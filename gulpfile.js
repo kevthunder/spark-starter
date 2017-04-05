@@ -4,14 +4,14 @@ var coffee = require('gulp-coffee');
 var uglify = require('gulp-uglify');
 
 gulp.task('coffee', function() {
-  gulp.src('./src/*.coffee')
+  return gulp.src('./src/*.coffee')
     .pipe(coffee())
     .pipe(rename('spark-starter.js'))
     .pipe(gulp.dest('./dist/'));
 });
 
 gulp.task('compress', ['coffee'], function () {
-  gulp.src('./dist/spark-starter.js')
+  return gulp.src('./dist/spark-starter.js')
     .pipe(uglify())
     .pipe(rename('spark-starter.min.js'))
     .pipe(gulp.dest('./dist/'));
