@@ -115,8 +115,8 @@
 
   })();
 
-  if (this.exports != null) {
-    this.exports = Element;
+  if (typeof module !== "undefined" && module !== null) {
+    module.exports = Element;
   } else {
     if (this.Spark == null) {
       this.Spark = {};

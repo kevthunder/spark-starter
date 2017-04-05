@@ -61,8 +61,8 @@ class Element
     for prop, desc of properties
       @property prop, desc
 
-if @exports?
-  @exports = Element
+if module?
+  module.exports = Element
 else 
   unless @Spark?
     @Spark = {}
