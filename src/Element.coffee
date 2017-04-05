@@ -61,11 +61,14 @@ class Element
     for prop, desc of properties
       @property prop, desc
 
+if Spark?
+  Spark.Element = Element
+### Standalone ###
 if module?
   module.exports = Element
-else 
+else
   unless @Spark?
     @Spark = {}
   @Spark.Element = Element
-  
+### Standalone end ###
   

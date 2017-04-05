@@ -115,6 +115,13 @@
 
   })();
 
+  if (typeof Spark !== "undefined" && Spark !== null) {
+    Spark.Element = Element;
+  }
+
+
+  /* Standalone */
+
   if (typeof module !== "undefined" && module !== null) {
     module.exports = Element;
   } else {
@@ -123,5 +130,8 @@
     }
     this.Spark.Element = Element;
   }
+
+
+  /* Standalone end */
 
 }).call(this);

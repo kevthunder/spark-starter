@@ -10,7 +10,7 @@ gulp.task('coffee', function() {
     .pipe(gulp.dest('./dist/'));
 });
 
-gulp.task('compress', function () {
+gulp.task('compress', ['coffee'], function () {
   gulp.src('./dist/spark-starter.js')
     .pipe(uglify())
     .pipe(rename('spark-starter.min.js'))
