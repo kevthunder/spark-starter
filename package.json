@@ -1,6 +1,5 @@
 {
   "name": "spark-starter",
-  "version": "1.0.0",
   "description": "Basic framework based on properties",
   "main": "dist/spark-starter.js",
   "scripts": {
