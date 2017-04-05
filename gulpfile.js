@@ -5,7 +5,7 @@ var uglify = require('gulp-uglify');
 
 gulp.task('coffee', function() {
   gulp.src('./src/*.coffee')
-    .pipe(coffee({bare: true}))
+    .pipe(coffee())
     .pipe(rename('spark-starter.js'))
     .pipe(gulp.dest('./dist/'));
 });

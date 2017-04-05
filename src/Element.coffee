@@ -60,11 +60,11 @@ class Element
   @properties: (properties) ->
     for prop, desc of properties
       @property prop, desc
-      
-if typeof @exports == 'undefined'
+
+if @exports?
   @exports = Element
 else 
-  if typeof @Spark == 'undefined'
+  unless @Spark?
     @Spark = {}
   @Spark.Element = Element
   
