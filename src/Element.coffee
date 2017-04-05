@@ -63,12 +63,12 @@ class Element
 
 if Spark?
   Spark.Element = Element
-### Standalone ###
+#--- Standalone ---
 if module?
   module.exports = Element
 else
   unless @Spark?
     @Spark = {}
   @Spark.Element = Element
-### Standalone end ###
+#--- Standalone end ---
   
