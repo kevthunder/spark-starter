@@ -57,16 +57,14 @@
       if (!((desc.get != null) && desc.get === false)) {
         if (desc.get != null) {
           this.prototype['get' + maj] = desc.get;
-        } else if (desc.init != null) {
-          this.prototype['init' + maj] = desc.init;
+        } else {
+          if (desc.init != null) {
+            this.prototype['init' + maj] = desc.init;
+          }
           this.prototype['get' + maj] = function() {
-            if (this['_' + prop] == null) {
+            if (typeof this['init' + maj] === 'function' && (this['_' + prop] == null)) {
               this['_' + prop] = this['init' + maj]();
             }
-            return this['_' + prop];
-          };
-        } else {
-          this.prototype['get' + maj] = function() {
             return this['_' + prop];
           };
         }
@@ -77,20 +75,19 @@
       if (!((desc.set != null) && desc.set === false)) {
         if (desc.set != null) {
           this.prototype['set' + maj] = desc.set;
-        } else if (desc.change != null) {
-          this.prototype['change' + maj] = desc.change;
+        } else {
+          if (desc.change != null) {
+            this.prototype['change' + maj] = desc.change;
+          }
           this.prototype['set' + maj] = function(val) {
             var old;
-            if (this['_' + prop] !== val) {
+            if (typeof this['change' + maj] === 'function' && this['_' + prop] !== val) {
               old = this['_' + prop];
               this['_' + prop] = val;
               this['change' + maj](old);
+            } else {
+              this['_' + prop] = val;
             }
-            return this;
-          };
-        } else {
-          this.prototype['set' + maj] = function(val) {
-            this['_' + prop] = val;
             return this;
           };
         }
