@@ -9,7 +9,13 @@ class Element
     else
       @[name].apply this, args.slice(1)
     this
-    
+  
+  callback: (name) ->
+    if @_callbacks[name]?
+      @_callbacks[name]
+    else
+      @_callbacks[name] = (args...)=> this[name].call(this,args)
+  
   @extend: (obj) ->
     for key, value of obj when key not in Element.elementKeywords
       @[key] = value
