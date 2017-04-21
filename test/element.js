@@ -122,7 +122,7 @@
       };
       return obj.setProp(11);
     });
-    return it('should init a prop only once and on demand', function() {
+    it('should init a prop only once and on demand', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
         extend(TestClass, superClass);
@@ -148,6 +148,74 @@
       assert.equal(obj.callcount, 1);
       obj.getProp();
       return assert.equal(obj.callcount, 1);
+    });
+    it('should allow to alter the input value', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          prop: {
+            ingest: function(val) {
+              if (val === 2) {
+                return 'two';
+              } else {
+                return val;
+              }
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      obj.prop = 2;
+      assert.equal(obj._prop, 'two');
+      obj.prop = 'zero';
+      return assert.equal(obj._prop, 'zero');
+    });
+    it('return self when calling tap', function() {
+      var TestClass, obj, res;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      res = obj.tap(function() {
+        return this.test = 1;
+      });
+      assert.equal(obj.test, 1);
+      return assert.equal(res, obj);
+    });
+    return it('return the same function when calling "callback" twice', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.prototype.doSomething = function() {
+          return this.test = 1;
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callback('doSomething'), obj.callback('doSomething'));
+      obj.callback('doSomething')();
+      return assert.equal(obj.test, 1);
     });
   });
 

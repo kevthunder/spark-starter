@@ -90,3 +90,42 @@ describe 'Element', ->
     obj.getProp()
     assert.equal obj.callcount, 1
     
+  it 'should allow to alter the input value', ->
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          prop: 
+            ingest: (val)->
+              if val == 2
+                'two'
+              else
+                val
+    obj = new TestClass();
+    
+    obj.prop = 2
+    assert.equal obj._prop, 'two'
+    obj.prop = 'zero'
+    assert.equal obj._prop, 'zero'
+    
+  it 'return self when calling tap', ->
+    class TestClass extends Element
+    obj = new TestClass();
+    
+    res = obj.tap ->
+      @test = 1
+    
+    assert.equal obj.test, 1
+    assert.equal res, obj
+    
+  it 'return the same function when calling "callback" twice', ->
+    class TestClass extends Element
+      doSomething: ->
+        @test = 1
+    obj = new TestClass();
+    
+    assert.equal obj.callback('doSomething'), obj.callback('doSomething')
+    
+    obj.callback('doSomething')()
+    assert.equal obj.test, 1
+  
+  

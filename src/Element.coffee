@@ -55,11 +55,11 @@ class Element
       else 
         if desc.change?
           @prototype['change'+maj] = desc.change
-        if desc.alter?
-          @prototype['alter'+maj] = desc.alter
+        if desc.ingest?
+          @prototype['ingest'+maj] = desc.ingest
         @prototype['set'+maj] = (val)->
-          if typeof this['alter'+maj] == 'function'
-            val = this['alter'+maj](val)
+          if typeof this['ingest'+maj] == 'function'
+            val = this['ingest'+maj](val)
           if this['_'+prop] != val
             old = this['_'+prop]
             this['_'+prop] = val
