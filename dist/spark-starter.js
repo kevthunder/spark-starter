@@ -97,8 +97,14 @@
           if (desc.change != null) {
             this.prototype['change' + maj] = desc.change;
           }
+          if (desc.alter != null) {
+            this.prototype['alter' + maj] = desc.alter;
+          }
           this.prototype['set' + maj] = function(val) {
             var old;
+            if (typeof this['alter' + maj] === 'function') {
+              val = this['alter' + maj](val);
+            }
             if (this['_' + prop] !== val) {
               old = this['_' + prop];
               this['_' + prop] = val;
