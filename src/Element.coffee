@@ -11,6 +11,8 @@ class Element
     this
   
   callback: (name) ->
+    unless @_callbacks?
+      @_callbacks = {}
     if @_callbacks[name]?
       @_callbacks[name]
     else

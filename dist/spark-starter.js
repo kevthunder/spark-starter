@@ -20,6 +20,9 @@
     };
 
     Element.prototype.callback = function(name) {
+      if (this._callbacks == null) {
+        this._callbacks = {};
+      }
       if (this._callbacks[name] != null) {
         return this._callbacks[name];
       } else {
