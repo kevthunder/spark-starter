@@ -81,12 +81,15 @@
           }
           this.prototype['set' + maj] = function(val) {
             var old;
-            if (typeof this['change' + maj] === 'function' && this['_' + prop] !== val) {
+            if (this['_' + prop] !== val) {
               old = this['_' + prop];
               this['_' + prop] = val;
-              this['change' + maj](old);
-            } else {
-              this['_' + prop] = val;
+              if (typeof this['change' + maj] === 'function') {
+                this['change' + maj](old);
+              }
+              if (typeof this.emitEvent === 'function') {
+                this.emitEvent('changed' + maj, [old]);
+              }
             }
             return this;
           };

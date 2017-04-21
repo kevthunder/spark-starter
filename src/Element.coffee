@@ -48,12 +48,13 @@ class Element
         if desc.change?
           @prototype['change'+maj] = desc.change
         @prototype['set'+maj] = (val)->
-          if typeof this['change'+maj] == 'function' and this['_'+prop] != val
+          if this['_'+prop] != val
             old = this['_'+prop]
             this['_'+prop] = val
-            this['change'+maj](old)
-          else
-            this['_'+prop] = val
+            if typeof this['change'+maj] == 'function'
+              this['change'+maj](old)
+            if typeof @emitEvent == 'function'
+              @emitEvent('changed'+maj, [old])
           return this
       desc.set = (val) ->
         this['set'+maj](val)
