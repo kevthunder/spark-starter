@@ -1,7 +1,216 @@
 (function() {
-  var Element,
+  var Element, EventBind, Invalidator, Spark, afterAddListener, callChange, pluck, registerCalculatedProperty,
     slice = [].slice,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  if (typeof Spark === "undefined" || Spark === null) {
+    Spark = {};
+  }
+
+  EventBind = (function() {
+    function EventBind(event1, target1, callback1) {
+      this.event = event1;
+      this.target = target1;
+      this.callback = callback1;
+      this.binded = false;
+    }
+
+    EventBind.prototype.bind = function() {
+      if (!this.binded) {
+        this.target.addListener(this.event, this.callback);
+      }
+      return this.binded = true;
+    };
+
+    EventBind.prototype.unbind = function() {
+      if (this.binded) {
+        this.target.removeListener(this.event, this.callback);
+      }
+      return this.binded = false;
+    };
+
+    EventBind.prototype.equals = function(eventBind) {
+      return eventBind.event === this.event && eventBind.target === this.target && eventBind.callback === this.callback;
+    };
+
+    return EventBind;
+
+  })();
+
+  if (Spark != null) {
+    Spark.EventBind = EventBind;
+  }
+
+  pluck = function(arr, fn) {
+    var found, index;
+    index = arr.findIndex(fn);
+    if (index > -1) {
+      found = arr[index];
+      arr.splice(index, 1);
+      return found;
+    } else {
+      return null;
+    }
+  };
+
+  Invalidator = (function() {
+    function Invalidator(obj1, property) {
+      this.obj = obj1;
+      this.property = property;
+      this.invalidationEvents = [];
+      this.recycled = [];
+      this.invalidateCallback = (function(_this) {
+        return function() {
+          _this.invalidate();
+          return null;
+        };
+      })(this);
+    }
+
+    Invalidator.prototype.invalidate = function() {
+      var functName;
+      functName = 'invalidate' + this.property.charAt(0).toUpperCase() + this.property.slice(1);
+      if (this.obj[functName] != null) {
+        return this.obj[functName]();
+      } else {
+        return this.obj[this.property] = null;
+      }
+    };
+
+    Invalidator.prototype.fromEvent = function(event, target) {
+      if (target == null) {
+        target = this;
+      }
+      if (!this.invalidationEvents.some(function(eventBind) {
+        return eventBind.event === event && eventBind.target === target;
+      })) {
+        return this.invalidationEvents.push(pluck(this.recycled, function(eventBind) {
+          return eventBind.event === event && eventBind.target === target;
+        }) || new EventBind(event, target, this.invalidateCallback));
+      }
+    };
+
+    Invalidator.prototype.fromValue = function(val, event, target) {
+      if (target == null) {
+        target = this;
+      }
+      this.fromEvent(event, target);
+      return val;
+    };
+
+    Invalidator.prototype.fromProperty = function(propertyName, target) {
+      var maj;
+      if (target == null) {
+        target = this;
+      }
+      maj = propertyName.charAt(0).toUpperCase() + propertyName.slice(1);
+      return this.fromValue(target[propertyName], 'changed' + maj, target);
+    };
+
+    Invalidator.prototype.isEmpty = function() {
+      return this.invalidationEvents.length === 0;
+    };
+
+    Invalidator.prototype.bind = function() {
+      return this.invalidationEvents.forEach(function(eventBind) {
+        return eventBind.bind();
+      });
+    };
+
+    Invalidator.prototype.recycle = function(callback) {
+      var done, res;
+      this.recycled = this.invalidationEvents;
+      this.invalidationEvents = [];
+      done = (function(_this) {
+        return function() {
+          _this.recycled.forEach(function(eventBind) {
+            return eventBind.unbind();
+          });
+          return _this.recycled = [];
+        };
+      })(this);
+      if (typeof callback === "function") {
+        if (callback.length > 1) {
+          return callback(this, done);
+        } else {
+          res = callback(this);
+          done();
+          return res;
+        }
+      } else {
+        return done;
+      }
+    };
+
+    Invalidator.prototype.unbind = function() {
+      return this.invalidationEvents.forEach(function(eventBind) {
+        return eventBind.unbind();
+      });
+    };
+
+    return Invalidator;
+
+  })();
+
+  if (Spark != null) {
+    Spark.Invalidator = Invalidator;
+  }
+
+  afterAddListener = function(event) {
+    var maj, match, prop;
+    if (match = event.match(/^changed(\w*)$/)) {
+      maj = match[1];
+      prop = maj.charAt(0).toLowerCase() + maj.slice(1);
+      if (typeof this['invalidate' + maj] === 'function' && this[prop + 'Calculated'] === false) {
+        return this['get' + maj]();
+      }
+    }
+  };
+
+  registerCalculatedProperty = function(obj, prop, calcul) {
+    var maj, overrided;
+    maj = prop.charAt(0).toUpperCase() + prop.slice(1);
+    if (calcul != null) {
+      obj['calcul' + maj] = calcul;
+    }
+    if (obj['calcul' + maj] != null) {
+      obj[prop + 'Calculated'] = false;
+      obj['invalidate' + maj] = function() {
+        var old;
+        if (this[prop + 'Calculated']) {
+          this[prop + 'Calculated'] = false;
+          if (this['immediate' + maj] || (typeof this.getListeners === 'function' && this.getListeners('changed' + maj).length > 0)) {
+            old = this['_' + prop];
+            this['get' + maj]();
+            if (old !== this['_' + prop]) {
+              return callChange(this, prop, old);
+            }
+          } else if (this[prop + 'Invalidator'] != null) {
+            return this[prop + 'Invalidator'].unbind();
+          }
+        }
+      };
+      if (typeof this.addListener === 'function' && typeof this.afterAddListener !== 'function') {
+        this.afterAddListener = afterAddListener;
+        overrided = this.addListener;
+        return this.addListener = function(evt, listener) {
+          overrided(evt, listener);
+          return this.afterAddListener(evt);
+        };
+      }
+    }
+  };
+
+  callChange = function(obj, prop, old) {
+    var maj;
+    maj = prop.charAt(0).toUpperCase() + prop.slice(1);
+    if (typeof obj['change' + maj] === 'function') {
+      obj['change' + maj](old);
+    }
+    if (typeof obj.emitEvent === 'function') {
+      return obj.emitEvent('changed' + maj, [old]);
+    }
+  };
 
   Element = (function() {
     function Element() {}
@@ -30,7 +239,8 @@
           return function() {
             var args;
             args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-            return _this[name].call(_this, args);
+            _this[name].call(_this, args);
+            return null;
           };
         })(this);
       }
@@ -76,12 +286,24 @@
         if (desc.get != null) {
           this.prototype['get' + maj] = desc.get;
         } else {
-          if (desc.init != null) {
-            this.prototype['init' + maj] = desc.init;
-          }
+          this.prototype['immediate' + maj] = desc.immediate === true;
+          registerCalculatedProperty(this.prototype, prop, desc.calcul);
           this.prototype['get' + maj] = function() {
-            if (typeof this['init' + maj] === 'function' && (this['_' + prop] == null)) {
-              this['_' + prop] = this['init' + maj]();
+            if (typeof this['calcul' + maj] === 'function' && !this[prop + 'Calculated']) {
+              if (this[prop + 'Invalidator'] == null) {
+                this[prop + 'Invalidator'] = new Invalidator(this, prop);
+              }
+              this[prop + 'Invalidator'].recycle((function(_this) {
+                return function(invalidator) {
+                  _this['_' + prop] = _this['calcul' + maj](invalidator);
+                  if (invalidator.isEmpty()) {
+                    return _this[prop + 'Invalidator'] = null;
+                  } else {
+                    return invalidator.bind();
+                  }
+                };
+              })(this));
+              this[prop + 'Calculated'] = true;
             }
             return this['_' + prop];
           };
@@ -108,12 +330,7 @@
             if (this['_' + prop] !== val) {
               old = this['_' + prop];
               this['_' + prop] = val;
-              if (typeof this['change' + maj] === 'function') {
-                this['change' + maj](old);
-              }
-              if (typeof this.emitEvent === 'function') {
-                this.emitEvent('changed' + maj, [old]);
-              }
+              callChange(this, prop, old);
             }
             return this;
           };
@@ -139,17 +356,14 @@
 
   })();
 
-  if (typeof Spark !== "undefined" && Spark !== null) {
+  if (Spark != null) {
     Spark.Element = Element;
   }
 
   if (typeof module !== "undefined" && module !== null) {
-    module.exports = Element;
+    module.exports = Spark;
   } else {
-    if (this.Spark == null) {
-      this.Spark = {};
-    }
-    this.Spark.Element = Element;
+    this.Spark = Spark;
   }
 
 }).call(this);

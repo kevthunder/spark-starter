@@ -1,5 +1,5 @@
 assert = require('chai').assert
-Element = require('../dist/spark-starter')
+Element = require('../lib/Element')
 
 describe 'Element', ->
   
@@ -39,7 +39,6 @@ describe 'Element', ->
     assert.equal obj.prop, 11
     assert.equal res, obj
     
-    
   it 'should call change only when value differ', ->
     class TestClass extends Element
         constructor: () ->
@@ -61,6 +60,25 @@ describe 'Element', ->
     assert.equal obj.prop, 11
     assert.equal obj.callcount, 2
     
+  it 'should emit event when value change', ->
+    
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            default: 1
+        emitEvent: (event,params)->
+          assert.equal event, 'changedProp'
+          assert.equal params[0], 1
+          @callcount += 1
+    obj = new TestClass();
+  
+    assert.equal obj.callcount, 0
+    obj.prop = 7
+    assert.equal obj.prop, 7
+    assert.equal obj.callcount, 1
+    
   it 'allow access to old and new value in change function', ->
     class TestClass extends Element
         constructor: () ->
@@ -74,13 +92,13 @@ describe 'Element', ->
       assert.equal old, 7
     obj.setProp(11)
     
-  it 'should init a prop only once and on demand', ->
+  it 'should calcul a prop only once and on demand', ->
     class TestClass extends Element
         constructor: () ->
           @callcount = 0
         @properties
           prop: 
-            init: ->
+            calcul: ->
                @callcount += 1
     obj = new TestClass();
     
@@ -89,6 +107,183 @@ describe 'Element', ->
     assert.equal obj.callcount, 1
     obj.getProp()
     assert.equal obj.callcount, 1
+    
+  it 'should be able to invalidate a property', ->
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          prop: 
+            calcul: ->
+               3
+    obj = new TestClass();
+    
+    assert.equal obj._prop, undefined
+    assert.equal obj.propCalculated, false
+    obj.getProp()
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    obj.invalidateProp()
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, false
+    
+  it 'should be able to invalidate a property from an event', ->
+    emitter = {
+      addListener: (evt, listener) ->
+        @event = evt
+        @listener = listener
+      removeListener: (evt, listener) ->
+        @event = null
+        @listener = null
+      emit: ->
+        if @listener?
+          @listener()
+    }
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          prop: 
+            calcul: (invalidator)->
+              invalidator.fromEvent('changedTest',emitter)
+              3
+    obj = new TestClass();
+    
+    assert.equal obj._prop, undefined
+    assert.equal obj.propCalculated, false
+    obj.getProp()
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    emitter.emit()
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, false
+    
+  it 'should re-calcul only on the next get after an avalidation', ->
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+               @callcount += 1
+               3
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    assert.equal obj._prop, undefined
+    assert.equal obj.propCalculated, false
+    obj.getProp()
+    assert.equal obj.callcount, 1
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    obj.invalidateProp()
+    assert.equal obj.callcount, 1
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, false
+    obj.getProp()
+    assert.equal obj.callcount, 2
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    
+  it 'should re-calcul immediately when the option is true', ->
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+               @callcount += 1
+               3
+            immediate: true
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    assert.equal obj._prop, undefined
+    assert.equal obj.propCalculated, false
+    obj.getProp()
+    assert.equal obj.callcount, 1
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    obj.invalidateProp()
+    assert.equal obj.callcount, 2
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    obj.getProp()
+    assert.equal obj.callcount, 2
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    
+  it 'should re-calcul immediately if there is a listener on the change event', ->
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+               @callcount += 1
+               3
+        getListeners: -> 
+          [{}]
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    assert.equal obj._prop, undefined
+    assert.equal obj.propCalculated, false
+    obj.getProp()
+    assert.equal obj.callcount, 1
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    obj.invalidateProp()
+    assert.equal obj.callcount, 2
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    obj.getProp()
+    assert.equal obj.callcount, 2
+    assert.equal obj._prop, 3
+    assert.equal obj.propCalculated, true
+    
+  it 'should emit event when a property is invalidated and is changed', ->
+    lastValue = 0
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+               lastValue += 1
+        getListeners: -> 
+          [{}]
+        emitEvent: (event,params)->
+          assert.equal event, 'changedProp'
+          assert.equal params[0], lastValue-1
+          @callcount += 1
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    obj.getProp()
+    assert.equal obj.callcount, 0
+    obj.invalidateProp()
+    assert.equal obj.callcount, 1
+    
+  it 'should not emit event when a property is invalidated and is not changed', ->
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+               5
+        getListeners: -> 
+          [{}]
+        emitEvent: (event,params)->
+          assert.equal event, 'changedProp'
+          assert.equal params[0], lastValue-1
+          @callcount += 1
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    obj.getProp()
+    assert.equal obj.callcount, 0
+    obj.invalidateProp()
+    assert.equal obj.callcount, 0
     
   it 'should allow to alter the input value', ->
     class TestClass extends Element

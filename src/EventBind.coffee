@@ -13,3 +13,14 @@ class EventBind
     eventBind.event    == @event    and
     eventBind.target   == @target   and
     eventBind.callback == @callback
+    
+if Spark?
+  Spark.EventBind = EventBind
+#--- Standalone ---
+if module?
+  module.exports = EventBind
+else
+  unless @Spark?
+    @Spark = {}
+  @Spark.EventBind = EventBind
+#--- Standalone end ---

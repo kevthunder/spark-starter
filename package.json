@@ -2,7 +2,7 @@
   "name": "spark-starter",
   "version": "1.0.0",
   "description": "Basic framework based on properties",
-  "main": "dist/spark-starter.js",
+  "main": "lib/spark-starter.js",
   "scripts": {
     "test": "gulp test",
     "build": "gulp build"
@@ -13,7 +13,9 @@
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-coffee": "^2.3.3",
+    "gulp-coffeescript-concat": "^0.1.3",
     "gulp-rename": "^1.2.2",
+    "gulp-strip-code": "^0.1.4",
     "gulp-uglify": "^2.0.1",
     "gulp-mocha": "^4.3.0",
     "mocha": "^3.2.0"

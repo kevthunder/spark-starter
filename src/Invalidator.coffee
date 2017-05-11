@@ -1,3 +1,4 @@
+#= require <EventBind>
 #--- Standalone ---
 EventBind = @Spark?.EventBind || require('./EventBind')
 #--- Standalone end ---
@@ -16,18 +17,18 @@ class Invalidator
     @invalidationEvents = []
     @recycled = []
     @invalidateCallback = => 
-      invalidate()
+      @invalidate()
       null
 
-  invalidate: 
-    functName = 'invalidate'+@property.charAt(0).toUpperCase() + @property.slice(1)
+  invalidate: ->
+    functName = 'invalidate' + @property.charAt(0).toUpperCase() + @property.slice(1)
     if @obj[functName]?
       @obj[functName]()
     else
       @obj[@property] = null
       
-  invalidationEvent: (event, target = this) ->
-    unless @invalidationEvents.some (eventBind)-> eventBind.event == event and eventBind.target == target
+  fromEvent: (event, target = this) ->
+    unless @invalidationEvents.some( (eventBind)-> eventBind.event == event and eventBind.target == target)
       @invalidationEvents.push(
         pluck(@recycled, (eventBind)-> 
           eventBind.event == event and eventBind.target == target
@@ -35,13 +36,16 @@ class Invalidator
         new EventBind(event, target, @invalidateCallback)
       )  
   
-  invalidatedValue: (val, event, target = this) ->
-    @invalidationEvent(event, target)
+  fromValue: (val, event, target = this) ->
+    @fromEvent(event, target)
     val
   
-  invalidatedProperty: (propertyName, target = this) ->
+  fromProperty: (propertyName, target = this) ->
     maj = propertyName.charAt(0).toUpperCase() + propertyName.slice(1)
-    @invalidatedValue(target[propertyName],'changed'+maj, target)
+    @fromValue(target[propertyName],'changed'+maj, target)
+    
+  isEmpty: ->
+    @invalidationEvents.length == 0
     
   bind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.bind()
@@ -58,10 +62,23 @@ class Invalidator
       if callback.length > 1
         callback(this, done)
       else
-        callback(this)
+        res = callback(this)
         done()
+        res
     else
       done
   
   unbind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.unbind()
+    
+    
+if Spark?
+  Spark.Invalidator = Invalidator
+#--- Standalone ---
+if module?
+  module.exports = Invalidator
+else
+  unless @Spark?
+    @Spark = {}
+  @Spark.Invalidator = Invalidator
+#--- Standalone end ---

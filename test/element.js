@@ -5,7 +5,7 @@
 
   assert = require('chai').assert;
 
-  Element = require('../dist/spark-starter');
+  Element = require('../lib/Element');
 
   describe('Element', function() {
     it('should get property', function() {
@@ -99,6 +99,36 @@
       assert.equal(obj.prop, 11);
       return assert.equal(obj.callcount, 2);
     });
+    it('should emit event when value change', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            "default": 1
+          }
+        });
+
+        TestClass.prototype.emitEvent = function(event, params) {
+          assert.equal(event, 'changedProp');
+          assert.equal(params[0], 1);
+          return this.callcount += 1;
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      obj.prop = 7;
+      assert.equal(obj.prop, 7);
+      return assert.equal(obj.callcount, 1);
+    });
     it('allow access to old and new value in change function', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
@@ -122,7 +152,7 @@
       };
       return obj.setProp(11);
     });
-    it('should init a prop only once and on demand', function() {
+    it('should calcul a prop only once and on demand', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
         extend(TestClass, superClass);
@@ -133,7 +163,7 @@
 
         TestClass.properties({
           prop: {
-            init: function() {
+            calcul: function() {
               return this.callcount += 1;
             }
           }
@@ -148,6 +178,272 @@
       assert.equal(obj.callcount, 1);
       obj.getProp();
       return assert.equal(obj.callcount, 1);
+    });
+    it('should be able to invalidate a property', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              return 3;
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj._prop, void 0);
+      assert.equal(obj.propCalculated, false);
+      obj.getProp();
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      obj.invalidateProp();
+      assert.equal(obj._prop, 3);
+      return assert.equal(obj.propCalculated, false);
+    });
+    it('should be able to invalidate a property from an event', function() {
+      var TestClass, emitter, obj;
+      emitter = {
+        addListener: function(evt, listener) {
+          this.event = evt;
+          return this.listener = listener;
+        },
+        removeListener: function(evt, listener) {
+          this.event = null;
+          return this.listener = null;
+        },
+        emit: function() {
+          if (this.listener != null) {
+            return this.listener();
+          }
+        }
+      };
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          prop: {
+            calcul: function(invalidator) {
+              invalidator.fromEvent('changedTest', emitter);
+              return 3;
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj._prop, void 0);
+      assert.equal(obj.propCalculated, false);
+      obj.getProp();
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      emitter.emit();
+      assert.equal(obj._prop, 3);
+      return assert.equal(obj.propCalculated, false);
+    });
+    it('should re-calcul only on the next get after an avalidation', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              this.callcount += 1;
+              return 3;
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      assert.equal(obj._prop, void 0);
+      assert.equal(obj.propCalculated, false);
+      obj.getProp();
+      assert.equal(obj.callcount, 1);
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      obj.invalidateProp();
+      assert.equal(obj.callcount, 1);
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, false);
+      obj.getProp();
+      assert.equal(obj.callcount, 2);
+      assert.equal(obj._prop, 3);
+      return assert.equal(obj.propCalculated, true);
+    });
+    it('should re-calcul immediately when the option is true', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              this.callcount += 1;
+              return 3;
+            },
+            immediate: true
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      assert.equal(obj._prop, void 0);
+      assert.equal(obj.propCalculated, false);
+      obj.getProp();
+      assert.equal(obj.callcount, 1);
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      obj.invalidateProp();
+      assert.equal(obj.callcount, 2);
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      obj.getProp();
+      assert.equal(obj.callcount, 2);
+      assert.equal(obj._prop, 3);
+      return assert.equal(obj.propCalculated, true);
+    });
+    it('should re-calcul immediately if there is a listener on the change event', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              this.callcount += 1;
+              return 3;
+            }
+          }
+        });
+
+        TestClass.prototype.getListeners = function() {
+          return [{}];
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      assert.equal(obj._prop, void 0);
+      assert.equal(obj.propCalculated, false);
+      obj.getProp();
+      assert.equal(obj.callcount, 1);
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      obj.invalidateProp();
+      assert.equal(obj.callcount, 2);
+      assert.equal(obj._prop, 3);
+      assert.equal(obj.propCalculated, true);
+      obj.getProp();
+      assert.equal(obj.callcount, 2);
+      assert.equal(obj._prop, 3);
+      return assert.equal(obj.propCalculated, true);
+    });
+    it('should emit event when a property is invalidated and is changed', function() {
+      var TestClass, lastValue, obj;
+      lastValue = 0;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              return lastValue += 1;
+            }
+          }
+        });
+
+        TestClass.prototype.getListeners = function() {
+          return [{}];
+        };
+
+        TestClass.prototype.emitEvent = function(event, params) {
+          assert.equal(event, 'changedProp');
+          assert.equal(params[0], lastValue - 1);
+          return this.callcount += 1;
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      obj.getProp();
+      assert.equal(obj.callcount, 0);
+      obj.invalidateProp();
+      return assert.equal(obj.callcount, 1);
+    });
+    it('should not emit event when a property is invalidated and is not changed', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              return 5;
+            }
+          }
+        });
+
+        TestClass.prototype.getListeners = function() {
+          return [{}];
+        };
+
+        TestClass.prototype.emitEvent = function(event, params) {
+          assert.equal(event, 'changedProp');
+          assert.equal(params[0], lastValue - 1);
+          return this.callcount += 1;
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      obj.getProp();
+      assert.equal(obj.callcount, 0);
+      obj.invalidateProp();
+      return assert.equal(obj.callcount, 0);
     });
     it('should allow to alter the input value', function() {
       var TestClass, obj;

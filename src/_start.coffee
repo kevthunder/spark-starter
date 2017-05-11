@@ -1,0 +1,2 @@
+unless Spark?
+    Spark = {}

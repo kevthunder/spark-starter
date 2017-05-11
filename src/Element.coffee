@@ -1,5 +1,6 @@
+#= require <Invalidator>
 #--- Standalone ---
-Invalidator = @Spark?.Invalidator || require('./Invalidator')
+Invalidator = @Spark?.Invalidator or require('./Invalidator')
 #--- Standalone end ---
 
 afterAddListener = (event)->
@@ -12,15 +13,19 @@ afterAddListener = (event)->
 registerCalculatedProperty = (obj, prop, calcul)->
   maj = prop.charAt(0).toUpperCase() + prop.slice(1)
   if calcul?
-    obj['calcul'+maj] = desc.calcul
+    obj['calcul'+maj] = calcul
   if obj['calcul'+maj]?
     obj[prop+'Calculated'] = false
     obj['invalidate'+maj] = ->
-      this[prop+'Calculated'] = false
-      if this['immediate'+maj] or (typeof @getListeners == 'function' and @getListeners('changed'+maj).length > 0)
-        this['get'+maj]()
-      else
-        this[prop+'Invalidator'].unbind()
+      if this[prop+'Calculated']
+        this[prop+'Calculated'] = false
+        if this['immediate'+maj] or (typeof @getListeners == 'function' and @getListeners('changed'+maj).length > 0)
+          old = this['_'+prop]
+          this['get'+maj]()
+          if old != this['_'+prop]
+            callChange(this,prop,old)
+        else if this[prop+'Invalidator']?
+          this[prop+'Invalidator'].unbind()
     if typeof @addListener == 'function' and typeof @afterAddListener != 'function' 
       @afterAddListener = afterAddListener
       overrided = @addListener
@@ -28,6 +33,13 @@ registerCalculatedProperty = (obj, prop, calcul)->
         overrided(evt, listener)
         @afterAddListener(evt)
 
+callChange = (obj, prop, old)->
+  maj = prop.charAt(0).toUpperCase() + prop.slice(1)
+  if typeof obj['change'+maj] == 'function'
+    obj['change'+maj](old)
+  if typeof obj.emitEvent == 'function'
+    obj.emitEvent('changed'+maj, [old])
+    
 class Element
   @elementKeywords = ['extended', 'included']
   
@@ -72,6 +84,7 @@ class Element
       if desc.get?
         @prototype['get'+maj] = desc.get
       else 
+        @prototype['immediate'+maj] = desc.immediate == true
         registerCalculatedProperty(@prototype, prop, desc.calcul)
         @prototype['get'+maj] = ->
           if typeof this['calcul'+maj] == 'function' and !this[prop+'Calculated']
@@ -79,7 +92,10 @@ class Element
               this[prop+'Invalidator'] = new Invalidator(this,prop)
             this[prop+'Invalidator'].recycle (invalidator)=> 
               this['_'+prop] = this['calcul'+maj](invalidator)
-              invalidator.bind()
+              if invalidator.isEmpty()
+                this[prop+'Invalidator'] = null
+              else
+                invalidator.bind()
             this[prop+'Calculated'] = true
           this['_'+prop]
       desc.get = ->
@@ -98,10 +114,7 @@ class Element
           if this['_'+prop] != val
             old = this['_'+prop]
             this['_'+prop] = val
-            if typeof this['change'+maj] == 'function'
-              this['change'+maj](old)
-            if typeof @emitEvent == 'function'
-              @emitEvent('changed'+maj, [old])
+            callChange(this,prop,old)
           return this
       desc.set = (val) ->
         this['set'+maj](val)
