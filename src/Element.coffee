@@ -1,3 +1,32 @@
+#--- Standalone ---
+Invalidator = @Spark?.Invalidator || require('./Invalidator')
+#--- Standalone end ---
+
+afterAddListener = (event)->
+  if match = event.match(/^changed(\w*)$/)
+    maj = match[1]
+    prop = maj.charAt(0).toLowerCase() + maj.slice(1)
+    if typeof this['invalidate'+maj] == 'function' and this[prop+'Calculated'] == false
+      this['get'+maj]()
+
+registerCalculatedProperty = (obj, prop, calcul)->
+  maj = prop.charAt(0).toUpperCase() + prop.slice(1)
+  if calcul?
+    obj['calcul'+maj] = desc.calcul
+  if obj['calcul'+maj]?
+    obj[prop+'Calculated'] = false
+    obj['invalidate'+maj] = ->
+      this[prop+'Calculated'] = false
+      if this['immediate'+maj] or (typeof @getListeners == 'function' and @getListeners('changed'+maj).length > 0)
+        this['get'+maj]()
+      else
+        this[prop+'Invalidator'].unbind()
+    if typeof @addListener == 'function' and typeof @afterAddListener != 'function' 
+      @afterAddListener = afterAddListener
+      overrided = @addListener
+      @addListener = (evt, listener)-> 
+        overrided(evt, listener)
+        @afterAddListener(evt)
 
 class Element
   @elementKeywords = ['extended', 'included']
@@ -16,7 +45,9 @@ class Element
     if @_callbacks[name]?
       @_callbacks[name]
     else
-      @_callbacks[name] = (args...)=> this[name].call(this,args)
+      @_callbacks[name] = (args...)=> 
+        this[name].call(this,args)
+        null
   
   @extend: (obj) ->
     for key, value of obj when key not in Element.elementKeywords
@@ -32,7 +63,7 @@ class Element
     this
     
   @property: (prop, desc) ->
-    maj = prop.charAt(0).toUpperCase() + prop.slice(1);
+    maj = prop.charAt(0).toUpperCase() + prop.slice(1)
     if desc.default?
       @prototype['_'+prop] = desc.default
     else
@@ -41,11 +72,15 @@ class Element
       if desc.get?
         @prototype['get'+maj] = desc.get
       else 
-        if desc.init?
-          @prototype['init'+maj] = desc.init
+        registerCalculatedProperty(@prototype, prop, desc.calcul)
         @prototype['get'+maj] = ->
-          if typeof this['init'+maj] == 'function' and !this['_'+prop]?
-            this['_'+prop] = this['init'+maj]()
+          if typeof this['calcul'+maj] == 'function' and !this[prop+'Calculated']
+            unless this[prop+'Invalidator']?
+              this[prop+'Invalidator'] = new Invalidator(this,prop)
+            this[prop+'Invalidator'].recycle (invalidator)=> 
+              this['_'+prop] = this['calcul'+maj](invalidator)
+              invalidator.bind()
+            this[prop+'Calculated'] = true
           this['_'+prop]
       desc.get = ->
         this['get'+maj]()
