@@ -98,13 +98,11 @@
       return val;
     };
 
-    Invalidator.prototype.fromProperty = function(propertyName, target) {
-      var maj;
+    Invalidator.prototype.fromProperty = function(prop, target) {
       if (target == null) {
         target = this;
       }
-      maj = propertyName.charAt(0).toUpperCase() + propertyName.slice(1);
-      return this.fromValue(target[propertyName], 'changed' + maj, target);
+      return this.fromValue(target[prop], prop + 'Changed', target);
     };
 
     Invalidator.prototype.isEmpty = function() {
@@ -179,7 +177,7 @@
         var old;
         if (this[prop + 'Calculated']) {
           this[prop + 'Calculated'] = false;
-          if (this['immediate' + maj] || (typeof this.getListeners === 'function' && this.getListeners('changed' + maj).length > 0)) {
+          if (this['immediate' + maj] || (typeof this.getListeners === 'function' && this.getListeners(prop + 'Changed').length > 0)) {
             old = this['_' + prop];
             this['get' + maj]();
             if (old !== this['_' + prop]) {
@@ -202,13 +200,11 @@
   };
 
   callChange = function(obj, prop, old) {
-    var maj;
-    maj = prop.charAt(0).toUpperCase() + prop.slice(1);
-    if (typeof obj['change' + maj] === 'function') {
-      obj['change' + maj](old);
+    if (typeof obj[prop + 'Changed'] === 'function') {
+      obj[prop + 'Changed'](old);
     }
     if (typeof obj.emitEvent === 'function') {
-      return obj.emitEvent('changed' + maj, [old]);
+      return obj.emitEvent(prop + 'Changed', [old]);
     }
   };
 
@@ -317,7 +313,7 @@
           this.prototype['set' + maj] = desc.set;
         } else {
           if (desc.change != null) {
-            this.prototype['change' + maj] = desc.change;
+            this.prototype[prop + 'Changed'] = desc.change;
           }
           if (desc.ingest != null) {
             this.prototype['ingest' + maj] = desc.ingest;

@@ -115,7 +115,7 @@
         });
 
         TestClass.prototype.emitEvent = function(event, params) {
-          assert.equal(event, 'changedProp');
+          assert.equal(event, 'propChanged');
           assert.equal(params[0], 1);
           return this.callcount += 1;
         };
@@ -146,7 +146,7 @@
 
       })(Element);
       obj = new TestClass();
-      obj.changeProp = function(old) {
+      obj.propChanged = function(old) {
         assert.equal(this._prop, 11);
         return assert.equal(old, 7);
       };
@@ -232,7 +232,7 @@
         TestClass.properties({
           prop: {
             calcul: function(invalidator) {
-              invalidator.fromEvent('changedTest', emitter);
+              invalidator.fromEvent('testChanged', emitter);
               return 3;
             }
           }
@@ -393,7 +393,7 @@
         };
 
         TestClass.prototype.emitEvent = function(event, params) {
-          assert.equal(event, 'changedProp');
+          assert.equal(event, 'propChanged');
           assert.equal(params[0], lastValue - 1);
           return this.callcount += 1;
         };
@@ -430,7 +430,7 @@
         };
 
         TestClass.prototype.emitEvent = function(event, params) {
-          assert.equal(event, 'changedProp');
+          assert.equal(event, 'propChanged');
           assert.equal(params[0], lastValue - 1);
           return this.callcount += 1;
         };

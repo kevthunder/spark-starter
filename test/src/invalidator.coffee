@@ -11,10 +11,10 @@ describe 'Invalidator', ->
     
     assert.equal invalidator.invalidationEvents.length, 0
     
-    invalidator.fromEvent('changedTest',emitter)
+    invalidator.fromEvent('testChanged',emitter)
     
     assert.equal invalidator.invalidationEvents.length, 1
-    assert.equal invalidator.invalidationEvents[0].event, 'changedTest'
+    assert.equal invalidator.invalidationEvents[0].event, 'testChanged'
     assert.equal invalidator.invalidationEvents[0].target, emitter
     assert.equal invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback
     
@@ -27,11 +27,11 @@ describe 'Invalidator', ->
     
     assert.equal invalidator.invalidationEvents.length, 0
     
-    res = invalidator.fromValue(2,'changedTest',emitter)
+    res = invalidator.fromValue(2,'testChanged',emitter)
     
     assert.equal res, 2
     assert.equal invalidator.invalidationEvents.length, 1
-    assert.equal invalidator.invalidationEvents[0].event, 'changedTest'
+    assert.equal invalidator.invalidationEvents[0].event, 'testChanged'
     assert.equal invalidator.invalidationEvents[0].target, emitter
     assert.equal invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback
     
@@ -50,7 +50,7 @@ describe 'Invalidator', ->
     
     assert.equal res, 2
     assert.equal invalidator.invalidationEvents.length, 1
-    assert.equal invalidator.invalidationEvents[0].event, 'changedTest'
+    assert.equal invalidator.invalidationEvents[0].event, 'testChanged'
     assert.equal invalidator.invalidationEvents[0].target, emitter
     assert.equal invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback
     
@@ -86,7 +86,7 @@ describe 'Invalidator', ->
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
         calls += 1
     }
@@ -107,10 +107,10 @@ describe 'Invalidator', ->
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
       removeListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
         calls += 1
     }
@@ -156,13 +156,13 @@ describe 'Invalidator', ->
     removeCalls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
         addCalls += 1
         @event = evt
         @listener = listener
       removeListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
         removeCalls += 1
         @event = null
@@ -199,13 +199,13 @@ describe 'Invalidator', ->
     removeCalls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
         addCalls += 1
         @event = evt
         @listener = listener
       removeListener: (evt, listener) ->
-        assert.equal evt, 'changedTest'
+        assert.equal evt, 'testChanged'
         assert.equal listener, invalidator.invalidateCallback
         removeCalls += 1
         @event = null

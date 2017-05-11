@@ -19,7 +19,7 @@ registerCalculatedProperty = (obj, prop, calcul)->
     obj['invalidate'+maj] = ->
       if this[prop+'Calculated']
         this[prop+'Calculated'] = false
-        if this['immediate'+maj] or (typeof @getListeners == 'function' and @getListeners('changed'+maj).length > 0)
+        if this['immediate'+maj] or (typeof @getListeners == 'function' and @getListeners(prop+'Changed').length > 0)
           old = this['_'+prop]
           this['get'+maj]()
           if old != this['_'+prop]
@@ -34,11 +34,10 @@ registerCalculatedProperty = (obj, prop, calcul)->
         @afterAddListener(evt)
 
 callChange = (obj, prop, old)->
-  maj = prop.charAt(0).toUpperCase() + prop.slice(1)
-  if typeof obj['change'+maj] == 'function'
-    obj['change'+maj](old)
+  if typeof obj[prop+'Changed'] == 'function'
+    obj[prop+'Changed'](old)
   if typeof obj.emitEvent == 'function'
-    obj.emitEvent('changed'+maj, [old])
+    obj.emitEvent(prop+'Changed', [old])
     
 class Element
   @elementKeywords = ['extended', 'included']
@@ -105,7 +104,7 @@ class Element
         @prototype['set'+maj] = desc.set
       else 
         if desc.change?
-          @prototype['change'+maj] = desc.change
+          @prototype[prop+'Changed'] = desc.change
         if desc.ingest?
           @prototype['ingest'+maj] = desc.ingest
         @prototype['set'+maj] = (val)->

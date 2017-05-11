@@ -69,7 +69,7 @@ describe 'Element', ->
           prop: 
             default: 1
         emitEvent: (event,params)->
-          assert.equal event, 'changedProp'
+          assert.equal event, 'propChanged'
           assert.equal params[0], 1
           @callcount += 1
     obj = new TestClass();
@@ -87,7 +87,7 @@ describe 'Element', ->
             default: 7
     obj = new TestClass();
     
-    obj.changeProp = (old)->
+    obj.propChanged = (old)->
       assert.equal @_prop, 11
       assert.equal old, 7
     obj.setProp(11)
@@ -143,7 +143,7 @@ describe 'Element', ->
         @properties
           prop: 
             calcul: (invalidator)->
-              invalidator.fromEvent('changedTest',emitter)
+              invalidator.fromEvent('testChanged',emitter)
               3
     obj = new TestClass();
     
@@ -252,7 +252,7 @@ describe 'Element', ->
         getListeners: -> 
           [{}]
         emitEvent: (event,params)->
-          assert.equal event, 'changedProp'
+          assert.equal event, 'propChanged'
           assert.equal params[0], lastValue-1
           @callcount += 1
     obj = new TestClass();
@@ -274,7 +274,7 @@ describe 'Element', ->
         getListeners: -> 
           [{}]
         emitEvent: (event,params)->
-          assert.equal event, 'changedProp'
+          assert.equal event, 'propChanged'
           assert.equal params[0], lastValue-1
           @callcount += 1
     obj = new TestClass();

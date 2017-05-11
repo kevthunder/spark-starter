@@ -40,9 +40,8 @@ class Invalidator
     @fromEvent(event, target)
     val
   
-  fromProperty: (propertyName, target = this) ->
-    maj = propertyName.charAt(0).toUpperCase() + propertyName.slice(1)
-    @fromValue(target[propertyName],'changed'+maj, target)
+  fromProperty: (prop, target = this) ->
+    @fromValue(target[prop], prop+'Changed', target)
     
   isEmpty: ->
     @invalidationEvents.length == 0
