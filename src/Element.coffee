@@ -59,6 +59,14 @@ class Element
       @_callbacks[name] = (args...)=> 
         this[name].call(this,args)
         null
+        
+  unbindInvalidators: ()->
+    count = 0
+    for name, val of this
+      if val instanceof Invalidator
+        val.unbind()
+        count += 1
+    count
   
   @extend: (obj) ->
     for key, value of obj when key not in Element.elementKeywords

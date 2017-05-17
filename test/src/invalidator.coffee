@@ -11,7 +11,7 @@ describe 'Invalidator', ->
     
     assert.equal invalidator.invalidationEvents.length, 0
     
-    invalidator.fromEvent('testChanged',emitter)
+    invalidator.event('testChanged',emitter)
     
     assert.equal invalidator.invalidationEvents.length, 1
     assert.equal invalidator.invalidationEvents[0].event, 'testChanged'
@@ -27,7 +27,7 @@ describe 'Invalidator', ->
     
     assert.equal invalidator.invalidationEvents.length, 0
     
-    res = invalidator.fromValue(2,'testChanged',emitter)
+    res = invalidator.value(2,'testChanged',emitter)
     
     assert.equal res, 2
     assert.equal invalidator.invalidationEvents.length, 1
@@ -46,7 +46,7 @@ describe 'Invalidator', ->
     
     assert.equal invalidator.invalidationEvents.length, 0
     
-    res = invalidator.fromProperty('test',emitter)
+    res = invalidator.prop('test',emitter)
     
     assert.equal res, 2
     assert.equal invalidator.invalidationEvents.length, 1
@@ -90,7 +90,7 @@ describe 'Invalidator', ->
         assert.equal listener, invalidator.invalidateCallback
         calls += 1
     }
-    res = invalidator.fromProperty('test',emitter)
+    res = invalidator.prop('test',emitter)
     
     
     assert.equal calls, 0
@@ -114,7 +114,7 @@ describe 'Invalidator', ->
         assert.equal listener, invalidator.invalidateCallback
         calls += 1
     }
-    res = invalidator.fromProperty('test',emitter)
+    res = invalidator.prop('test',emitter)
     
     
     invalidator.bind()
@@ -139,7 +139,7 @@ describe 'Invalidator', ->
         if @listener?
           @listener()
     }
-    res = invalidator.fromProperty('test',emitter)
+    res = invalidator.prop('test',emitter)
     invalidator.bind()
     
     assert.equal invalidated.test, 1
@@ -171,7 +171,7 @@ describe 'Invalidator', ->
         if @listener?
           @listener()
     }
-    res = invalidator.fromProperty('test',emitter)
+    res = invalidator.prop('test',emitter)
     
     assert.equal addCalls, 0
     assert.equal removeCalls, 0
@@ -179,7 +179,7 @@ describe 'Invalidator', ->
     assert.equal addCalls, 1
     assert.equal removeCalls, 0
     invalidator.recycle (invalidator)->
-      invalidator.fromProperty('test',emitter)
+      invalidator.prop('test',emitter)
     
     invalidator.bind()
     assert.equal addCalls, 1
@@ -214,7 +214,7 @@ describe 'Invalidator', ->
         if @listener?
           @listener()
     }
-    res = invalidator.fromProperty('test',emitter)
+    res = invalidator.prop('test',emitter)
     
     assert.equal addCalls, 0
     assert.equal removeCalls, 0

@@ -77,7 +77,7 @@
       }
     };
 
-    Invalidator.prototype.fromEvent = function(event, target) {
+    Invalidator.prototype.event = function(event, target) {
       if (target == null) {
         target = this;
       }
@@ -90,19 +90,19 @@
       }
     };
 
-    Invalidator.prototype.fromValue = function(val, event, target) {
+    Invalidator.prototype.value = function(val, event, target) {
       if (target == null) {
         target = this;
       }
-      this.fromEvent(event, target);
+      this.event(event, target);
       return val;
     };
 
-    Invalidator.prototype.fromProperty = function(prop, target) {
+    Invalidator.prototype.prop = function(prop, target) {
       if (target == null) {
         target = this;
       }
-      return this.fromValue(target[prop], prop + 'Changed', target);
+      return this.value(target[prop], prop + 'Changed', target);
     };
 
     Invalidator.prototype.isEmpty = function() {
@@ -240,6 +240,20 @@
           };
         })(this);
       }
+    };
+
+    Element.prototype.unbindInvalidators = function() {
+      var count, name, ref, val;
+      count = 0;
+      ref = this;
+      for (name in ref) {
+        val = ref[name];
+        if (val instanceof Invalidator) {
+          val.unbind();
+          count += 1;
+        }
+      }
+      return count;
     };
 
     Element.extend = function(obj) {

@@ -1,11 +1,13 @@
 (function() {
-  var Element, assert,
+  var Element, Invalidator, assert,
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
   assert = require('chai').assert;
 
   Element = require('../lib/Element');
+
+  Invalidator = require('../lib/Invalidator');
 
   describe('Element', function() {
     it('should get property', function() {
@@ -207,6 +209,33 @@
       assert.equal(obj._prop, 3);
       return assert.equal(obj.propCalculated, false);
     });
+    it('give access to an invalidator in the calcul option of a property', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function(invalidated) {
+              assert.typeOf(invalidated.prop, 'function');
+              assert.typeOf(invalidated.value, 'function');
+              assert.typeOf(invalidated.event, 'function');
+              return this.callcount += 1;
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      obj.getProp();
+      return assert.equal(obj.callcount, 1);
+    });
     it('should be able to invalidate a property from an event', function() {
       var TestClass, emitter, obj;
       emitter = {
@@ -231,8 +260,8 @@
 
         TestClass.properties({
           prop: {
-            calcul: function(invalidator) {
-              invalidator.fromEvent('testChanged', emitter);
+            calcul: function(invalidated) {
+              invalidated.event('testChanged', emitter);
               return 3;
             }
           }
@@ -444,6 +473,72 @@
       assert.equal(obj.callcount, 0);
       obj.invalidateProp();
       return assert.equal(obj.callcount, 0);
+    });
+    it('keeps properties invalidators', function() {
+      var TestClass, emitter, obj;
+      emitter = {
+        addListener: function(evt, listener) {
+          return assert.equal(evt, 'testChanged');
+        },
+        removeListener: function(evt, listener) {
+          return assert.equal(evt, 'testChanged');
+        },
+        test: 4
+      };
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          prop: {
+            calcul: function(invalidated) {
+              return invalidated.prop('test', emitter);
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      obj.getProp();
+      return assert.instanceOf(obj.propInvalidator, Invalidator);
+    });
+    it('have a method to unbind all invalidators', function() {
+      var TestClass, calls, emitter, obj, res;
+      calls = 0;
+      emitter = {
+        addListener: function(evt, listener) {
+          return assert.equal(evt, 'testChanged');
+        },
+        removeListener: function(evt, listener) {
+          assert.equal(evt, 'testChanged');
+          return calls += 1;
+        },
+        test: 4
+      };
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          prop: {
+            calcul: function(invalidated) {
+              return invalidated.prop('test', emitter);
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      obj.getProp();
+      res = obj.unbindInvalidators();
+      assert.equal(res, 1);
+      return assert.equal(calls, 1);
     });
     it('should allow to alter the input value', function() {
       var TestClass, obj;

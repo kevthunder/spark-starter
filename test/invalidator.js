@@ -14,7 +14,7 @@
       emitter = {};
       invalidator = new Invalidator(invalidated, 'test');
       assert.equal(invalidator.invalidationEvents.length, 0);
-      invalidator.fromEvent('testChanged', emitter);
+      invalidator.event('testChanged', emitter);
       assert.equal(invalidator.invalidationEvents.length, 1);
       assert.equal(invalidator.invalidationEvents[0].event, 'testChanged');
       assert.equal(invalidator.invalidationEvents[0].target, emitter);
@@ -28,7 +28,7 @@
       emitter = {};
       invalidator = new Invalidator(invalidated, 'test');
       assert.equal(invalidator.invalidationEvents.length, 0);
-      res = invalidator.fromValue(2, 'testChanged', emitter);
+      res = invalidator.value(2, 'testChanged', emitter);
       assert.equal(res, 2);
       assert.equal(invalidator.invalidationEvents.length, 1);
       assert.equal(invalidator.invalidationEvents[0].event, 'testChanged');
@@ -45,7 +45,7 @@
       };
       invalidator = new Invalidator(invalidated, 'test');
       assert.equal(invalidator.invalidationEvents.length, 0);
-      res = invalidator.fromProperty('test', emitter);
+      res = invalidator.prop('test', emitter);
       assert.equal(res, 2);
       assert.equal(invalidator.invalidationEvents.length, 1);
       assert.equal(invalidator.invalidationEvents[0].event, 'testChanged');
@@ -90,7 +90,7 @@
           return calls += 1;
         }
       };
-      res = invalidator.fromProperty('test', emitter);
+      res = invalidator.prop('test', emitter);
       assert.equal(calls, 0);
       invalidator.bind();
       return assert.equal(calls, 1);
@@ -113,7 +113,7 @@
           return calls += 1;
         }
       };
-      res = invalidator.fromProperty('test', emitter);
+      res = invalidator.prop('test', emitter);
       invalidator.bind();
       assert.equal(calls, 0);
       invalidator.unbind();
@@ -140,7 +140,7 @@
           }
         }
       };
-      res = invalidator.fromProperty('test', emitter);
+      res = invalidator.prop('test', emitter);
       invalidator.bind();
       assert.equal(invalidated.test, 1);
       emitter.emit();
@@ -175,14 +175,14 @@
           }
         }
       };
-      res = invalidator.fromProperty('test', emitter);
+      res = invalidator.prop('test', emitter);
       assert.equal(addCalls, 0);
       assert.equal(removeCalls, 0);
       invalidator.bind();
       assert.equal(addCalls, 1);
       assert.equal(removeCalls, 0);
       invalidator.recycle(function(invalidator) {
-        return invalidator.fromProperty('test', emitter);
+        return invalidator.prop('test', emitter);
       });
       invalidator.bind();
       assert.equal(addCalls, 1);
@@ -220,7 +220,7 @@
           }
         }
       };
-      res = invalidator.fromProperty('test', emitter);
+      res = invalidator.prop('test', emitter);
       assert.equal(addCalls, 0);
       assert.equal(removeCalls, 0);
       invalidator.bind();
