@@ -1,5 +1,5 @@
 (function() {
-  var Element, EventBind, Invalidator, Spark, afterAddListener, callChange, pluck, registerCalculatedProperty,
+  var Element, EventBind, Invalidator, Property, PropertyInstance, Spark, pluck,
     slice = [].slice,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -154,59 +154,265 @@
     Spark.Invalidator = Invalidator;
   }
 
-  afterAddListener = function(event) {
-    var maj, match, prop;
-    if (match = event.match(/^changed(\w*)$/)) {
-      maj = match[1];
-      prop = maj.charAt(0).toLowerCase() + maj.slice(1);
-      if (typeof this['invalidate' + maj] === 'function' && this[prop + 'Calculated'] === false) {
-        return this['get' + maj]();
-      }
+  PropertyInstance = (function() {
+    function PropertyInstance(property, obj1) {
+      this.property = property;
+      this.obj = obj1;
+      this.value = this.property.options["default"];
+      this.calculated = false;
     }
-  };
 
-  registerCalculatedProperty = function(obj, prop, calcul) {
-    var maj, overrided;
-    maj = prop.charAt(0).toUpperCase() + prop.slice(1);
-    if (calcul != null) {
-      obj['calcul' + maj] = calcul;
-    }
-    if (obj['calcul' + maj] != null) {
-      obj[prop + 'Calculated'] = false;
-      obj['invalidate' + maj] = function() {
-        var old;
-        if (this[prop + 'Calculated']) {
-          this[prop + 'Calculated'] = false;
-          if (this['immediate' + maj] || (typeof this.getListeners === 'function' && this.getListeners(prop + 'Changed').length > 0)) {
-            old = this['_' + prop];
-            this['get' + maj]();
-            if (old !== this['_' + prop]) {
-              return callChange(this, prop, old);
-            }
-          } else if (this[prop + 'Invalidator'] != null) {
-            return this[prop + 'Invalidator'].unbind();
-          }
+    PropertyInstance.prototype.get = function() {
+      if (this.property.options.get === false) {
+        return void 0;
+      } else if (typeof this.property.options.get === 'function') {
+        return this.property.options.get.call(this.obj);
+      } else {
+        if (!this.calculated) {
+          this.calcul();
         }
+        return this.value;
+      }
+    };
+
+    PropertyInstance.prototype.set = function(val) {
+      var old;
+      if (this.property.options.set === false) {
+        void 0;
+      } else if (typeof this.property.options.set === 'function') {
+        this.property.options.set.call(this.obj, val);
+      } else {
+        val = this.ingest(val);
+        if (this.value !== val) {
+          old = this.value;
+          this.value = val;
+          this.changed(old);
+        }
+      }
+      return this;
+    };
+
+    PropertyInstance.prototype.invalidate = function() {
+      var old;
+      if (this.calculated) {
+        this.calculated = false;
+        if (this.isImmediate()) {
+          old = this.value;
+          this.get();
+          if (this.value !== old) {
+            return this.changed(old);
+          }
+        } else if (this.invalidator != null) {
+          return this.invalidator.unbind();
+        }
+      }
+    };
+
+    PropertyInstance.prototype.destroy = function() {
+      if (this.invalidator != null) {
+        return this.invalidator.unbind();
+      }
+    };
+
+    PropertyInstance.prototype.calcul = function() {
+      if (typeof this.property.options.calcul === 'function') {
+        if (!this.invalidator) {
+          this.invalidator = new Invalidator(this.obj, this.property.name);
+        }
+        this.invalidator.recycle((function(_this) {
+          return function(invalidator) {
+            _this.value = _this.property.options.calcul.call(_this.obj, invalidator);
+            if (invalidator.isEmpty()) {
+              return _this.invalidator = null;
+            } else {
+              return invalidator.bind();
+            }
+          };
+        })(this));
+      }
+      this.calculated = true;
+      return this.value;
+    };
+
+    PropertyInstance.prototype.ingest = function(val) {
+      if (typeof this.property.options.ingest === 'function') {
+        return val = this.property.options.ingest.call(this.obj, val);
+      } else {
+        return val;
+      }
+    };
+
+    PropertyInstance.prototype.changed = function(old) {
+      if (typeof this.property.options.change === 'function') {
+        this.property.options.change.call(this.obj, old);
+      }
+      if (typeof this.obj.emitEvent === 'function') {
+        return this.obj.emitEvent(this.property.getChangeEventName(), [old]);
+      }
+    };
+
+    PropertyInstance.prototype.isImmediate = function() {
+      return this.property.options.immediate === true || (typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0);
+    };
+
+    return PropertyInstance;
+
+  })();
+
+  if (Spark != null) {
+    Spark.PropertyInstance = PropertyInstance;
+  }
+
+  Property = (function() {
+    function Property(name1, options) {
+      var calculated;
+      this.name = name1;
+      this.options = options;
+      calculated = false;
+    }
+
+    Property.prototype.bind = function(target) {
+      var maj, prop;
+      prop = this;
+      maj = this.name.charAt(0).toUpperCase() + this.name.slice(1);
+      Object.defineProperty(target, this.name, {
+        get: function() {
+          return prop.getInstance(this).get();
+        },
+        set: function(val) {
+          return prop.getInstance(this).set(val);
+        }
+      });
+      target['get' + maj] = function() {
+        return prop.getInstance(this).get();
       };
-      if (typeof this.addListener === 'function' && typeof this.afterAddListener !== 'function') {
-        this.afterAddListener = afterAddListener;
-        overrided = this.addListener;
-        return this.addListener = function(evt, listener) {
-          overrided(evt, listener);
+      target['set' + maj] = function(val) {
+        prop.getInstance(this).set(val);
+        return this;
+      };
+      target['invalidate' + maj] = function() {
+        prop.getInstance(this).invalidate();
+        return this;
+      };
+      target._properties = (target._properties || []).concat([prop]);
+      this.checkFunctions(target);
+      return this.checkAfterAddListener(target);
+    };
+
+    Property.prototype.checkFunctions = function(target) {
+      var funct, name, ref, results;
+      this.checkAfterAddListener(target);
+      ref = Property.fn;
+      results = [];
+      for (name in ref) {
+        funct = ref[name];
+        if (typeof target[name] === 'undefined') {
+          results.push(target[name] = funct);
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
+    Property.prototype.checkAfterAddListener = function(target) {
+      var overrided;
+      if (typeof target.addListener === 'function' && typeof target.afterAddListener === 'undefined') {
+        target.afterAddListener = Property.optionalFn.afterAddListener;
+        overrided = target.addListener;
+        target.addListener = function(evt, listener) {
+          this.addListener.overrided(evt, listener);
           return this.afterAddListener(evt);
         };
+        return target.addListener.overrided = overrided;
       }
-    }
-  };
+    };
 
-  callChange = function(obj, prop, old) {
-    if (typeof obj[prop + 'Changed'] === 'function') {
-      obj[prop + 'Changed'](old);
-    }
-    if (typeof obj.emitEvent === 'function') {
-      return obj.emitEvent(prop + 'Changed', [old]);
-    }
-  };
+    Property.prototype.getInstanceVarName = function() {
+      return this.options.instanceVarName || '_' + this.name;
+    };
+
+    Property.prototype.isInstantiated = function(obj) {
+      return obj[this.getInstanceVarName()] != null;
+    };
+
+    Property.prototype.getInstance = function(obj) {
+      var varName;
+      varName = this.getInstanceVarName();
+      if (!this.isInstantiated(obj)) {
+        obj[varName] = new PropertyInstance(this, obj);
+      }
+      return obj[varName];
+    };
+
+    Property.prototype.getChangeEventName = function() {
+      return this.options.changeEventName || this.name + 'Changed';
+    };
+
+    Property.fn = {
+      getProperty: function(name) {
+        return this._properties.find(function(prop) {
+          return prop.name === name;
+        });
+      },
+      getPropertyInstance: function(name) {
+        var res;
+        res = this.getProperty(name);
+        if (res) {
+          return res.getInstance(this);
+        }
+      },
+      getProperties: function() {
+        return this._properties.slice();
+      },
+      getPropertyInstances: function() {
+        return this._properties.map((function(_this) {
+          return function(prop) {
+            return prop.getInstance(_this);
+          };
+        })(this));
+      },
+      getInstantiatedProperties: function() {
+        return this._properties.filter((function(_this) {
+          return function(prop) {
+            return prop.isInstantiated(_this);
+          };
+        })(this)).map((function(_this) {
+          return function(prop) {
+            return prop.getInstance(_this);
+          };
+        })(this));
+      },
+      destroyProperties: function() {
+        this.getInstantiatedProperties().forEach((function(_this) {
+          return function(prop) {
+            return prop.destroy();
+          };
+        })(this));
+        this._properties = [];
+        return true;
+      }
+    };
+
+    Property.optionalFn = {
+      afterAddListener: function(event) {
+        return this._properties.forEach((function(_this) {
+          return function(prop) {
+            if (prop.getChangeEventName() === event) {
+              return prop.getInstance(_this).get();
+            }
+          };
+        })(this));
+      }
+    };
+
+    return Property;
+
+  })();
+
+  if (Spark != null) {
+    Spark.Property = Property;
+  }
 
   Element = (function() {
     function Element() {}
@@ -242,20 +448,6 @@
       }
     };
 
-    Element.prototype.unbindInvalidators = function() {
-      var count, name, ref, val;
-      count = 0;
-      ref = this;
-      for (name in ref) {
-        val = ref[name];
-        if (val instanceof Invalidator) {
-          val.unbind();
-          count += 1;
-        }
-      }
-      return count;
-    };
-
     Element.extend = function(obj) {
       var key, ref, value;
       for (key in obj) {
@@ -285,71 +477,7 @@
     };
 
     Element.property = function(prop, desc) {
-      var maj;
-      maj = prop.charAt(0).toUpperCase() + prop.slice(1);
-      if (desc["default"] != null) {
-        this.prototype['_' + prop] = desc["default"];
-      } else {
-        this.prototype['_' + prop] = null;
-      }
-      if (!((desc.get != null) && desc.get === false)) {
-        if (desc.get != null) {
-          this.prototype['get' + maj] = desc.get;
-        } else {
-          this.prototype['immediate' + maj] = desc.immediate === true;
-          registerCalculatedProperty(this.prototype, prop, desc.calcul);
-          this.prototype['get' + maj] = function() {
-            if (typeof this['calcul' + maj] === 'function' && !this[prop + 'Calculated']) {
-              if (this[prop + 'Invalidator'] == null) {
-                this[prop + 'Invalidator'] = new Invalidator(this, prop);
-              }
-              this[prop + 'Invalidator'].recycle((function(_this) {
-                return function(invalidator) {
-                  _this['_' + prop] = _this['calcul' + maj](invalidator);
-                  if (invalidator.isEmpty()) {
-                    return _this[prop + 'Invalidator'] = null;
-                  } else {
-                    return invalidator.bind();
-                  }
-                };
-              })(this));
-              this[prop + 'Calculated'] = true;
-            }
-            return this['_' + prop];
-          };
-        }
-        desc.get = function() {
-          return this['get' + maj]();
-        };
-      }
-      if (!((desc.set != null) && desc.set === false)) {
-        if (desc.set != null) {
-          this.prototype['set' + maj] = desc.set;
-        } else {
-          if (desc.change != null) {
-            this.prototype[prop + 'Changed'] = desc.change;
-          }
-          if (desc.ingest != null) {
-            this.prototype['ingest' + maj] = desc.ingest;
-          }
-          this.prototype['set' + maj] = function(val) {
-            var old;
-            if (typeof this['ingest' + maj] === 'function') {
-              val = this['ingest' + maj](val);
-            }
-            if (this['_' + prop] !== val) {
-              old = this['_' + prop];
-              this['_' + prop] = val;
-              callChange(this, prop, old);
-            }
-            return this;
-          };
-        }
-        desc.set = function(val) {
-          return this['set' + maj](val);
-        };
-      }
-      return Object.defineProperty(this.prototype, prop, desc);
+      return (new Property(prop, desc)).bind(this.prototype);
     };
 
     Element.properties = function(properties) {
