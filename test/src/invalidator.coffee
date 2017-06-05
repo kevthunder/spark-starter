@@ -7,7 +7,7 @@ describe 'Invalidator', ->
       test: 1
     }
     emitter = {}
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     
     assert.equal invalidator.invalidationEvents.length, 0
     
@@ -23,7 +23,7 @@ describe 'Invalidator', ->
       test: 1
     }
     emitter = {}
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     
     assert.equal invalidator.invalidationEvents.length, 0
     
@@ -42,7 +42,7 @@ describe 'Invalidator', ->
     emitter = {
       test: 2
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     
     assert.equal invalidator.invalidationEvents.length, 0
     
@@ -58,7 +58,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     
     assert.equal invalidated.test, 1
     invalidator.invalidate()
@@ -71,7 +71,7 @@ describe 'Invalidator', ->
         calls += 1
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     
     assert.equal calls, 0
     invalidator.invalidate()
@@ -82,7 +82,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
@@ -103,7 +103,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
@@ -127,7 +127,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     emitter = {
       addListener: (evt, listener) ->
         @event = evt
@@ -151,7 +151,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     addCalls = 0
     removeCalls = 0
     emitter = {
@@ -194,7 +194,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    invalidator = new Invalidator(invalidated, 'test');
+    invalidator = new Invalidator('test', invalidated);
     addCalls = 0
     removeCalls = 0
     emitter = {

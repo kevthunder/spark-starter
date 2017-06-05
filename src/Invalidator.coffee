@@ -13,7 +13,7 @@ pluck = (arr,fn) ->
     null
 
 class Invalidator
-  constructor: (@obj, @property) ->
+  constructor: (@property, @obj = null) ->
     @invalidationEvents = []
     @recycled = []
     @invalidateCallback = => 
@@ -21,11 +21,14 @@ class Invalidator
       null
 
   invalidate: ->
-    functName = 'invalidate' + @property.charAt(0).toUpperCase() + @property.slice(1)
-    if @obj[functName]?
-      @obj[functName]()
+    if typeof @property.invalidate == "function"
+      @property.invalidate()
     else
-      @obj[@property] = null
+      functName = 'invalidate' + @property.charAt(0).toUpperCase() + @property.slice(1)
+      if typeof @obj[functName] == "function"
+        @obj[functName]()
+      else
+        @obj[@property] = null
       
   event: (event, target = this) ->
     unless @invalidationEvents.some( (eventBind)-> eventBind.event == event and eventBind.target == target)

@@ -49,7 +49,7 @@ class PropertyInstance
   calcul: ->
     if typeof @property.options.calcul == 'function'
       unless @invalidator
-        @invalidator = new Invalidator(@obj,@property.name)
+        @invalidator = new Invalidator(this)
       @invalidator.recycle (invalidator)=> 
         @value = @property.options.calcul.call(@obj,invalidator)
         if invalidator.isEmpty()

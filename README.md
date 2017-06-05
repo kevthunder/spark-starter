@@ -51,5 +51,4 @@ apple.color = 'green'; // trigger an alert
 ```
 
 ## todo
-  - tests for PropertyInstance class
   - Support for node's `require('events')`

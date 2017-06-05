@@ -1,13 +1,11 @@
 (function() {
-  var Element, Invalidator, assert,
+  var Element, assert,
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
   assert = require('chai').assert;
 
   Element = require('../lib/Element');
-
-  Invalidator = require('../lib/Invalidator');
 
   describe('Element', function() {
     it('should get property', function() {
@@ -181,34 +179,6 @@
       obj.getProp();
       return assert.equal(obj.callcount, 1);
     });
-    it('should be able to invalidate a property', function() {
-      var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
-
-        TestClass.properties({
-          prop: {
-            calcul: function() {
-              return 3;
-            }
-          }
-        });
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      assert.equal(obj.getPropertyInstance('prop').value, void 0);
-      assert.equal(obj.getPropertyInstance('prop').calculated, false);
-      obj.getProp();
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true);
-      obj.invalidateProp();
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      return assert.equal(obj.getPropertyInstance('prop').calculated, false);
-    });
     it('give access to an invalidator in the calcul option of a property', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
@@ -235,169 +205,6 @@
       obj = new TestClass();
       obj.getProp();
       return assert.equal(obj.callcount, 1);
-    });
-    it('should be able to invalidate a property from an event', function() {
-      var TestClass, emitter, obj;
-      emitter = {
-        addListener: function(evt, listener) {
-          this.event = evt;
-          return this.listener = listener;
-        },
-        removeListener: function(evt, listener) {
-          this.event = null;
-          return this.listener = null;
-        },
-        emit: function() {
-          if (this.listener != null) {
-            return this.listener();
-          }
-        }
-      };
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
-
-        TestClass.properties({
-          prop: {
-            calcul: function(invalidated) {
-              invalidated.event('testChanged', emitter);
-              return 3;
-            }
-          }
-        });
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      assert.equal(obj.getPropertyInstance('prop').value, void 0);
-      assert.equal(obj.getPropertyInstance('prop').calculated, false, 'calculated initially false');
-      obj.getProp();
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true, 'calculated true after get');
-      emitter.emit();
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      return assert.equal(obj.getPropertyInstance('prop').calculated, false, 'calculated false after invalidation');
-    });
-    it('should re-calcul only on the next get after an avalidation', function() {
-      var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          this.callcount = 0;
-        }
-
-        TestClass.properties({
-          prop: {
-            calcul: function() {
-              this.callcount += 1;
-              return 3;
-            }
-          }
-        });
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      assert.equal(obj.callcount, 0);
-      assert.equal(obj.getPropertyInstance('prop').value, void 0);
-      assert.equal(obj.getPropertyInstance('prop').calculated, false);
-      obj.getProp();
-      assert.equal(obj.callcount, 1);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true);
-      obj.invalidateProp();
-      assert.equal(obj.callcount, 1);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, false);
-      obj.getProp();
-      assert.equal(obj.callcount, 2);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      return assert.equal(obj.getPropertyInstance('prop').calculated, true);
-    });
-    it('should re-calcul immediately when the option is true', function() {
-      var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          this.callcount = 0;
-        }
-
-        TestClass.properties({
-          prop: {
-            calcul: function() {
-              this.callcount += 1;
-              return 3;
-            },
-            immediate: true
-          }
-        });
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      assert.equal(obj.callcount, 0);
-      assert.equal(obj.getPropertyInstance('prop').value, void 0);
-      assert.equal(obj.getPropertyInstance('prop').calculated, false);
-      obj.getProp();
-      assert.equal(obj.callcount, 1);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true);
-      obj.invalidateProp();
-      assert.equal(obj.callcount, 2);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true);
-      obj.getProp();
-      assert.equal(obj.callcount, 2);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      return assert.equal(obj.getPropertyInstance('prop').calculated, true);
-    });
-    it('should re-calcul immediately if there is a listener on the change event', function() {
-      var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          this.callcount = 0;
-        }
-
-        TestClass.properties({
-          prop: {
-            calcul: function() {
-              this.callcount += 1;
-              return 3;
-            }
-          }
-        });
-
-        TestClass.prototype.getListeners = function() {
-          return [{}];
-        };
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      assert.equal(obj.callcount, 0);
-      assert.equal(obj.getPropertyInstance('prop').value, void 0);
-      assert.equal(obj.getPropertyInstance('prop').calculated, false);
-      obj.getProp();
-      assert.equal(obj.callcount, 1);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true);
-      obj.invalidateProp();
-      assert.equal(obj.callcount, 2);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      assert.equal(obj.getPropertyInstance('prop').calculated, true);
-      obj.getProp();
-      assert.equal(obj.callcount, 2);
-      assert.equal(obj.getPropertyInstance('prop').value, 3);
-      return assert.equal(obj.getPropertyInstance('prop').calculated, true);
     });
     it('should emit event when a property is invalidated and is changed', function() {
       var TestClass, lastValue, obj;
@@ -474,37 +281,6 @@
       obj.invalidateProp();
       return assert.equal(obj.callcount, 0);
     });
-    it('keeps properties invalidators', function() {
-      var TestClass, emitter, obj;
-      emitter = {
-        addListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
-        },
-        removeListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
-        },
-        test: 4
-      };
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
-
-        TestClass.properties({
-          prop: {
-            calcul: function(invalidated) {
-              return invalidated.prop('test', emitter);
-            }
-          }
-        });
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      obj.getProp();
-      return assert.instanceOf(obj.getPropertyInstance('prop').invalidator, Invalidator);
-    });
     it('have a method to unbind all invalidators', function() {
       var TestClass, calls, emitter, obj, res;
       calls = 0;
@@ -538,34 +314,6 @@
       obj.getProp();
       res = obj.destroyProperties();
       return assert.equal(calls, 1);
-    });
-    it('should allow to alter the input value', function() {
-      var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
-
-        TestClass.properties({
-          prop: {
-            ingest: function(val) {
-              if (val === 2) {
-                return 'two';
-              } else {
-                return val;
-              }
-            }
-          }
-        });
-
-        return TestClass;
-
-      })(Element);
-      obj = new TestClass();
-      obj.prop = 2;
-      assert.equal(obj.getPropertyInstance('prop').value, 'two');
-      obj.prop = 'zero';
-      return assert.equal(obj.getPropertyInstance('prop').value, 'zero');
     });
     it('return self when calling tap', function() {
       var TestClass, obj, res;

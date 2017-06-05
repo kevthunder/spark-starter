@@ -54,9 +54,9 @@
   };
 
   Invalidator = (function() {
-    function Invalidator(obj1, property) {
-      this.obj = obj1;
+    function Invalidator(property, obj1) {
       this.property = property;
+      this.obj = obj1 != null ? obj1 : null;
       this.invalidationEvents = [];
       this.recycled = [];
       this.invalidateCallback = (function(_this) {
@@ -69,11 +69,15 @@
 
     Invalidator.prototype.invalidate = function() {
       var functName;
-      functName = 'invalidate' + this.property.charAt(0).toUpperCase() + this.property.slice(1);
-      if (this.obj[functName] != null) {
-        return this.obj[functName]();
+      if (typeof this.property.invalidate === "function") {
+        return this.property.invalidate();
       } else {
-        return this.obj[this.property] = null;
+        functName = 'invalidate' + this.property.charAt(0).toUpperCase() + this.property.slice(1);
+        if (typeof this.obj[functName] === "function") {
+          return this.obj[functName]();
+        } else {
+          return this.obj[this.property] = null;
+        }
       }
     };
 
@@ -217,7 +221,7 @@
     PropertyInstance.prototype.calcul = function() {
       if (typeof this.property.options.calcul === 'function') {
         if (!this.invalidator) {
-          this.invalidator = new Invalidator(this.obj, this.property.name);
+          this.invalidator = new Invalidator(this);
         }
         this.invalidator.recycle((function(_this) {
           return function(invalidator) {
@@ -267,7 +271,7 @@
     function Property(name1, options) {
       var calculated;
       this.name = name1;
-      this.options = options;
+      this.options = options != null ? options : {};
       calculated = false;
     }
 

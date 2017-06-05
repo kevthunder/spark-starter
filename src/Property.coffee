@@ -4,7 +4,7 @@ PropertyInstance = @Spark?.PropertyInstance or require('./PropertyInstance')
 #--- Standalone end ---
 
 class Property
-  constructor: (@name, @options) ->
+  constructor: (@name, @options = {}) ->
     calculated = false
     
   bind: (target) ->

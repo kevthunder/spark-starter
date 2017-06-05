@@ -1,6 +1,5 @@
 assert = require('chai').assert
 Element = require('../lib/Element')
-Invalidator = require('../lib/Invalidator')
 
 describe 'Element', ->
   
@@ -109,24 +108,6 @@ describe 'Element', ->
     obj.getProp()
     assert.equal obj.callcount, 1
     
-  it 'should be able to invalidate a property', ->
-    class TestClass extends Element
-        constructor: () ->
-        @properties
-          prop: 
-            calcul: ->
-               3
-    obj = new TestClass();
-    
-    assert.equal obj.getPropertyInstance('prop').value, undefined
-    assert.equal obj.getPropertyInstance('prop').calculated, false
-    obj.getProp()
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    obj.invalidateProp()
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, false
-    
   it 'give access to an invalidator in the calcul option of a property', ->
     class TestClass extends Element
         constructor: () ->
@@ -142,120 +123,6 @@ describe 'Element', ->
     
     obj.getProp()
     assert.equal obj.callcount, 1
-    
-  it 'should be able to invalidate a property from an event', ->
-    emitter = {
-      addListener: (evt, listener) ->
-        @event = evt
-        @listener = listener
-      removeListener: (evt, listener) ->
-        @event = null
-        @listener = null
-      emit: ->
-        if @listener?
-          @listener()
-    }
-    class TestClass extends Element
-        constructor: () ->
-        @properties
-          prop: 
-            calcul: (invalidated)->
-              invalidated.event('testChanged',emitter)
-              3
-    obj = new TestClass();
-    
-    assert.equal obj.getPropertyInstance('prop').value, undefined
-    assert.equal obj.getPropertyInstance('prop').calculated, false, 'calculated initially false'
-    obj.getProp()
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true, 'calculated true after get'
-    emitter.emit()
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, false, 'calculated false after invalidation'
-    
-  it 'should re-calcul only on the next get after an avalidation', ->
-    class TestClass extends Element
-        constructor: () ->
-          @callcount = 0
-        @properties
-          prop: 
-            calcul: ->
-               @callcount += 1
-               3
-    obj = new TestClass();
-    
-    assert.equal obj.callcount, 0
-    assert.equal obj.getPropertyInstance('prop').value, undefined
-    assert.equal obj.getPropertyInstance('prop').calculated, false
-    obj.getProp()
-    assert.equal obj.callcount, 1
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    obj.invalidateProp()
-    assert.equal obj.callcount, 1
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, false
-    obj.getProp()
-    assert.equal obj.callcount, 2
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    
-  it 'should re-calcul immediately when the option is true', ->
-    class TestClass extends Element
-        constructor: () ->
-          @callcount = 0
-        @properties
-          prop: 
-            calcul: ->
-               @callcount += 1
-               3
-            immediate: true
-    obj = new TestClass();
-    
-    assert.equal obj.callcount, 0
-    assert.equal obj.getPropertyInstance('prop').value, undefined
-    assert.equal obj.getPropertyInstance('prop').calculated, false
-    obj.getProp()
-    assert.equal obj.callcount, 1
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    obj.invalidateProp()
-    assert.equal obj.callcount, 2
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    obj.getProp()
-    assert.equal obj.callcount, 2
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    
-  it 'should re-calcul immediately if there is a listener on the change event', ->
-    class TestClass extends Element
-        constructor: () ->
-          @callcount = 0
-        @properties
-          prop: 
-            calcul: ->
-               @callcount += 1
-               3
-        getListeners: -> 
-          [{}]
-    obj = new TestClass();
-    
-    assert.equal obj.callcount, 0
-    assert.equal obj.getPropertyInstance('prop').value, undefined
-    assert.equal obj.getPropertyInstance('prop').calculated, false
-    obj.getProp()
-    assert.equal obj.callcount, 1
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    obj.invalidateProp()
-    assert.equal obj.callcount, 2
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
-    obj.getProp()
-    assert.equal obj.callcount, 2
-    assert.equal obj.getPropertyInstance('prop').value, 3
-    assert.equal obj.getPropertyInstance('prop').calculated, true
     
   it 'should emit event when a property is invalidated and is changed', ->
     lastValue = 0
@@ -302,25 +169,6 @@ describe 'Element', ->
     obj.invalidateProp()
     assert.equal obj.callcount, 0
     
-  it 'keeps properties invalidators', ->
-    emitter = {
-      addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-      removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-      test: 4
-    }
-    class TestClass extends Element
-        constructor: () ->
-        @properties
-          prop: 
-            calcul: (invalidated)->
-              invalidated.prop('test',emitter)
-    obj = new TestClass();
-    
-    obj.getProp()
-    assert.instanceOf(obj.getPropertyInstance('prop').invalidator,Invalidator)
-  
   it 'have a method to unbind all invalidators', ->
     calls = 0
     emitter = {
@@ -342,23 +190,6 @@ describe 'Element', ->
     obj.getProp()
     res = obj.destroyProperties()
     assert.equal calls, 1
-    
-  it 'should allow to alter the input value', ->
-    class TestClass extends Element
-        constructor: () ->
-        @properties
-          prop: 
-            ingest: (val)->
-              if val == 2
-                'two'
-              else
-                val
-    obj = new TestClass();
-    
-    obj.prop = 2
-    assert.equal obj.getPropertyInstance('prop').value, 'two'
-    obj.prop = 'zero'
-    assert.equal obj.getPropertyInstance('prop').value, 'zero'
     
   it 'return self when calling tap', ->
     class TestClass extends Element

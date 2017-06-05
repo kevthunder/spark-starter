@@ -12,7 +12,7 @@
         test: 1
       };
       emitter = {};
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);
       invalidator.event('testChanged', emitter);
       assert.equal(invalidator.invalidationEvents.length, 1);
@@ -26,7 +26,7 @@
         test: 1
       };
       emitter = {};
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);
       res = invalidator.value(2, 'testChanged', emitter);
       assert.equal(res, 2);
@@ -43,7 +43,7 @@
       emitter = {
         test: 2
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);
       res = invalidator.prop('test', emitter);
       assert.equal(res, 2);
@@ -57,7 +57,7 @@
       invalidated = {
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidated.test, 1);
       invalidator.invalidate();
       return assert.equal(invalidated.test, null);
@@ -71,7 +71,7 @@
         },
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       assert.equal(calls, 0);
       invalidator.invalidate();
       return assert.equal(calls, 1);
@@ -81,7 +81,7 @@
       invalidated = {
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       calls = 0;
       emitter = {
         addListener: function(evt, listener) {
@@ -100,7 +100,7 @@
       invalidated = {
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       calls = 0;
       emitter = {
         addListener: function(evt, listener) {
@@ -124,7 +124,7 @@
       invalidated = {
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       emitter = {
         addListener: function(evt, listener) {
           this.event = evt;
@@ -151,7 +151,7 @@
       invalidated = {
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       addCalls = 0;
       removeCalls = 0;
       emitter = {
@@ -196,7 +196,7 @@
       invalidated = {
         test: 1
       };
-      invalidator = new Invalidator(invalidated, 'test');
+      invalidator = new Invalidator('test', invalidated);
       addCalls = 0;
       removeCalls = 0;
       emitter = {
