@@ -39,7 +39,7 @@ class Property
       target.afterAddListener = Property.optionalFn.afterAddListener
       overrided = target.addListener
       target.addListener = (evt, listener)-> 
-        @addListener.overrided(evt, listener)
+        @addListener.overrided.call(this, evt, listener)
         @afterAddListener(evt)
       target.addListener.overrided = overrided
     

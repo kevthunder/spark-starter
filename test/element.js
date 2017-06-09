@@ -244,6 +244,70 @@
       obj.invalidateProp();
       return assert.equal(obj.callcount, 1);
     });
+    it('get ready to emit an event when a property is invalidated by an event', function() {
+      var TestClass, emitter, lastValue, obj;
+      lastValue = 0;
+      emitter = {
+        addListener: function(evt, listener) {
+          this.event = evt;
+          return this.listener = listener;
+        },
+        removeListener: function(evt, listener) {
+          this.event = null;
+          return this.listener = null;
+        },
+        emit: function() {
+          if (this.listener != null) {
+            return this.listener();
+          }
+        }
+      };
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+          this.added = 0;
+          this.calculed = 0;
+        }
+
+        TestClass.prototype.getListeners = function() {
+          return [{}];
+        };
+
+        TestClass.prototype.addListener = function(evt, listener) {
+          return this.added += 1;
+        };
+
+        TestClass.properties({
+          prop: {
+            calcul: function(invalidated) {
+              invalidated.event('testChanged', emitter);
+              this.calculed += 1;
+              return lastValue += 1;
+            }
+          }
+        });
+
+        TestClass.prototype.emitEvent = function(event, params) {
+          assert.equal(event, 'propChanged');
+          assert.equal(params[0], lastValue - 1);
+          return this.callcount += 1;
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.added, 0);
+      assert.equal(obj.calculed, 0);
+      obj.addListener('propChanged', function() {});
+      assert.equal(obj.added, 1, 'listened added');
+      assert.equal(obj.calculed, 1, 'calculed');
+      assert.equal(obj.callcount, 0);
+      emitter.emit();
+      return assert.equal(obj.callcount, 1, 'event emmited');
+    });
     it('should not emit event when a property is invalidated and is not changed', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {

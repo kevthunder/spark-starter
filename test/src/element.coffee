@@ -147,6 +147,49 @@ describe 'Element', ->
     obj.invalidateProp()
     assert.equal obj.callcount, 1
     
+  it 'get ready to emit an event when a property is invalidated by an event', ->
+    lastValue = 0
+    emitter = {
+      addListener: (evt, listener) ->
+        @event = evt
+        @listener = listener
+      removeListener: (evt, listener) ->
+        @event = null
+        @listener = null
+      emit: ->
+        if @listener?
+          @listener()
+    }
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+          @added = 0
+          @calculed = 0
+        getListeners: -> 
+          [{}]
+        addListener: (evt, listener) ->
+          @added += 1
+        @properties
+          prop: 
+            calcul: (invalidated)->
+              invalidated.event('testChanged',emitter)
+              @calculed += 1
+              lastValue += 1
+        emitEvent: (event,params)->
+          assert.equal event, 'propChanged'
+          assert.equal params[0], lastValue-1
+          @callcount += 1
+    obj = new TestClass();
+    
+    assert.equal obj.added, 0
+    assert.equal obj.calculed, 0
+    obj.addListener('propChanged',->)
+    assert.equal obj.added, 1, 'listened added'
+    assert.equal obj.calculed, 1, 'calculed'
+    assert.equal obj.callcount, 0
+    emitter.emit()
+    assert.equal obj.callcount, 1, 'event emmited'
+    
   it 'should not emit event when a property is invalidated and is not changed', ->
     class TestClass extends Element
         constructor: () ->

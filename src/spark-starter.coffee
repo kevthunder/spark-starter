@@ -13,6 +13,8 @@ else
 if module?
   module.exports = {
     Element: require('./Element'),
+    Property: require('./Property'),
+    PropertyInstance: require('./PropertyInstance'),
     Invalidator: require('./Invalidator'),
     EventBind: require('./EventBind'),
   }

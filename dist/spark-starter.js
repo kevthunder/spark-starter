@@ -325,7 +325,7 @@
         target.afterAddListener = Property.optionalFn.afterAddListener;
         overrided = target.addListener;
         target.addListener = function(evt, listener) {
-          this.addListener.overrided(evt, listener);
+          this.addListener.overrided.call(this, evt, listener);
           return this.afterAddListener(evt);
         };
         return target.addListener.overrided = overrided;
