@@ -51,4 +51,5 @@ apple.color = 'green'; // trigger an alert
 ```
 
 ## todo
+  - override
   - Support for node's `require('events')`
