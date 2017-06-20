@@ -97,13 +97,45 @@ describe 'PropertyInstance', ->
     assert.equal prop.value, 3
     assert.equal prop.calculated, true
     
+    
+  it 'should re-calcul immediately if the change option is defined', ->
+    calculCalls = 0
+    changeCalls = 0
+    val = 3
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: (invalidated)->
+        calculCalls += 1
+        val += 1
+      change: (old)->
+        changeCalls += 1
+    }),{});
+    
+    assert.equal calculCalls, 0, "nb calcul calls"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    prop.get()
+    assert.equal calculCalls, 1, "nb calcul calls"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal calculCalls, 2, "nb calcul calls"
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop.value, 5
+    assert.equal prop.calculated, true
+    prop.get()
+    assert.equal calculCalls, 2, "nb calcul calls"
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop.value, 5
+    assert.equal prop.calculated, true
+    
   it 'should re-calcul immediately if there is a listener on the change event', ->
     callcount = 0
     prop = new PropertyInstance(new Property('prop',{
       calcul: (invalidated)->
         callcount += 1
         3
-      immediate: true
     }),{
         getListeners: -> 
           [{}]

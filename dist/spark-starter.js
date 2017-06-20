@@ -274,7 +274,7 @@
     };
 
     PropertyInstance.prototype.isImmediate = function() {
-      return this.property.options.immediate === true || (typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0);
+      return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0) || typeof this.property.options.change === 'function');
     };
 
     return PropertyInstance;

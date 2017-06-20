@@ -80,9 +80,14 @@ class PropertyInstance
       @obj.emitEvent(@property.getChangeEventName(), [old])
         
   isImmediate: ->
-    @property.options.immediate == true or (
-      typeof @obj.getListeners == 'function' and
-      @obj.getListeners(@property.getChangeEventName()).length > 0
+    @property.options.immediate != false and
+    (
+      @property.options.immediate == true or 
+      (
+        typeof @obj.getListeners == 'function' and
+        @obj.getListeners(@property.getChangeEventName()).length > 0
+      ) or
+      typeof @property.options.change == 'function'
     )
     
     
