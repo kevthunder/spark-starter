@@ -398,7 +398,7 @@
       assert.equal(obj.test, 1);
       return assert.equal(res, obj);
     });
-    return it('return the same function when calling "callback" twice', function() {
+    it('return the same function when calling "callback" twice', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
         extend(TestClass, superClass);
@@ -418,6 +418,96 @@
       assert.equal(obj.callback('doSomething'), obj.callback('doSomething'));
       obj.callback('doSomething')();
       return assert.equal(obj.test, 1);
+    });
+    it('keeps old options when overriding a property', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            change: function() {
+              return this.callcount += 1;
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      TestClass.properties({
+        prop: {
+          "default": 10
+        }
+      });
+      obj = new TestClass();
+      assert.equal(obj.prop, 10);
+      assert.equal(obj.callcount, 0);
+      obj.prop = 7;
+      assert.equal(obj.prop, 7);
+      return assert.equal(obj.callcount, 1);
+    });
+    it('allows to call an overrided function of a property', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount1 = 0;
+          this.callcount2 = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            change: function(old) {
+              return this.callcount1 += 1;
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      TestClass.properties({
+        prop: {
+          change: function(old, overrided) {
+            overrided(old);
+            return this.callcount2 += 1;
+          }
+        }
+      });
+      obj = new TestClass();
+      assert.equal(obj.callcount1, 0);
+      assert.equal(obj.callcount2, 0);
+      obj.prop = 7;
+      assert.equal(obj.prop, 7);
+      assert.equal(obj.callcount1, 1, "original callcount");
+      return assert.equal(obj.callcount2, 1, "new callcount");
+    });
+    return it('return new Property when calling getProperty after an override', function() {
+      var TestClass, newProp, obj, oldProp;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        return TestClass;
+
+      })(Element);
+      oldProp = TestClass.property("prop", {
+        "default": 1
+      });
+      newProp = TestClass.property("prop", {
+        "default": 2
+      });
+      obj = new TestClass();
+      return assert.equal(obj.getProperty("prop"), newProp);
     });
   });
 

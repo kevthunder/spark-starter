@@ -12,7 +12,7 @@ class PropertyInstance
     if @property.options.get == false
       undefined
     else if typeof @property.options.get == 'function'
-      @property.options.get.call(@obj)
+      @callOptionFunct("get")
     else
       if !@calculated
         @calcul()
@@ -22,7 +22,7 @@ class PropertyInstance
     if @property.options.set == false
       undefined
     else if typeof @property.options.set == 'function'
-      @property.options.set.call(@obj,val)
+      @callOptionFunct("set",val)
     else
       val = @ingest(val)
       if @value != val
@@ -30,7 +30,7 @@ class PropertyInstance
         @value = val
         @changed(old)
     this
-    
+  
   invalidate: ->
     if @calculated
       @calculated = false
@@ -45,13 +45,21 @@ class PropertyInstance
   destroy: ->
     if @invalidator?
       @invalidator.unbind()
+      
+  callOptionFunct: (funct, args...) ->
+    if typeof funct == 'string'
+      funct = @property.options[funct]
+    if typeof funct.overrided == 'function'
+      args.push (args...) => 
+        @callOptionFunct funct.overrided, args...
+    funct.apply(@obj,args)
 
   calcul: ->
     if typeof @property.options.calcul == 'function'
       unless @invalidator
         @invalidator = new Invalidator(this)
       @invalidator.recycle (invalidator)=> 
-        @value = @property.options.calcul.call(@obj,invalidator)
+        @value = @callOptionFunct("calcul", invalidator)
         if invalidator.isEmpty()
           @invalidator = null
         else
@@ -61,13 +69,13 @@ class PropertyInstance
     
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
-      val = @property.options.ingest.call(@obj,val)
+      val = @callOptionFunct("ingest", val)
     else
       val
       
   changed: (old)->
     if typeof @property.options.change == 'function'
-      @property.options.change.call(@obj,old)
+      @callOptionFunct("change", old)
     if typeof @obj.emitEvent == 'function'
       @obj.emitEvent(@property.getChangeEventName(), [old])
         

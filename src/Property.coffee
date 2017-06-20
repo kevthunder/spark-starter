@@ -9,8 +9,11 @@ class Property
     
   bind: (target) ->
     prop = this
+    if typeof target.getProperty == 'function' and (parent = target.getProperty(@name))?
+      @override(parent)
     maj = @name.charAt(0).toUpperCase() + @name.slice(1)
     Object.defineProperty target, @name, {
+      configurable: true
       get: ->
         prop.getInstance(this).get()
       set: (val)->
@@ -25,8 +28,20 @@ class Property
         prop.getInstance(this).invalidate()
         this
     target._properties = (target._properties || []).concat([prop])
+    if parent?
+      target._properties = target._properties.filter (existing)->
+        existing != parent
     @checkFunctions(target)
     @checkAfterAddListener(target)
+    prop
+    
+  override: (parent) ->
+    @options.parent = parent.options
+    for key, value of parent.options
+      if typeof @options[key] == 'function' and typeof value == 'function'
+        @options[key].overrided = value
+      else if typeof @options[key] == 'undefined'
+        @options[key] = value
     
   checkFunctions: (target) ->
     @checkAfterAddListener(target)

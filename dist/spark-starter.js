@@ -170,7 +170,7 @@
       if (this.property.options.get === false) {
         return void 0;
       } else if (typeof this.property.options.get === 'function') {
-        return this.property.options.get.call(this.obj);
+        return this.callOptionFunct("get");
       } else {
         if (!this.calculated) {
           this.calcul();
@@ -184,7 +184,7 @@
       if (this.property.options.set === false) {
         void 0;
       } else if (typeof this.property.options.set === 'function') {
-        this.property.options.set.call(this.obj, val);
+        this.callOptionFunct("set", val);
       } else {
         val = this.ingest(val);
         if (this.value !== val) {
@@ -218,6 +218,24 @@
       }
     };
 
+    PropertyInstance.prototype.callOptionFunct = function() {
+      var args, funct;
+      funct = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+      if (typeof funct === 'string') {
+        funct = this.property.options[funct];
+      }
+      if (typeof funct.overrided === 'function') {
+        args.push((function(_this) {
+          return function() {
+            var args;
+            args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+            return _this.callOptionFunct.apply(_this, [funct.overrided].concat(slice.call(args)));
+          };
+        })(this));
+      }
+      return funct.apply(this.obj, args);
+    };
+
     PropertyInstance.prototype.calcul = function() {
       if (typeof this.property.options.calcul === 'function') {
         if (!this.invalidator) {
@@ -225,7 +243,7 @@
         }
         this.invalidator.recycle((function(_this) {
           return function(invalidator) {
-            _this.value = _this.property.options.calcul.call(_this.obj, invalidator);
+            _this.value = _this.callOptionFunct("calcul", invalidator);
             if (invalidator.isEmpty()) {
               return _this.invalidator = null;
             } else {
@@ -240,7 +258,7 @@
 
     PropertyInstance.prototype.ingest = function(val) {
       if (typeof this.property.options.ingest === 'function') {
-        return val = this.property.options.ingest.call(this.obj, val);
+        return val = this.callOptionFunct("ingest", val);
       } else {
         return val;
       }
@@ -248,7 +266,7 @@
 
     PropertyInstance.prototype.changed = function(old) {
       if (typeof this.property.options.change === 'function') {
-        this.property.options.change.call(this.obj, old);
+        this.callOptionFunct("change", old);
       }
       if (typeof this.obj.emitEvent === 'function') {
         return this.obj.emitEvent(this.property.getChangeEventName(), [old]);
@@ -276,10 +294,14 @@
     }
 
     Property.prototype.bind = function(target) {
-      var maj, prop;
+      var maj, parent, prop;
       prop = this;
+      if (typeof target.getProperty === 'function' && ((parent = target.getProperty(this.name)) != null)) {
+        this.override(parent);
+      }
       maj = this.name.charAt(0).toUpperCase() + this.name.slice(1);
       Object.defineProperty(target, this.name, {
+        configurable: true,
         get: function() {
           return prop.getInstance(this).get();
         },
@@ -299,8 +321,32 @@
         return this;
       };
       target._properties = (target._properties || []).concat([prop]);
+      if (parent != null) {
+        target._properties = target._properties.filter(function(existing) {
+          return existing !== parent;
+        });
+      }
       this.checkFunctions(target);
-      return this.checkAfterAddListener(target);
+      this.checkAfterAddListener(target);
+      return prop;
+    };
+
+    Property.prototype.override = function(parent) {
+      var key, ref, results, value;
+      this.options.parent = parent.options;
+      ref = parent.options;
+      results = [];
+      for (key in ref) {
+        value = ref[key];
+        if (typeof this.options[key] === 'function' && typeof value === 'function') {
+          results.push(this.options[key].overrided = value);
+        } else if (typeof this.options[key] === 'undefined') {
+          results.push(this.options[key] = value);
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
     };
 
     Property.prototype.checkFunctions = function(target) {

@@ -255,4 +255,60 @@ describe 'Element', ->
     obj.callback('doSomething')()
     assert.equal obj.test, 1
   
-  
+  it 'keeps old options when overriding a property', ->
+    class TestClass extends Element
+      constructor: () ->
+        @callcount = 0
+      @properties
+        prop: 
+          change: ->
+             @callcount += 1
+             
+    TestClass.properties
+      prop: 
+          default: 10
+          
+    obj = new TestClass();
+         
+    assert.equal obj.prop, 10
+    assert.equal obj.callcount, 0
+    obj.prop = 7
+    assert.equal obj.prop, 7
+    assert.equal obj.callcount, 1
+    
+  it 'allows to call an overrided function of a property', ->
+    class TestClass extends Element
+      constructor: () ->
+        @callcount1 = 0
+        @callcount2 = 0
+      @properties
+        prop: 
+          change: (old) ->
+             @callcount1 += 1
+             
+    TestClass.properties
+      prop: 
+        change: (old,overrided) ->
+          overrided(old)
+          @callcount2 += 1
+          
+    obj = new TestClass();
+    
+    assert.equal obj.callcount1, 0
+    assert.equal obj.callcount2, 0
+    obj.prop = 7
+    assert.equal obj.prop, 7
+    assert.equal obj.callcount1, 1, "original callcount"
+    assert.equal obj.callcount2, 1, "new callcount"
+    
+  it 'return new Property when calling getProperty after an override', ->
+    class TestClass extends Element
+    
+    oldProp = TestClass.property "prop", {default:1}
+    newProp = TestClass.property "prop", {default:2}
+    
+    obj = new TestClass();
+    
+    assert.equal obj.getProperty("prop"), newProp
+    
+            
