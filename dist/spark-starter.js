@@ -83,7 +83,7 @@
 
     Invalidator.prototype.event = function(event, target) {
       if (target == null) {
-        target = this;
+        target = this.obj;
       }
       if (!this.invalidationEvents.some(function(eventBind) {
         return eventBind.event === event && eventBind.target === target;
@@ -96,7 +96,7 @@
 
     Invalidator.prototype.value = function(val, event, target) {
       if (target == null) {
-        target = this;
+        target = this.obj;
       }
       this.event(event, target);
       return val;
@@ -104,7 +104,7 @@
 
     Invalidator.prototype.prop = function(prop, target) {
       if (target == null) {
-        target = this;
+        target = this.obj;
       }
       return this.value(target[prop], prop + 'Changed', target);
     };

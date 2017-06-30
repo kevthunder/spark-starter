@@ -30,7 +30,7 @@ class Invalidator
       else
         @obj[@property] = null
       
-  event: (event, target = this) ->
+  event: (event, target = @obj) ->
     unless @invalidationEvents.some( (eventBind)-> eventBind.event == event and eventBind.target == target)
       @invalidationEvents.push(
         pluck(@recycled, (eventBind)-> 
@@ -39,11 +39,11 @@ class Invalidator
         new EventBind(event, target, @invalidateCallback)
       )  
   
-  value: (val, event, target = this) ->
+  value: (val, event, target = @obj) ->
     @event(event, target)
     val
   
-  prop: (prop, target = this) ->
+  prop: (prop, target = @obj) ->
     @value(target[prop], prop+'Changed', target)
     
   isEmpty: ->

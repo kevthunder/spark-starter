@@ -52,6 +52,20 @@
       assert.equal(invalidator.invalidationEvents[0].target, emitter);
       return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
     });
+    it('should create a bind with invalidatedProperty with implicit target', function() {
+      var invalidated, invalidator, res;
+      invalidated = {
+        test: 1
+      };
+      invalidator = new Invalidator('test', invalidated);
+      assert.equal(invalidator.invalidationEvents.length, 0);
+      res = invalidator.prop('test');
+      assert.equal(res, 1);
+      assert.equal(invalidator.invalidationEvents.length, 1);
+      assert.equal(invalidator.invalidationEvents[0].event, 'testChanged');
+      assert.equal(invalidator.invalidationEvents[0].target, invalidated);
+      return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
+    });
     it('should remove old value with invalidate', function() {
       var invalidated, invalidator;
       invalidated = {
