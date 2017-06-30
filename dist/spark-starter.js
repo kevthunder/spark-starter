@@ -239,7 +239,7 @@
     PropertyInstance.prototype.calcul = function() {
       if (typeof this.property.options.calcul === 'function') {
         if (!this.invalidator) {
-          this.invalidator = new Invalidator(this);
+          this.invalidator = new Invalidator(this, this.obj);
         }
         this.invalidator.recycle((function(_this) {
           return function(invalidator) {

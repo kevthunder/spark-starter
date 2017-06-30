@@ -172,6 +172,22 @@ describe 'PropertyInstance', ->
     
     prop.get()
     assert.instanceOf(prop.invalidator,Invalidator)
+    
+  it 'allow implicit target for invalidators', ->
+    emitter = {
+      addListener: (evt, listener) ->
+        assert.equal evt, 'testChanged'
+      removeListener: (evt, listener) ->
+        assert.equal evt, 'testChanged'
+      test: 4
+    }
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: (invalidated)->
+        invalidated.prop('test')
+    }),emitter);
+    
+    res = prop.get()
+    assert.equal res, 4
   
   it 'should allow to alter the input value', ->
     prop = new PropertyInstance(new Property('prop',{

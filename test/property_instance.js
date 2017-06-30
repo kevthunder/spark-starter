@@ -191,6 +191,25 @@
       prop.get();
       return assert.instanceOf(prop.invalidator, Invalidator);
     });
+    it('allow implicit target for invalidators', function() {
+      var emitter, prop, res;
+      emitter = {
+        addListener: function(evt, listener) {
+          return assert.equal(evt, 'testChanged');
+        },
+        removeListener: function(evt, listener) {
+          return assert.equal(evt, 'testChanged');
+        },
+        test: 4
+      };
+      prop = new PropertyInstance(new Property('prop', {
+        calcul: function(invalidated) {
+          return invalidated.prop('test');
+        }
+      }), emitter);
+      res = prop.get();
+      return assert.equal(res, 4);
+    });
     return it('should allow to alter the input value', function() {
       var prop;
       prop = new PropertyInstance(new Property('prop', {
