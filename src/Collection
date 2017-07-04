@@ -1,0 +1,45 @@
+class Collection
+  constructor: (@_array) ->
+  
+  changed: ->
+  
+  get: (i)->
+    @_array[i]
+  set: (i, val)->
+    if @_array[i] != val
+      old = @toArray()
+      @_array[i] = val
+      @changed(old)
+    val
+  toArray: ->
+    @_array.slice()
+  count: ->
+    @_array.length
+    
+  @readFunctions = ['concat','every','filter','find','findIndex','forEach','includes','indexOf','join','lastIndexOf','map','reduce','reduceRight','slice','some']
+  @writefunctions = ['pop','push','reverse','shift','sort','splice','unshift']
+  for funct of @readFunctions
+    @prototype[funct] = (arg...)->
+      @_array[funct](arg...)
+  for funct of @writefunctions
+    @prototype[funct] = (arg...)->
+      old = @toArray()
+      res = @_array[funct](arg...)
+      @changed(old)
+      res
+      
+  equals: (arr) -> 
+    (@count() == if tyepeof arr.count == 'function' then arr.count() else arr.length) and
+      @every (val, i) ->
+        arr[i] == val
+  
+if Spark?
+  Spark.Collection = Collection
+#--- Standalone ---
+if module?
+  module.exports = Collection
+else
+  unless @Spark?
+    @Spark = {}
+  @Spark.Collection = Collection
+#--- Standalone end ---

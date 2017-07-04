@@ -1,6 +1,8 @@
 #= require <Invalidator>
+#= require <Collection>
 #--- Standalone ---
 Invalidator = @Spark?.Invalidator or require('./Invalidator')
+Collection = @Spark?.Invalidator or require('./Collection')
 #--- Standalone end ---
 
 class PropertyInstance
@@ -16,7 +18,7 @@ class PropertyInstance
     else
       if !@calculated
         @calcul()
-      @value
+      @output()
   
   set: (val)->
     if @property.options.set == false
@@ -70,8 +72,21 @@ class PropertyInstance
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)
+    else if @property.options.collection and typeof val.toArray == 'function'
+      val.toArray()
     else
       val
+      
+  output: ->
+    if typeof @property.options.output == 'function'
+      @callOptionFunct("output", @value)
+    else if @property.options.collection
+      prop = this
+      col = new Collection(@value)
+      col.changed = (old)-> prop.changed(old)
+      col
+    else
+      @value
       
   changed: (old)->
     if typeof @property.options.change == 'function'
