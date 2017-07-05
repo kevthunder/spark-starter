@@ -1,3 +1,4 @@
+require './collection'
 require './event_bind'
 require './invalidator'
 require './property_instance'

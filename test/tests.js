@@ -1,4 +1,6 @@
 (function() {
+  require('./collection');
+
   require('./event_bind');
 
   require('./invalidator');

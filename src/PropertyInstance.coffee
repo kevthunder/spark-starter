@@ -72,8 +72,13 @@ class PropertyInstance
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)
-    else if @property.options.collection and typeof val.toArray == 'function'
-      val.toArray()
+    else if @property.options.collection 
+      if typeof val.toArray == 'function'
+        val.toArray()
+      else if Array.isArray(val)
+        val.slice()
+      else
+        [val]
     else
       val
       

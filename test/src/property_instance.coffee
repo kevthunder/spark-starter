@@ -2,6 +2,7 @@ assert = require('chai').assert
 PropertyInstance = require('../lib/PropertyInstance')
 Property = require('../lib/Property')
 Invalidator = require('../lib/Invalidator')
+Collection = require('../lib/Collection')
 
 describe 'PropertyInstance', ->
   
@@ -188,6 +189,64 @@ describe 'PropertyInstance', ->
     
     res = prop.get()
     assert.equal res, 4
+    
+  it 'should not edit original value of a collection property', ->
+    prop = new PropertyInstance(new Property('prop',{
+      collection: true
+    }),{});
+    
+    original = [1,2,3]
+    prop.set(original)
+    res = prop.get()
+    res.push(4)
+    assert.equal res.toString(), '1,2,3,4'
+    assert.equal prop.get().toString(), '1,2,3,4'
+    assert.equal original.toString(), '1,2,3'
+    
+  it 'should return collection when collection config is on', ->
+    prop = new PropertyInstance(new Property('prop',{
+      collection: true
+      default: [1,2,3]
+    }),{});
+    
+    res = prop.get()
+    assert.isTrue res instanceof Collection
+    assert.equal res.toString(), '1,2,3'
+    
+  it 'should call change function when collection changed', ->
+    callcount = 0
+    prop = new PropertyInstance(new Property('prop',{
+      collection: true
+      default: [1,2,3]
+      change: ->
+        callcount+=1
+    }),{});
+    
+    res = prop.get()
+    assert.equal callcount, 0
+    assert.equal res.count(), 3
+    res.push(4)
+    assert.equal res.count(), 4
+    assert.equal res.toString(), '1,2,3,4'
+    assert.equal callcount, 1
+    
+  it 'should trigger change event when collection changed', ->
+    emitter = {
+      emitEvent: (event,params)->
+        assert.equal event, 'propChanged'
+        @callcount += 1
+      callcount: 0
+    }
+    prop = new PropertyInstance(new Property('prop',{
+      collection: true
+      default: [1,2,3]
+    }),emitter);
+    
+    res = prop.get()
+    assert.equal emitter.callcount, 0
+    res.set(2,4)
+    assert.equal res.toString(), '1,2,4'
+    assert.equal emitter.callcount, 1
   
   it 'should allow to alter the input value', ->
     prop = new PropertyInstance(new Property('prop',{

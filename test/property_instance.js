@@ -1,5 +1,5 @@
 (function() {
-  var Invalidator, Property, PropertyInstance, assert;
+  var Collection, Invalidator, Property, PropertyInstance, assert;
 
   assert = require('chai').assert;
 
@@ -8,6 +8,8 @@
   Property = require('../lib/Property');
 
   Invalidator = require('../lib/Invalidator');
+
+  Collection = require('../lib/Collection');
 
   describe('PropertyInstance', function() {
     it('should be able to invalidate a property', function() {
@@ -209,6 +211,66 @@
       }), emitter);
       res = prop.get();
       return assert.equal(res, 4);
+    });
+    it('should not edit original value of a collection property', function() {
+      var original, prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        collection: true
+      }), {});
+      original = [1, 2, 3];
+      prop.set(original);
+      res = prop.get();
+      res.push(4);
+      assert.equal(res.toString(), '1,2,3,4');
+      assert.equal(prop.get().toString(), '1,2,3,4');
+      return assert.equal(original.toString(), '1,2,3');
+    });
+    it('should return collection when collection config is on', function() {
+      var prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        collection: true,
+        "default": [1, 2, 3]
+      }), {});
+      res = prop.get();
+      assert.isTrue(res instanceof Collection);
+      return assert.equal(res.toString(), '1,2,3');
+    });
+    it('should call change function when collection changed', function() {
+      var callcount, prop, res;
+      callcount = 0;
+      prop = new PropertyInstance(new Property('prop', {
+        collection: true,
+        "default": [1, 2, 3],
+        change: function() {
+          return callcount += 1;
+        }
+      }), {});
+      res = prop.get();
+      assert.equal(callcount, 0);
+      assert.equal(res.count(), 3);
+      res.push(4);
+      assert.equal(res.count(), 4);
+      assert.equal(res.toString(), '1,2,3,4');
+      return assert.equal(callcount, 1);
+    });
+    it('should trigger change event when collection changed', function() {
+      var emitter, prop, res;
+      emitter = {
+        emitEvent: function(event, params) {
+          assert.equal(event, 'propChanged');
+          return this.callcount += 1;
+        },
+        callcount: 0
+      };
+      prop = new PropertyInstance(new Property('prop', {
+        collection: true,
+        "default": [1, 2, 3]
+      }), emitter);
+      res = prop.get();
+      assert.equal(emitter.callcount, 0);
+      res.set(2, 4);
+      assert.equal(res.toString(), '1,2,4');
+      return assert.equal(emitter.callcount, 1);
     });
     return it('should allow to alter the input value', function() {
       var prop;
