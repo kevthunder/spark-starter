@@ -235,6 +235,16 @@
       assert.isTrue(res instanceof Collection);
       return assert.equal(res.toString(), '1,2,3');
     });
+    it('can edit collection when no initial value', function() {
+      var prop;
+      prop = new PropertyInstance(new Property('prop', {
+        collection: true
+      }), {});
+      assert.equal(prop.get().count(), 0);
+      prop.get().push(4);
+      assert.equal(prop.get().count(), 1);
+      return assert.equal(prop.get().toString(), '4');
+    });
     it('should call change function when collection changed', function() {
       var callcount, prop, res;
       callcount = 0;

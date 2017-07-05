@@ -213,6 +213,16 @@ describe 'PropertyInstance', ->
     assert.isTrue res instanceof Collection
     assert.equal res.toString(), '1,2,3'
     
+  it 'can edit collection when no initial value', ->
+    prop = new PropertyInstance(new Property('prop',{
+      collection: true
+    }),{});
+  
+    assert.equal prop.get().count(), 0
+    prop.get().push(4)
+    assert.equal prop.get().count(), 1
+    assert.equal prop.get().toString(), '4'
+    
   it 'should call change function when collection changed', ->
     callcount = 0
     prop = new PropertyInstance(new Property('prop',{

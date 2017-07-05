@@ -364,6 +364,9 @@
         return this.callOptionFunct("output", this.value);
       } else if (this.property.options.collection) {
         prop = this;
+        if (this.value == null) {
+          this.value = [];
+        }
         col = new Collection(this.value);
         col.changed = function(old) {
           return prop.changed(old);

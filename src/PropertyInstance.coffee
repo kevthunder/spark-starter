@@ -87,6 +87,8 @@ class PropertyInstance
       @callOptionFunct("output", @value)
     else if @property.options.collection
       prop = this
+      unless @value?
+        @value = []
       col = new Collection(@value)
       col.changed = (old)-> prop.changed(old)
       col
