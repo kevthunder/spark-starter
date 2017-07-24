@@ -94,8 +94,7 @@ class PropertyInstance
         @value = []
       col = new Collection(@value)
       col.changed = (old)-> prop.changed(old)
-      if typeof @property.options.collection == 'object'
-        Object.assign(col, @property.options.collection)
+      col.addFunctions(@property.options.collection)
       col
     else
       @value

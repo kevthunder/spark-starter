@@ -131,13 +131,28 @@
       newColl = new Collection([1]);
       return assert.equal(newColl.getRemovedFrom(old).toString(), '2,3');
     });
-    return it('can add an item once', function() {
+    it('can add an item once', function() {
       var coll;
       coll = new Collection([1, 2, 3]);
       coll.add(4);
       assert.equal(coll.toString(), '1,2,3,4');
       coll.add(4);
       return assert.equal(coll.toString(), '1,2,3,4');
+    });
+    return it('returns a collection when calling filter and forward added functions', function() {
+      var coll, res;
+      coll = new Collection([1, 2, 3, 4]);
+      coll.addFunctions({
+        test: function() {
+          return 'test';
+        }
+      });
+      res = coll.filter(function(item) {
+        return item % 2 === 1;
+      });
+      assert.equal(res.toString(), '1,3');
+      assert.instanceOf(res, Collection);
+      return assert.equal(res.test(), 'test');
     });
   });
 

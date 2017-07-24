@@ -210,7 +210,7 @@ describe 'PropertyInstance', ->
     }),{});
     
     res = prop.get()
-    assert.isTrue res instanceof Collection
+    assert.instanceOf res, Collection
     assert.equal res.toString(), '1,2,3'
     
   it 'should not return collection when collection config is undefined', ->
@@ -220,7 +220,7 @@ describe 'PropertyInstance', ->
     
     assert.isFalse prop.isACollection()
     res = prop.get()
-    assert.isFalse res instanceof Collection
+    assert.notInstanceOf res, Collection
     
   it 'can edit collection when no initial value', ->
     prop = new PropertyInstance(new Property('prop',{
@@ -276,7 +276,7 @@ describe 'PropertyInstance', ->
     }),{});
     
     res = prop.get()
-    assert.isTrue res instanceof Collection
+    assert.instanceOf res, Collection
     assert.equal res.test(), 'test'
   
   it 'should allow to alter the input value', ->

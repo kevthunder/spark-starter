@@ -171,6 +171,7 @@
       } else {
         this._array = [];
       }
+      this._addedFunctions = {};
     }
 
     Collection.prototype.changed = function() {};
@@ -190,9 +191,7 @@
     };
 
     Collection.prototype.add = function(val) {
-      var index;
-      index = this._array.indexOf(val);
-      if (index === -1) {
+      if (!this._array.includes(val)) {
         return this.push(val);
       }
     };
@@ -215,7 +214,9 @@
       return this._array.length;
     };
 
-    Collection.readFunctions = ['concat', 'every', 'filter', 'find', 'findIndex', 'forEach', 'includes', 'indexOf', 'join', 'lastIndexOf', 'map', 'reduce', 'reduceRight', 'slice', 'some', 'toString'];
+    Collection.readFunctions = ['every', 'find', 'findIndex', 'forEach', 'includes', 'indexOf', 'join', 'lastIndexOf', 'map', 'reduce', 'reduceRight', 'some', 'toString'];
+
+    Collection.readListFunctions = ['concat', 'filter', 'slice'];
 
     Collection.writefunctions = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'];
 
@@ -224,6 +225,14 @@
         var arg, ref;
         arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
         return (ref = this._array)[funct].apply(ref, arg);
+      };
+    });
+
+    Collection.readListFunctions.forEach(function(funct) {
+      return Collection.prototype[funct] = function() {
+        var arg, ref;
+        arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+        return this.copy((ref = this._array)[funct].apply(ref, arg));
       };
     });
 
@@ -238,6 +247,23 @@
       };
     });
 
+    Collection.prototype.addFunctions = function(fn) {
+      if (typeof fn === 'object') {
+        Object.assign(this._addedFunctions, fn);
+        return Object.assign(this, fn);
+      }
+    };
+
+    Collection.prototype.copy = function(arr) {
+      var coll;
+      if (arr == null) {
+        arr = this.toArray;
+      }
+      coll = new this.constructor(arr);
+      coll.addFunctions(this._addedFunctions);
+      return coll;
+    };
+
     Collection.prototype.equals = function(arr) {
       return (this.count() === (tyepeof(arr.count === 'function') ? arr.count() : arr.length)) && this.every(function(val, i) {
         return arr[i] === val;
@@ -245,15 +271,15 @@
     };
 
     Collection.prototype.getAddedFrom = function(arr) {
-      return this.filter(function(item) {
-        return arr.indexOf(item) === -1;
+      return this._array.filter(function(item) {
+        return !arr.includes(item);
       });
     };
 
     Collection.prototype.getRemovedFrom = function(arr) {
       return arr.filter((function(_this) {
         return function(item) {
-          return _this.indexOf(item) === -1;
+          return !_this.includes(item);
         };
       })(this));
     };
@@ -364,10 +390,14 @@
       return this.value;
     };
 
+    PropertyInstance.prototype.isACollection = function(val) {
+      return this.property.options.collection != null;
+    };
+
     PropertyInstance.prototype.ingest = function(val) {
       if (typeof this.property.options.ingest === 'function') {
         return val = this.callOptionFunct("ingest", val);
-      } else if (this.property.options.collection) {
+      } else if (this.isACollection()) {
         if (typeof val.toArray === 'function') {
           return val.toArray();
         } else if (Array.isArray(val)) {
@@ -384,7 +414,7 @@
       var col, prop;
       if (typeof this.property.options.output === 'function') {
         return this.callOptionFunct("output", this.value);
-      } else if (this.property.options.collection) {
+      } else if (this.isACollection()) {
         prop = this;
         if (this.value == null) {
           this.value = [];
@@ -393,6 +423,7 @@
         col.changed = function(old) {
           return prop.changed(old);
         };
+        col.addFunctions(this.property.options.collection);
         return col;
       } else {
         return this.value;

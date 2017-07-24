@@ -232,7 +232,7 @@
         "default": [1, 2, 3]
       }), {});
       res = prop.get();
-      assert.isTrue(res instanceof Collection);
+      assert.instanceOf(res, Collection);
       return assert.equal(res.toString(), '1,2,3');
     });
     it('should not return collection when collection config is undefined', function() {
@@ -242,7 +242,7 @@
       }), {});
       assert.isFalse(prop.isACollection());
       res = prop.get();
-      return assert.isFalse(res instanceof Collection);
+      return assert.notInstanceOf(res, Collection);
     });
     it('can edit collection when no initial value', function() {
       var prop;
@@ -302,7 +302,7 @@
         "default": [1, 2, 3]
       }), {});
       res = prop.get();
-      assert.isTrue(res instanceof Collection);
+      assert.instanceOf(res, Collection);
       return assert.equal(res.test(), 'test');
     });
     return it('should allow to alter the input value', function() {
