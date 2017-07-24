@@ -92,9 +92,8 @@ class PropertyInstance
       prop = this
       unless @value?
         @value = []
-      col = new Collection(@value)
+      col = Collection.newSubClass(@property.options.collection, @value)
       col.changed = (old)-> prop.changed(old)
-      col.addFunctions(@property.options.collection)
       col
     else
       @value

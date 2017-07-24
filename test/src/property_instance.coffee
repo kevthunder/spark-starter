@@ -278,6 +278,22 @@ describe 'PropertyInstance', ->
     res = prop.get()
     assert.instanceOf res, Collection
     assert.equal res.test(), 'test'
+    
+  it 'can foward method added to a collection', ->
+    prop = new PropertyInstance(new Property('prop',{
+      collection: {
+        test: -> 'test'
+      }
+      default: [1,2,3]
+    }),{});
+    
+    res = prop.get()
+    assert.instanceOf res, Collection
+    assert.equal res.test(), 'test'
+    
+    res = res.filter -> true
+    assert.instanceOf res, Collection
+    assert.equal res.test(), 'test'
   
   it 'should allow to alter the input value', ->
     prop = new PropertyInstance(new Property('prop',{

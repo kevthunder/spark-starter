@@ -9,7 +9,6 @@ class Collection
         @_array = [arr]
     else
       @_array = []
-    @_addedFunctions = {}
   changed: ->
   
   get: (i)->
@@ -55,16 +54,18 @@ class Collection
       @changed(old)
       res
   
-  addFunctions: (fn)->
+  @newSubClass: (fn,arr)->
     if typeof fn == 'object'
-      Object.assign(@_addedFunctions, fn)
-      Object.assign(this, fn)
-      
+      SubClass = class extends this
+      Object.assign(SubClass.prototype, fn)
+      new SubClass(arr)
+    else 
+      new this(arr)
+  
   copy: (arr) ->
     unless arr?
       arr = @toArray
     coll = new this.constructor(arr)
-    coll.addFunctions(@_addedFunctions)
     coll
   
   equals: (arr) -> 

@@ -17,5 +17,6 @@ if module?
     PropertyInstance: require('./PropertyInstance'),
     Invalidator: require('./Invalidator'),
     EventBind: require('./EventBind'),
+    Collection: require('./Collection'),
   }
 #--- Standalone end ---

@@ -1,6 +1,8 @@
 (function() {
   var Collection, Element, EventBind, Invalidator, Property, PropertyInstance, Spark, pluck,
     slice = [].slice,
+    extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    hasProp = {}.hasOwnProperty,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   if (typeof Spark === "undefined" || Spark === null) {
@@ -171,7 +173,6 @@
       } else {
         this._array = [];
       }
-      this._addedFunctions = {};
     }
 
     Collection.prototype.changed = function() {};
@@ -247,10 +248,23 @@
       };
     });
 
-    Collection.prototype.addFunctions = function(fn) {
+    Collection.newSubClass = function(fn, arr) {
+      var SubClass;
       if (typeof fn === 'object') {
-        Object.assign(this._addedFunctions, fn);
-        return Object.assign(this, fn);
+        SubClass = (function(superClass) {
+          extend(_Class, superClass);
+
+          function _Class() {
+            return _Class.__super__.constructor.apply(this, arguments);
+          }
+
+          return _Class;
+
+        })(this);
+        Object.assign(SubClass.prototype, fn);
+        return new SubClass(arr);
+      } else {
+        return new this(arr);
       }
     };
 
@@ -260,7 +274,6 @@
         arr = this.toArray;
       }
       coll = new this.constructor(arr);
-      coll.addFunctions(this._addedFunctions);
       return coll;
     };
 
@@ -419,11 +432,10 @@
         if (this.value == null) {
           this.value = [];
         }
-        col = new Collection(this.value);
+        col = Collection.newSubClass(this.property.options.collection, this.value);
         col.changed = function(old) {
           return prop.changed(old);
         };
-        col.addFunctions(this.property.options.collection);
         return col;
       } else {
         return this.value;

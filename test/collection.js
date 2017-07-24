@@ -141,12 +141,11 @@
     });
     return it('returns a collection when calling filter and forward added functions', function() {
       var coll, res;
-      coll = new Collection([1, 2, 3, 4]);
-      coll.addFunctions({
+      coll = Collection.newSubClass({
         test: function() {
           return 'test';
         }
-      });
+      }, [1, 2, 3, 4]);
       res = coll.filter(function(item) {
         return item % 2 === 1;
       });

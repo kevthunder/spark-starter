@@ -305,6 +305,25 @@
       assert.instanceOf(res, Collection);
       return assert.equal(res.test(), 'test');
     });
+    it('can foward method added to a collection', function() {
+      var prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        collection: {
+          test: function() {
+            return 'test';
+          }
+        },
+        "default": [1, 2, 3]
+      }), {});
+      res = prop.get();
+      assert.instanceOf(res, Collection);
+      assert.equal(res.test(), 'test');
+      res = res.filter(function() {
+        return true;
+      });
+      assert.instanceOf(res, Collection);
+      return assert.equal(res.test(), 'test');
+    });
     return it('should allow to alter the input value', function() {
       var prop;
       prop = new PropertyInstance(new Property('prop', {

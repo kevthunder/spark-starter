@@ -118,9 +118,9 @@ describe 'Collection', ->
     assert.equal coll.toString(), '1,2,3,4'
   
   it 'returns a collection when calling filter and forward added functions', ->
-    coll = new Collection([1,2,3,4])
-    coll.addFunctions
+    coll = Collection.newSubClass({
       test: -> 'test'
+    },[1,2,3,4])
     res = coll.filter (item)-> item % 2 == 1
     assert.equal res.toString(), '1,3'
     assert.instanceOf res, Collection
