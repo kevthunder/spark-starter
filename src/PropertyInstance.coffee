@@ -7,7 +7,7 @@ Collection = @Spark?.Invalidator or require('./Collection')
 
 class PropertyInstance
   constructor: (@property, @obj) ->
-    @value = @property.options.default
+    @value = @ingest(@property.options.default)
     @calculated = false
     
   get: ->
@@ -76,7 +76,9 @@ class PropertyInstance
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)
     else if @isACollection()
-      if typeof val.toArray == 'function'
+      if !val?
+        []
+      else if typeof val.toArray == 'function'
         val.toArray()
       else if Array.isArray(val)
         val.slice()
@@ -90,8 +92,6 @@ class PropertyInstance
       @callOptionFunct("output", @value)
     else if @isACollection()
       prop = this
-      unless @value?
-        @value = []
       col = Collection.newSubClass(@property.options.collection, @value)
       col.changed = (old)-> prop.changed(old)
       col

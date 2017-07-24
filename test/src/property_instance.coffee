@@ -237,7 +237,8 @@ describe 'PropertyInstance', ->
     prop = new PropertyInstance(new Property('prop',{
       collection: true
       default: [1,2,3]
-      change: ->
+      change: (old)->
+        assert.isArray old
         callcount+=1
     }),{});
     
@@ -247,6 +248,22 @@ describe 'PropertyInstance', ->
     res.push(4)
     assert.equal res.count(), 4
     assert.equal res.toString(), '1,2,3,4'
+    assert.equal callcount, 1
+    
+  it 'should pass the old value of an uninitiated collection as an array', ->
+    callcount = 0
+    prop = new PropertyInstance(new Property('prop',{
+      collection: true
+      change: (old)->
+        assert.isArray old
+        callcount+=1
+    }),{});
+    
+    assert.equal callcount, 0
+    #assert.equal prop.get().count(), 0
+    prop.set(4)
+    assert.equal prop.get().count(), 1
+    assert.equal prop.get().toString(), '4'
     assert.equal callcount, 1
     
   it 'should trigger change event when collection changed', ->

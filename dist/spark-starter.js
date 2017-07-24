@@ -309,7 +309,7 @@
     function PropertyInstance(property, obj1) {
       this.property = property;
       this.obj = obj1;
-      this.value = this.property.options["default"];
+      this.value = this.ingest(this.property.options["default"]);
       this.calculated = false;
     }
 
@@ -411,7 +411,9 @@
       if (typeof this.property.options.ingest === 'function') {
         return val = this.callOptionFunct("ingest", val);
       } else if (this.isACollection()) {
-        if (typeof val.toArray === 'function') {
+        if (val == null) {
+          return [];
+        } else if (typeof val.toArray === 'function') {
           return val.toArray();
         } else if (Array.isArray(val)) {
           return val.slice();
@@ -429,9 +431,6 @@
         return this.callOptionFunct("output", this.value);
       } else if (this.isACollection()) {
         prop = this;
-        if (this.value == null) {
-          this.value = [];
-        }
         col = Collection.newSubClass(this.property.options.collection, this.value);
         col.changed = function(old) {
           return prop.changed(old);
