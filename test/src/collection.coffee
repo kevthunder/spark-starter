@@ -109,3 +109,10 @@ describe 'Collection', ->
     old = [1,2,3]
     newColl = new Collection([1])
     assert.equal newColl.getRemovedFrom(old).toString(), '2,3'
+  
+  it 'can add an item once', ->
+    coll = new Collection([1,2,3])
+    coll.add(4)
+    assert.equal coll.toString(), '1,2,3,4'
+    coll.add(4)
+    assert.equal coll.toString(), '1,2,3,4'

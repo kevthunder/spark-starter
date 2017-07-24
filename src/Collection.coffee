@@ -19,6 +19,10 @@ class Collection
       @_array[i] = val
       @changed(old)
     val
+  add: (val)->
+    index = @_array.indexOf(val)
+    if index == -1
+      @push(val)
   remove: (val)->
     index = @_array.indexOf(val)
     if index != -1

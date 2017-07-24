@@ -125,11 +125,19 @@
       newColl = new Collection([1, 4, 2, 3, 5]);
       return assert.equal(newColl.getAddedFrom(old).toString(), '4,5');
     });
-    return it('can tell what items were removed compared to another array', function() {
+    it('can tell what items were removed compared to another array', function() {
       var newColl, old;
       old = [1, 2, 3];
       newColl = new Collection([1]);
       return assert.equal(newColl.getRemovedFrom(old).toString(), '2,3');
+    });
+    return it('can add an item once', function() {
+      var coll;
+      coll = new Collection([1, 2, 3]);
+      coll.add(4);
+      assert.equal(coll.toString(), '1,2,3,4');
+      coll.add(4);
+      return assert.equal(coll.toString(), '1,2,3,4');
     });
   });
 

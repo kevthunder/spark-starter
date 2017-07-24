@@ -189,6 +189,14 @@
       return val;
     };
 
+    Collection.prototype.add = function(val) {
+      var index;
+      index = this._array.indexOf(val);
+      if (index === -1) {
+        return this.push(val);
+      }
+    };
+
     Collection.prototype.remove = function(val) {
       var index, old;
       index = this._array.indexOf(val);
