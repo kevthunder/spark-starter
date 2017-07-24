@@ -69,10 +69,13 @@ class PropertyInstance
     @calculated = true
     @value
     
+  isACollection: (val)->
+    @property.options.collection?
+    
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)
-    else if @property.options.collection 
+    else if @isACollection()
       if typeof val.toArray == 'function'
         val.toArray()
       else if Array.isArray(val)
@@ -81,16 +84,18 @@ class PropertyInstance
         [val]
     else
       val
-      
+  
   output: ->
     if typeof @property.options.output == 'function'
       @callOptionFunct("output", @value)
-    else if @property.options.collection
+    else if @isACollection()
       prop = this
       unless @value?
         @value = []
       col = new Collection(@value)
       col.changed = (old)-> prop.changed(old)
+      if typeof @property.options.collection == 'object'
+        Object.assign(col, @property.options.collection)
       col
     else
       @value

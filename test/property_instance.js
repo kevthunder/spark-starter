@@ -235,6 +235,15 @@
       assert.isTrue(res instanceof Collection);
       return assert.equal(res.toString(), '1,2,3');
     });
+    it('should not return collection when collection config is undefined', function() {
+      var prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        "default": 1
+      }), {});
+      assert.isFalse(prop.isACollection());
+      res = prop.get();
+      return assert.isFalse(res instanceof Collection);
+    });
     it('can edit collection when no initial value', function() {
       var prop;
       prop = new PropertyInstance(new Property('prop', {
@@ -281,6 +290,20 @@
       res.set(2, 4);
       assert.equal(res.toString(), '1,2,4');
       return assert.equal(emitter.callcount, 1);
+    });
+    it('can add method to a collection', function() {
+      var prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        collection: {
+          test: function() {
+            return 'test';
+          }
+        },
+        "default": [1, 2, 3]
+      }), {});
+      res = prop.get();
+      assert.isTrue(res instanceof Collection);
+      return assert.equal(res.test(), 'test');
     });
     return it('should allow to alter the input value', function() {
       var prop;

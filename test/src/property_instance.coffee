@@ -213,6 +213,15 @@ describe 'PropertyInstance', ->
     assert.isTrue res instanceof Collection
     assert.equal res.toString(), '1,2,3'
     
+  it 'should not return collection when collection config is undefined', ->
+    prop = new PropertyInstance(new Property('prop',{
+      default: 1
+    }),{});
+    
+    assert.isFalse prop.isACollection()
+    res = prop.get()
+    assert.isFalse res instanceof Collection
+    
   it 'can edit collection when no initial value', ->
     prop = new PropertyInstance(new Property('prop',{
       collection: true
@@ -257,6 +266,18 @@ describe 'PropertyInstance', ->
     res.set(2,4)
     assert.equal res.toString(), '1,2,4'
     assert.equal emitter.callcount, 1
+    
+  it 'can add method to a collection', ->
+    prop = new PropertyInstance(new Property('prop',{
+      collection: {
+        test: -> 'test'
+      }
+      default: [1,2,3]
+    }),{});
+    
+    res = prop.get()
+    assert.isTrue res instanceof Collection
+    assert.equal res.test(), 'test'
   
   it 'should allow to alter the input value', ->
     prop = new PropertyInstance(new Property('prop',{
