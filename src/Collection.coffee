@@ -49,6 +49,14 @@ class Collection
     (@count() == if tyepeof arr.count == 'function' then arr.count() else arr.length) and
       @every (val, i) ->
         arr[i] == val
+        
+  getAddedFrom: (arr) -> 
+    @filter (item)->
+      arr.indexOf(item) == -1
+  
+  getRemovedFrom: (arr) -> 
+    arr.filter (item)=>
+      @indexOf(item) == -1
   
 if Spark?
   Spark.Collection = Collection

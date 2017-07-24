@@ -98,3 +98,14 @@ describe 'Collection', ->
     assert.equal coll.count(), 4, 'new Count'
     assert.equal coll.get(3), 4, 'new val'
     assert.equal calls, 1
+    
+  
+  it 'can tell what items were added compared to another array', ->
+    old = [1,2,3]
+    newColl = new Collection([1,4,2,3,5])
+    assert.equal newColl.getAddedFrom(old).toString(), '4,5'
+  
+  it 'can tell what items were removed compared to another array', ->
+    old = [1,2,3]
+    newColl = new Collection([1])
+    assert.equal newColl.getRemovedFrom(old).toString(), '2,3'
