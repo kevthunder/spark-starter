@@ -139,6 +139,16 @@
       coll.add(4);
       return assert.equal(coll.toString(), '1,2,3,4');
     });
+    it('can copy itself to a new independant collection ', function() {
+      var coll, coll2;
+      coll = new Collection([1, 2, 3, 4]);
+      assert.equal(coll.toString(), '1,2,3,4');
+      coll2 = coll.copy();
+      assert.equal(coll2.toString(), '1,2,3,4');
+      coll2.pop();
+      assert.equal(coll2.toString(), '1,2,3');
+      return assert.equal(coll.toString(), '1,2,3,4');
+    });
     return it('returns a collection when calling filter and forward added functions', function() {
       var coll, res;
       coll = Collection.newSubClass({

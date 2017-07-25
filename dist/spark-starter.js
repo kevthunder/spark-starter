@@ -271,7 +271,7 @@
     Collection.prototype.copy = function(arr) {
       var coll;
       if (arr == null) {
-        arr = this.toArray;
+        arr = this.toArray();
       }
       coll = new this.constructor(arr);
       return coll;

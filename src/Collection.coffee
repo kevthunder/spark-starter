@@ -64,7 +64,7 @@ class Collection
   
   copy: (arr) ->
     unless arr?
-      arr = @toArray
+      arr = @toArray()
     coll = new this.constructor(arr)
     coll
   

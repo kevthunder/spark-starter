@@ -116,6 +116,17 @@ describe 'Collection', ->
     assert.equal coll.toString(), '1,2,3,4'
     coll.add(4)
     assert.equal coll.toString(), '1,2,3,4'
+    
+
+  it 'can copy itself to a new independant collection ', ->
+    coll = new Collection([1,2,3,4])
+    assert.equal coll.toString(), '1,2,3,4'
+    coll2 = coll.copy()
+    assert.equal coll2.toString(), '1,2,3,4'
+    coll2.pop()
+    assert.equal coll2.toString(), '1,2,3'
+    assert.equal coll.toString(), '1,2,3,4'
+    
   
   it 'returns a collection when calling filter and forward added functions', ->
     coll = Collection.newSubClass({
