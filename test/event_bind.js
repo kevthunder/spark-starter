@@ -24,6 +24,34 @@
       bind.bind();
       return assert.equal(calls, 1);
     });
+    it('should add listener on bind with addEventListener', function() {
+      var bind, calls, emitter, testEvent, testListener;
+      testEvent = 'test';
+      testListener = function() {
+        return null;
+      };
+      calls = 0;
+      emitter = {
+        addEventListener: function(evt, listener) {
+          assert.equal(evt, testEvent);
+          assert.equal(listener, testListener);
+          return calls += 1;
+        }
+      };
+      bind = new EventBind(testEvent, emitter, testListener);
+      bind.bind();
+      return assert.equal(calls, 1);
+    });
+    it('should throw error if bind fail', function() {
+      var bind, emitter, testEvent, testListener;
+      testEvent = 'test';
+      testListener = function() {
+        return null;
+      };
+      emitter = {};
+      bind = new EventBind(testEvent, emitter, testListener);
+      return assert.throws(bind.bind.bind(bind), 'No function to add a event listener found');
+    });
     it('should add listener once', function() {
       var bind, calls, emitter, testEvent, testListener;
       testEvent = 'test';

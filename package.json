@@ -1,8 +1,12 @@
 {
   "name": "spark-starter",
-  "version": "1.0.0",
+  "version": "0.3.1",
   "description": "Basic framework based on properties",
   "main": "lib/spark-starter.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kevthunder/spark-starter.git"
+  },
   "scripts": {
     "test": "gulp test",
     "build": "gulp build"

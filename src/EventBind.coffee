@@ -3,11 +3,25 @@ class EventBind
     @binded = false
   bind: ->
     unless @binded 
-      @target.addListener(@event, @callback)
+      if typeof @target.addEventListener == 'function'
+        @target.addEventListener(@event, @callback)
+      else if typeof @target.addListener == 'function'
+        @target.addListener(@event, @callback)
+      else if typeof @target.on == 'function'
+        @target.on(@event, @callback)
+      else
+        throw 'No function to add a event listener found'
     @binded = true
   unbind: ->
     if @binded 
-      @target.removeListener(@event, @callback)
+      if typeof @target.removeEventListener == 'function'
+        @target.removeEventListener(@event, @callback)
+      else if typeof @target.removeListener == 'function'
+        @target.removeListener(@event, @callback)
+      else if typeof @target.off == 'function'
+        @target.off(@event, @callback)
+      else
+        throw 'No function to remove a event listener found'
     @binded = false
   equals: (eventBind) -> 
     eventBind.event    == @event    and
