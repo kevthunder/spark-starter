@@ -51,6 +51,10 @@
       return eventBind.event === this.event && eventBind.target === this.target && eventBind.callback === this.callback;
     };
 
+    EventBind.prototype.match = function(event, target) {
+      return event === this.event && target === this.target;
+    };
+
     return EventBind;
 
   })();
@@ -104,10 +108,10 @@
         target = this.obj;
       }
       if (!this.invalidationEvents.some(function(eventBind) {
-        return eventBind.event === event && eventBind.target === target;
+        return eventBind.match(event, target);
       })) {
         return this.invalidationEvents.push(pluck(this.recycled, function(eventBind) {
-          return eventBind.event === event && eventBind.target === target;
+          return eventBind.match(event, target);
         }) || new EventBind(event, target, this.invalidateCallback));
       }
     };
@@ -405,8 +409,9 @@
           this.invalidator = new Invalidator(this, this.obj);
         }
         this.invalidator.recycle((function(_this) {
-          return function(invalidator) {
+          return function(invalidator, done) {
             _this.value = _this.callOptionFunct("calcul", invalidator);
+            done();
             if (invalidator.isEmpty()) {
               return _this.invalidator = null;
             } else {

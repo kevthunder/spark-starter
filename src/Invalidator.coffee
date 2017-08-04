@@ -31,10 +31,10 @@ class Invalidator
         @obj[@property] = null
       
   event: (event, target = @obj) ->
-    unless @invalidationEvents.some( (eventBind)-> eventBind.event == event and eventBind.target == target)
+    unless @invalidationEvents.some( (eventBind)-> eventBind.match(event,target))
       @invalidationEvents.push(
         pluck(@recycled, (eventBind)-> 
-          eventBind.event == event and eventBind.target == target
+          eventBind.match(event,target)
         ) or
         new EventBind(event, target, @invalidateCallback)
       )  

@@ -49,6 +49,31 @@ describe 'PropertyInstance', ->
     assert.equal prop.value, 3
     assert.equal prop.calculated, false, 'calculated false after invalidation'
     
+  it 'Can handle indirect event target for invalidators', ->
+    val = 3
+    binded = false
+    class Emitter
+      addListener: (evt, listener) ->
+        binded = true
+      removeListener: (evt, listener) ->
+        binded = false
+    
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: (invalidated)->
+        invalidated.event('testChanged',new Emitter())
+        val+=1
+      immediate: true
+    }),{});
+    
+    assert.equal prop.calculated, false, 'calculated initially false'
+    assert.isFalse binded
+    prop.get()
+    assert.equal prop.calculated, true, 'calculated true after get'
+    assert.isTrue binded
+    prop.invalidate()
+    assert.equal prop.calculated, true, 'calculated false after invalidation'
+    assert.isTrue binded, 'binded should be true after invalidation'
+    
   it 'should re-calcul only on the next get after an invalidation', ->
     callcount = 0
     prop = new PropertyInstance(new Property('prop',{

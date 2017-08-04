@@ -27,7 +27,9 @@ class EventBind
     eventBind.event    == @event    and
     eventBind.target   == @target   and
     eventBind.callback == @callback
-    
+  match: (event, target) -> 
+    event    == @event    and
+    target   == @target
 if Spark?
   Spark.EventBind = EventBind
 #--- Standalone ---

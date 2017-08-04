@@ -60,6 +60,40 @@
       assert.equal(prop.value, 3);
       return assert.equal(prop.calculated, false, 'calculated false after invalidation');
     });
+    it('Can handle indirect event target for invalidators', function() {
+      var Emitter, binded, prop, val;
+      val = 3;
+      binded = false;
+      Emitter = (function() {
+        function Emitter() {}
+
+        Emitter.prototype.addListener = function(evt, listener) {
+          return binded = true;
+        };
+
+        Emitter.prototype.removeListener = function(evt, listener) {
+          return binded = false;
+        };
+
+        return Emitter;
+
+      })();
+      prop = new PropertyInstance(new Property('prop', {
+        calcul: function(invalidated) {
+          invalidated.event('testChanged', new Emitter());
+          return val += 1;
+        },
+        immediate: true
+      }), {});
+      assert.equal(prop.calculated, false, 'calculated initially false');
+      assert.isFalse(binded);
+      prop.get();
+      assert.equal(prop.calculated, true, 'calculated true after get');
+      assert.isTrue(binded);
+      prop.invalidate();
+      assert.equal(prop.calculated, true, 'calculated false after invalidation');
+      return assert.isTrue(binded, 'binded should be true after invalidation');
+    });
     it('should re-calcul only on the next get after an invalidation', function() {
       var callcount, prop;
       callcount = 0;
