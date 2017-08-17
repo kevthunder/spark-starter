@@ -1,12 +1,14 @@
 #= require <_start>
 #= require <Element>
 
+#--- Local ---
 #--- Concatened ---
 if module?
   module.exports = Spark
 else 
   @Spark = Spark
 #--- Concatened end ---
+#--- Local end ---
 
 
 #--- Standalone ---
