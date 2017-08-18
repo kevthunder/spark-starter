@@ -104,6 +104,7 @@ class Property
           prop = @getPropertyInstance(key)
           if prop?
             prop.set(val)
+      this
         
     destroyProperties: ->
       @getInstantiatedProperties().forEach (prop)=>

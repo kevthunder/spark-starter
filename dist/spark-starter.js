@@ -484,10 +484,10 @@
   }
 
   Property = (function() {
-    function Property(name1, options) {
+    function Property(name1, options1) {
       var calculated;
       this.name = name1;
-      this.options = options != null ? options : {};
+      this.options = options1 != null ? options1 : {};
       calculated = false;
     }
 
@@ -630,6 +630,22 @@
             return prop.getInstance(_this);
           };
         })(this));
+      },
+      setProperties: function(data, options) {
+        var key, prop, val;
+        if (options == null) {
+          options = {};
+        }
+        for (key in data) {
+          val = data[key];
+          if (((options.whitelist == null) || options.whitelist.indexOf(key) !== -1) && ((options.blacklist == null) || options.blacklist.indexOf(key) === -1)) {
+            prop = this.getPropertyInstance(key);
+            if (prop != null) {
+              prop.set(val);
+            }
+          }
+        }
+        return this;
       },
       destroyProperties: function() {
         this.getInstantiatedProperties().forEach((function(_this) {
