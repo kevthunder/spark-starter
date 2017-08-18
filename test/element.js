@@ -379,6 +379,131 @@
       res = obj.destroyProperties();
       return assert.equal(calls, 1);
     });
+    it('can mass assign properties', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          a: {
+            "default": 0
+          },
+          b: {
+            "default": 0
+          },
+          c: {
+            "default": 0
+          },
+          d: {
+            "default": 0
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.a, 0);
+      assert.equal(obj.b, 0);
+      assert.equal(obj.c, 0);
+      assert.equal(obj.d, 0);
+      obj.setProperties({
+        a: 1,
+        b: 2,
+        c: 3,
+        f: 8
+      });
+      assert.equal(obj.a, 1);
+      assert.equal(obj.b, 2);
+      assert.equal(obj.c, 3);
+      return assert.equal(obj.d, 0);
+    });
+    it('can mass assign properties with whitelist', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          a: {
+            "default": 0
+          },
+          b: {
+            "default": 0
+          },
+          c: {
+            "default": 0
+          },
+          d: {
+            "default": 0
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.a, 0);
+      assert.equal(obj.b, 0);
+      assert.equal(obj.c, 0);
+      assert.equal(obj.d, 0);
+      obj.setProperties({
+        a: 1,
+        b: 2,
+        c: 3
+      }, {
+        whitelist: ['a', 'b']
+      });
+      assert.equal(obj.a, 1);
+      assert.equal(obj.b, 2);
+      assert.equal(obj.c, 0);
+      return assert.equal(obj.d, 0);
+    });
+    it('can mass assign properties with blacklist', function() {
+      var TestClass, obj;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {}
+
+        TestClass.properties({
+          a: {
+            "default": 0
+          },
+          b: {
+            "default": 0
+          },
+          c: {
+            "default": 0
+          },
+          d: {
+            "default": 0
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.a, 0);
+      assert.equal(obj.b, 0);
+      assert.equal(obj.c, 0);
+      assert.equal(obj.d, 0);
+      obj.setProperties({
+        a: 1,
+        b: 2,
+        c: 3
+      }, {
+        blacklist: ['c']
+      });
+      assert.equal(obj.a, 1);
+      assert.equal(obj.b, 2);
+      assert.equal(obj.c, 0);
+      return assert.equal(obj.d, 0);
+    });
     it('return self when calling tap', function() {
       var TestClass, obj, res;
       TestClass = (function(superClass) {

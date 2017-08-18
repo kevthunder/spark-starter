@@ -98,6 +98,13 @@ class Property
       .map (prop)=>
         prop.getInstance(this)
 
+    setProperties: (data, options = {})->
+      for key,val of data
+        if (!options.whitelist? or options.whitelist.indexOf(key) != -1) and (!options.blacklist? or options.blacklist.indexOf(key) == -1)
+          prop = @getPropertyInstance(key)
+          if prop?
+            prop.set(val)
+        
     destroyProperties: ->
       @getInstantiatedProperties().forEach (prop)=>
         prop.destroy()

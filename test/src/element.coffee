@@ -234,6 +234,76 @@ describe 'Element', ->
     res = obj.destroyProperties()
     assert.equal calls, 1
     
+  it 'can mass assign properties', ->
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          a:
+            default: 0
+          b:
+            default: 0
+          c:
+            default: 0
+          d:
+            default: 0
+    obj = new TestClass();
+    assert.equal obj.a, 0
+    assert.equal obj.b, 0
+    assert.equal obj.c, 0
+    assert.equal obj.d, 0
+    obj.setProperties(a:1,b:2,c:3,f:8)
+    assert.equal obj.a, 1
+    assert.equal obj.b, 2
+    assert.equal obj.c, 3
+    assert.equal obj.d, 0
+    
+  it 'can mass assign properties with whitelist', ->
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          a:
+            default: 0
+          b:
+            default: 0
+          c:
+            default: 0
+          d:
+            default: 0
+    obj = new TestClass();
+    assert.equal obj.a, 0
+    assert.equal obj.b, 0
+    assert.equal obj.c, 0
+    assert.equal obj.d, 0
+    obj.setProperties({a:1,b:2,c:3},{whitelist:['a','b']})
+    assert.equal obj.a, 1
+    assert.equal obj.b, 2
+    assert.equal obj.c, 0
+    assert.equal obj.d, 0
+    
+  it 'can mass assign properties with blacklist', ->
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          a:
+            default: 0
+          b:
+            default: 0
+          c:
+            default: 0
+          d:
+            default: 0
+    obj = new TestClass();
+    assert.equal obj.a, 0
+    assert.equal obj.b, 0
+    assert.equal obj.c, 0
+    assert.equal obj.d, 0
+    obj.setProperties({a:1,b:2,c:3},{blacklist:['c']})
+    assert.equal obj.a, 1
+    assert.equal obj.b, 2
+    assert.equal obj.c, 0
+    assert.equal obj.d, 0
+  
+    
   it 'return self when calling tap', ->
     class TestClass extends Element
     obj = new TestClass();
