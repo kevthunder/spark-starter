@@ -9,7 +9,7 @@ class PropertyInstance
   constructor: (@property, @obj) ->
     @value = @ingest(@property.options.default)
     @calculated = false
-    
+    @initiated = false
   get: ->
     if @property.options.get == false
       undefined
@@ -17,7 +17,11 @@ class PropertyInstance
       @callOptionFunct("get")
     else
       if !@calculated
+        old = @value
+        initiated = @initiated
         @calcul()
+        if initiated && @value != old
+          @changed(old)
       @output()
   
   set: (val)->
@@ -37,10 +41,7 @@ class PropertyInstance
     if @calculated
       @calculated = false
       if @isImmediate()
-        old = @value
         @get()
-        if @value != old
-          @changed(old)
       else if @invalidator?
         @invalidator.unbind()
 
@@ -68,6 +69,7 @@ class PropertyInstance
         else
           invalidator.bind()
     @calculated = true
+    @initiated = true
     @value
     
   isACollection: (val)->
@@ -108,12 +110,14 @@ class PropertyInstance
   isImmediate: ->
     @property.options.immediate != false and
     (
-      @property.options.immediate == true or 
-      (
-        typeof @obj.getListeners == 'function' and
-        @obj.getListeners(@property.getChangeEventName()).length > 0
-      ) or
-      typeof @property.options.change == 'function'
+      @property.options.immediate == true or
+        if typeof @property.options.immediate == 'function' then @callOptionFunct("immediate")
+        else
+          (
+            typeof @obj.getListeners == 'function' and
+            @obj.getListeners(@property.getChangeEventName()).length > 0
+          ) or
+          typeof @property.options.change == 'function'
     )
     
     

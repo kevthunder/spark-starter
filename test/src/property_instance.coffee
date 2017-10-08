@@ -122,6 +122,32 @@ describe 'PropertyInstance', ->
     assert.equal callcount, 2
     assert.equal prop.value, 3
     assert.equal prop.calculated, true
+
+  it 'can use a function to determine immediate re-calcul', ->
+    callcount = 0
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: (invalidated)->
+        callcount += 1
+        3
+      immediate: ->
+        true
+    }),{});
+    
+    assert.equal callcount, 0
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    prop.get()
+    assert.equal callcount, 1
+    assert.equal prop.value, 3
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal callcount, 2
+    assert.equal prop.value, 3
+    assert.equal prop.calculated, true
+    prop.get()
+    assert.equal callcount, 2
+    assert.equal prop.value, 3
+    assert.equal prop.calculated, true
     
     
   it 'should re-calcul immediately if the change option is defined', ->
@@ -150,6 +176,40 @@ describe 'PropertyInstance', ->
     assert.equal changeCalls, 1, "nb change calls"
     assert.equal prop.value, 5
     assert.equal prop.calculated, true
+    prop.get()
+    assert.equal calculCalls, 2, "nb calcul calls"
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop.value, 5
+    assert.equal prop.calculated, true
+
+  it 'should use immediate function in priority to change option being defined for immediate re-calcul', ->
+    calculCalls = 0
+    changeCalls = 0
+    val = 3
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: (invalidated)->
+        calculCalls += 1
+        val += 1
+      change: (old)->
+        changeCalls += 1
+      immediate: ->
+        false
+    }),{});
+    
+    assert.equal calculCalls, 0, "nb calcul calls"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    prop.get()
+    assert.equal calculCalls, 1, "nb calcul calls"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal calculCalls, 1, "nb calcul calls"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, false
     prop.get()
     assert.equal calculCalls, 2, "nb calcul calls"
     assert.equal changeCalls, 1, "nb change calls"

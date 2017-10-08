@@ -331,16 +331,23 @@
       this.obj = obj1;
       this.value = this.ingest(this.property.options["default"]);
       this.calculated = false;
+      this.initiated = false;
     }
 
     PropertyInstance.prototype.get = function() {
+      var initiated, old;
       if (this.property.options.get === false) {
         return void 0;
       } else if (typeof this.property.options.get === 'function') {
         return this.callOptionFunct("get");
       } else {
         if (!this.calculated) {
+          old = this.value;
+          initiated = this.initiated;
           this.calcul();
+          if (initiated && this.value !== old) {
+            this.changed(old);
+          }
         }
         return this.output();
       }
@@ -364,15 +371,10 @@
     };
 
     PropertyInstance.prototype.invalidate = function() {
-      var old;
       if (this.calculated) {
         this.calculated = false;
         if (this.isImmediate()) {
-          old = this.value;
-          this.get();
-          if (this.value !== old) {
-            return this.changed(old);
-          }
+          return this.get();
         } else if (this.invalidator != null) {
           return this.invalidator.unbind();
         }
@@ -421,6 +423,7 @@
         })(this));
       }
       this.calculated = true;
+      this.initiated = true;
       return this.value;
     };
 
@@ -472,7 +475,7 @@
     };
 
     PropertyInstance.prototype.isImmediate = function() {
-      return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0) || typeof this.property.options.change === 'function');
+      return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0) || typeof this.property.options.change === 'function'));
     };
 
     return PropertyInstance;
