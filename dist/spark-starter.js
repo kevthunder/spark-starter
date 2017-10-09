@@ -361,6 +361,8 @@
         this.callOptionFunct("set", val);
       } else {
         val = this.ingest(val);
+        this.calculated = true;
+        this.initiated = true;
         if (this.value !== val) {
           old = this.value;
           this.value = val;

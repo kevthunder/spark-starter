@@ -6,6 +6,28 @@ Collection = require('../lib/Collection')
 
 describe 'PropertyInstance', ->
   
+  it 'should not call calcul when using set', ->
+
+    calls = 0
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: ->
+        calls+=1
+        3
+    }),{});
+
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    prop.set(2)
+    assert.equal prop.value, 2
+    assert.equal calls, 0
+    assert.equal prop.calculated, true
+    res = prop.get()
+    assert.equal res, 2
+    assert.equal prop.value, 2
+    assert.equal calls, 0
+    assert.equal prop.calculated, true
+
+
   it 'should be able to invalidate a property', ->
   
     prop = new PropertyInstance(new Property('prop',{

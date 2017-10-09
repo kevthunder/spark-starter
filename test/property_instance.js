@@ -12,6 +12,27 @@
   Collection = require('../lib/Collection');
 
   describe('PropertyInstance', function() {
+    it('should not call calcul when using set', function() {
+      var calls, prop, res;
+      calls = 0;
+      prop = new PropertyInstance(new Property('prop', {
+        calcul: function() {
+          calls += 1;
+          return 3;
+        }
+      }), {});
+      assert.equal(prop.value, void 0);
+      assert.equal(prop.calculated, false);
+      prop.set(2);
+      assert.equal(prop.value, 2);
+      assert.equal(calls, 0);
+      assert.equal(prop.calculated, true);
+      res = prop.get();
+      assert.equal(res, 2);
+      assert.equal(prop.value, 2);
+      assert.equal(calls, 0);
+      return assert.equal(prop.calculated, true);
+    });
     it('should be able to invalidate a property', function() {
       var prop;
       prop = new PropertyInstance(new Property('prop', {

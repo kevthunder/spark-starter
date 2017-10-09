@@ -31,6 +31,8 @@ class PropertyInstance
       @callOptionFunct("set",val)
     else
       val = @ingest(val)
+      @calculated = true
+      @initiated = true
       if @value != val
         old = @value
         @value = val
