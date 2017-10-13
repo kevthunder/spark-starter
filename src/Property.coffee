@@ -75,6 +75,14 @@ class Property
     @options.changeEventName ||
       @name+'Changed'
       
+  getUpdateEventName: ()->
+    @options.changeEventName ||
+      @name+'Updated'
+      
+  getInvalidateEventName: ()->
+    @options.changeEventName ||
+      @name+'Invalidated'
+      
   @fn:
     getProperty: (name)->
       @_properties.find (prop)->

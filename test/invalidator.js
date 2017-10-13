@@ -6,6 +6,8 @@
   Invalidator = require('../lib/Invalidator');
 
   describe('Invalidator', function() {
+    var propEvents;
+    propEvents = ['testInvalidated', 'testUpdated'];
     it('should create a bind with invalidationEvent', function() {
       var emitter, invalidated, invalidator;
       invalidated = {
@@ -36,7 +38,7 @@
       return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
     });
     it('should create a bind with invalidatedProperty', function() {
-      var emitter, invalidated, invalidator, res;
+      var emitter, i, invalidated, invalidator, j, len, propEvent, res, results;
       invalidated = {
         test: 1
       };
@@ -47,13 +49,22 @@
       assert.equal(invalidator.invalidationEvents.length, 0);
       res = invalidator.prop('test', emitter);
       assert.equal(res, 2);
-      assert.equal(invalidator.invalidationEvents.length, 1);
-      assert.equal(invalidator.invalidationEvents[0].event, 'testChanged');
-      assert.equal(invalidator.invalidationEvents[0].target, emitter);
-      return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
+      assert.equal(invalidator.invalidationEvents.length, propEvents.length);
+      results = [];
+      for (i = j = 0, len = propEvents.length; j < len; i = ++j) {
+        propEvent = propEvents[i];
+        assert.equal(invalidator.invalidationEvents[i].event, propEvent);
+        assert.equal(invalidator.invalidationEvents[i].target, emitter);
+        if (invalidator.invalidationEvents[i].event === 'testUpdated') {
+          results.push(assert.equal(invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback));
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
     });
     it('should create a bind with invalidatedProperty with implicit target', function() {
-      var invalidated, invalidator, res;
+      var i, invalidated, invalidator, j, len, propEvent, res, results;
       invalidated = {
         test: 1
       };
@@ -61,10 +72,19 @@
       assert.equal(invalidator.invalidationEvents.length, 0);
       res = invalidator.prop('test');
       assert.equal(res, 1);
-      assert.equal(invalidator.invalidationEvents.length, 1);
-      assert.equal(invalidator.invalidationEvents[0].event, 'testChanged');
-      assert.equal(invalidator.invalidationEvents[0].target, invalidated);
-      return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
+      assert.equal(invalidator.invalidationEvents.length, propEvents.length);
+      results = [];
+      for (i = j = 0, len = propEvents.length; j < len; i = ++j) {
+        propEvent = propEvents[i];
+        assert.equal(invalidator.invalidationEvents[i].event, propEvent);
+        assert.equal(invalidator.invalidationEvents[i].target, invalidated);
+        if (invalidator.invalidationEvents[i].event === 'testUpdated') {
+          results.push(assert.equal(invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback));
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
     });
     it('should remove old value with invalidate', function() {
       var invalidated, invalidator;
@@ -99,15 +119,17 @@
       calls = 0;
       emitter = {
         addListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(['testInvalidated', 'testUpdated'], evt);
+          if (evt === 'testUpdated') {
+            assert.equal(listener, invalidator.invalidateCallback);
+          }
           return calls += 1;
         }
       };
       res = invalidator.prop('test', emitter);
       assert.equal(calls, 0);
       invalidator.bind();
-      return assert.equal(calls, 1);
+      return assert.equal(calls, 2);
     });
     it('should remove listener on unbind', function() {
       var calls, emitter, invalidated, invalidator, res;
@@ -118,12 +140,16 @@
       calls = 0;
       emitter = {
         addListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          return assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(propEvents, evt);
+          if (evt === 'testUpdated') {
+            return assert.equal(listener, invalidator.invalidateCallback);
+          }
         },
         removeListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(propEvents, evt);
+          if (evt === 'testUpdated') {
+            assert.equal(listener, invalidator.invalidateCallback);
+          }
           return calls += 1;
         }
       };
@@ -131,7 +157,7 @@
       invalidator.bind();
       assert.equal(calls, 0);
       invalidator.unbind();
-      return assert.equal(calls, 1);
+      return assert.equal(calls, propEvents.length);
     });
     it('should remove old value when the listener is triggered', function() {
       var emitter, invalidated, invalidator, res;
@@ -170,15 +196,19 @@
       removeCalls = 0;
       emitter = {
         addListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(propEvents, evt);
+          if (evt === 'testUpdated') {
+            assert.equal(listener, invalidator.invalidateCallback);
+          }
           addCalls += 1;
           this.event = evt;
           return this.listener = listener;
         },
         removeListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(propEvents, evt);
+          if (evt === 'testUpdated') {
+            assert.equal(listener, invalidator.invalidateCallback);
+          }
           removeCalls += 1;
           this.event = null;
           return this.listener = null;
@@ -193,13 +223,13 @@
       assert.equal(addCalls, 0);
       assert.equal(removeCalls, 0);
       invalidator.bind();
-      assert.equal(addCalls, 1);
+      assert.equal(addCalls, propEvents.length);
       assert.equal(removeCalls, 0);
       invalidator.recycle(function(invalidator) {
         return invalidator.prop('test', emitter);
       });
       invalidator.bind();
-      assert.equal(addCalls, 1);
+      assert.equal(addCalls, propEvents.length);
       assert.equal(removeCalls, 0);
       assert.equal(invalidated.test, 1);
       emitter.emit();
@@ -215,15 +245,19 @@
       removeCalls = 0;
       emitter = {
         addListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(propEvents, evt);
+          if (evt === 'testUpdated') {
+            assert.equal(listener, invalidator.invalidateCallback);
+          }
           addCalls += 1;
           this.event = evt;
           return this.listener = listener;
         },
         removeListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
-          assert.equal(listener, invalidator.invalidateCallback);
+          assert.include(propEvents, evt);
+          if (evt === 'testUpdated') {
+            assert.equal(listener, invalidator.invalidateCallback);
+          }
           removeCalls += 1;
           this.event = null;
           return this.listener = null;
@@ -238,14 +272,14 @@
       assert.equal(addCalls, 0);
       assert.equal(removeCalls, 0);
       invalidator.bind();
-      assert.equal(addCalls, 1);
+      assert.equal(addCalls, propEvents.length);
       assert.equal(removeCalls, 0);
       invalidator.recycle(function(invalidator) {
         return null;
       });
       invalidator.bind();
-      assert.equal(addCalls, 1);
-      assert.equal(removeCalls, 1);
+      assert.equal(addCalls, propEvents.length);
+      assert.equal(removeCalls, propEvents.length);
       assert.equal(invalidated.test, 1);
       emitter.emit();
       return assert.equal(invalidated.test, 1);

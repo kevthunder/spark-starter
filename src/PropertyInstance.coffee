@@ -16,6 +16,8 @@ class PropertyInstance
     else if typeof @property.options.get == 'function'
       @callOptionFunct("get")
     else
+      if @invalidator
+        @invalidator.validateUnknowns()
       if !@calculated
         old = @value
         initiated = @initiated
@@ -46,6 +48,8 @@ class PropertyInstance
         @get()
       else if @invalidator?
         @invalidator.unbind()
+        if typeof @obj.emitEvent == 'function'
+          @obj.emitEvent(@property.getInvalidateEventName())
 
   destroy: ->
     if @invalidator?
@@ -107,6 +111,7 @@ class PropertyInstance
     if typeof @property.options.change == 'function'
       @callOptionFunct("change", old)
     if typeof @obj.emitEvent == 'function'
+      @obj.emitEvent(@property.getUpdateEventName(), [old])
       @obj.emitEvent(@property.getChangeEventName(), [old])
         
   isImmediate: ->

@@ -2,6 +2,9 @@ assert = require('chai').assert
 Invalidator = require('../lib/Invalidator')
 
 describe 'Invalidator', ->
+
+  propEvents = ['testInvalidated','testUpdated']
+
   it 'should create a bind with invalidationEvent', ->
     invalidated = {
       test: 1
@@ -49,10 +52,12 @@ describe 'Invalidator', ->
     res = invalidator.prop('test',emitter)
     
     assert.equal res, 2
-    assert.equal invalidator.invalidationEvents.length, 1
-    assert.equal invalidator.invalidationEvents[0].event, 'testChanged'
-    assert.equal invalidator.invalidationEvents[0].target, emitter
-    assert.equal invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback
+    assert.equal invalidator.invalidationEvents.length, propEvents.length
+    for propEvent, i in propEvents
+      assert.equal invalidator.invalidationEvents[i].event, propEvent
+      assert.equal invalidator.invalidationEvents[i].target, emitter
+      if invalidator.invalidationEvents[i].event == 'testUpdated'
+        assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
     
   it 'should create a bind with invalidatedProperty with implicit target', ->
     invalidated = {
@@ -65,10 +70,12 @@ describe 'Invalidator', ->
     res = invalidator.prop('test')
     
     assert.equal res, 1
-    assert.equal invalidator.invalidationEvents.length, 1
-    assert.equal invalidator.invalidationEvents[0].event, 'testChanged'
-    assert.equal invalidator.invalidationEvents[0].target, invalidated
-    assert.equal invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback
+    assert.equal invalidator.invalidationEvents.length, propEvents.length
+    for propEvent, i in propEvents
+      assert.equal invalidator.invalidationEvents[i].event, propEvent
+      assert.equal invalidator.invalidationEvents[i].target, invalidated
+      if invalidator.invalidationEvents[i].event == 'testUpdated'
+        assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
     
   it 'should remove old value with invalidate', ->
     invalidated = {
@@ -102,8 +109,9 @@ describe 'Invalidator', ->
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include ['testInvalidated','testUpdated'], evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
         calls += 1
     }
     res = invalidator.prop('test',emitter)
@@ -111,7 +119,7 @@ describe 'Invalidator', ->
     
     assert.equal calls, 0
     invalidator.bind()
-    assert.equal calls, 1
+    assert.equal calls, 2
     
     
   it 'should remove listener on unbind', ->
@@ -123,11 +131,13 @@ describe 'Invalidator', ->
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include propEvents, evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
       removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include propEvents, evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
         calls += 1
     }
     res = invalidator.prop('test',emitter)
@@ -136,7 +146,7 @@ describe 'Invalidator', ->
     invalidator.bind()
     assert.equal calls, 0
     invalidator.unbind()
-    assert.equal calls, 1
+    assert.equal calls, propEvents.length
     
     
   it 'should remove old value when the listener is triggered', ->
@@ -172,14 +182,16 @@ describe 'Invalidator', ->
     removeCalls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include propEvents, evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
         addCalls += 1
         @event = evt
         @listener = listener
       removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include propEvents, evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
         removeCalls += 1
         @event = null
         @listener = null
@@ -192,13 +204,13 @@ describe 'Invalidator', ->
     assert.equal addCalls, 0
     assert.equal removeCalls, 0
     invalidator.bind()
-    assert.equal addCalls, 1
+    assert.equal addCalls, propEvents.length
     assert.equal removeCalls, 0
     invalidator.recycle (invalidator)->
       invalidator.prop('test',emitter)
     
     invalidator.bind()
-    assert.equal addCalls, 1
+    assert.equal addCalls, propEvents.length
     assert.equal removeCalls, 0
     
     assert.equal invalidated.test, 1
@@ -215,14 +227,16 @@ describe 'Invalidator', ->
     removeCalls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include propEvents, evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
         addCalls += 1
         @event = evt
         @listener = listener
       removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
-        assert.equal listener, invalidator.invalidateCallback
+        assert.include propEvents, evt
+        if evt == 'testUpdated'
+          assert.equal listener, invalidator.invalidateCallback
         removeCalls += 1
         @event = null
         @listener = null
@@ -235,14 +249,14 @@ describe 'Invalidator', ->
     assert.equal addCalls, 0
     assert.equal removeCalls, 0
     invalidator.bind()
-    assert.equal addCalls, 1
+    assert.equal addCalls, propEvents.length
     assert.equal removeCalls, 0
     invalidator.recycle (invalidator)->
       null
     
     invalidator.bind()
-    assert.equal addCalls, 1
-    assert.equal removeCalls, 1
+    assert.equal addCalls, propEvents.length
+    assert.equal removeCalls, propEvents.length
     
     assert.equal invalidated.test, 1
     emitter.emit();

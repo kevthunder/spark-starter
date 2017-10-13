@@ -16,6 +16,8 @@ class Invalidator
   constructor: (@property, @obj = null) ->
     @invalidationEvents = []
     @recycled = []
+    @unknowns = []
+    @unknownCallbacks = []
     @invalidateCallback = => 
       @invalidate()
       null
@@ -29,22 +31,39 @@ class Invalidator
         @obj[functName]()
       else
         @obj[@property] = null
-      
-  event: (event, target = @obj) ->
+        
+  addEventBind: (event, target, callback) ->
     unless @invalidationEvents.some( (eventBind)-> eventBind.match(event,target))
       @invalidationEvents.push(
         pluck(@recycled, (eventBind)-> 
           eventBind.match(event,target)
         ) or
-        new EventBind(event, target, @invalidateCallback)
-      )  
+        new EventBind(event, target, callback)
+      )
+      
+  getUnknownCallback: (prop, target) ->
+    => 
+      unless @unknowns.some( (unknown)-> 
+        unknown.prop == prop && unknown.target == target
+      )
+        @unknowns.push({"prop": prop, "target": target})
+      
+  event: (event, target = @obj) ->
+    @addEventBind(event, target, @invalidateCallback)
   
   value: (val, event, target = @obj) ->
     @event(event, target)
     val
   
   prop: (prop, target = @obj) ->
-    @value(target[prop], prop+'Changed', target)
+    @addEventBind(prop+'Invalidated', target, @getUnknownCallback(prop,target))
+    @value(target[prop], prop+'Updated', target)
+    
+  validateUnknowns: (prop, target = @obj) ->
+    unknowns = @unknowns
+    @unknowns = []
+    unknowns.forEach (unknown)->
+      unknown.target[unknown.prop]
     
   isEmpty: ->
     @invalidationEvents.length == 0
