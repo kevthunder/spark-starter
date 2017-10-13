@@ -5,6 +5,9 @@ Invalidator = require('../lib/Invalidator')
 Collection = require('../lib/Collection')
 
 describe 'PropertyInstance', ->
+
+  propEvents = ['testInvalidated','testUpdated']
+  updateEvents = ['propChanged','propUpdated']
   
   it 'should not call calcul when using set', ->
 
@@ -268,9 +271,9 @@ describe 'PropertyInstance', ->
   it 'keeps properties invalidators', ->
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
+        assert.include propEvents, evt
       removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
+        assert.include propEvents, evt
       test: 4
     }
     prop = new PropertyInstance(new Property('prop',{
@@ -284,9 +287,9 @@ describe 'PropertyInstance', ->
   it 'allow implicit target for invalidators', ->
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
+        assert.include propEvents, evt
       removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
+        assert.include propEvents, evt
       test: 4
     }
     prop = new PropertyInstance(new Property('prop',{
@@ -375,8 +378,8 @@ describe 'PropertyInstance', ->
     
   it 'should trigger change event when collection changed', ->
     emitter = {
-      emitEvent: (event,params)->
-        assert.equal event, 'propChanged'
+      emitEvent: (evt,params)->
+        assert.include updateEvents, evt
         @callcount += 1
       callcount: 0
     }
@@ -389,7 +392,7 @@ describe 'PropertyInstance', ->
     assert.equal emitter.callcount, 0
     res.set(2,4)
     assert.equal res.toString(), '1,2,4'
-    assert.equal emitter.callcount, 1
+    assert.equal emitter.callcount, updateEvents.length
     
   it 'can add method to a collection', ->
     prop = new PropertyInstance(new Property('prop',{

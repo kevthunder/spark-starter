@@ -8,6 +8,9 @@
   Element = require('../lib/Element');
 
   describe('Element', function() {
+    var invalidateEvents, updateEvents;
+    invalidateEvents = ['propInvalidated'];
+    updateEvents = ['propChanged', 'propUpdated'];
     it('should get property', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
@@ -115,7 +118,7 @@
         });
 
         TestClass.prototype.emitEvent = function(event, params) {
-          assert.equal(event, 'propChanged');
+          assert.include(updateEvents, event);
           assert.equal(params[0], 1);
           return this.callcount += 1;
         };
@@ -127,7 +130,7 @@
       assert.equal(obj.callcount, 0);
       obj.prop = 7;
       assert.equal(obj.prop, 7);
-      return assert.equal(obj.callcount, 1);
+      return assert.equal(obj.callcount, updateEvents.length);
     });
     it('allow access to old and new value in change function', function() {
       var TestClass, obj;
@@ -206,7 +209,7 @@
       obj.getProp();
       return assert.equal(obj.callcount, 1);
     });
-    it('should emit event when a property is invalidated and is changed', function() {
+    it('should emit changed event when a property is invalidated and is changed', function() {
       var TestClass, lastValue, obj;
       lastValue = 0;
       TestClass = (function(superClass) {
@@ -224,12 +227,16 @@
           }
         });
 
-        TestClass.prototype.getListeners = function() {
-          return [{}];
+        TestClass.prototype.getListeners = function(event) {
+          if (event === 'propChanged') {
+            return [{}];
+          } else {
+            return [];
+          }
         };
 
         TestClass.prototype.emitEvent = function(event, params) {
-          assert.equal(event, 'propChanged');
+          assert.include(updateEvents, event);
           assert.equal(params[0], lastValue - 1);
           return this.callcount += 1;
         };
@@ -242,6 +249,47 @@
       obj.getProp();
       assert.equal(obj.callcount, 0);
       obj.invalidateProp();
+      return assert.equal(obj.callcount, updateEvents.length);
+    });
+    it('should not calcul when a property is invalidated with update event', function() {
+      var TestClass, lastValue, obj;
+      lastValue = 0;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          this.callcount = 0;
+        }
+
+        TestClass.properties({
+          prop: {
+            calcul: function() {
+              return this.callcount += 1;
+            }
+          }
+        });
+
+        TestClass.prototype.getListeners = function(event) {
+          if (event === 'propUpdated') {
+            return [{}];
+          } else {
+            return [];
+          }
+        };
+
+        TestClass.prototype.emitEvent = function(event, params) {
+          return assert.include(invalidateEvents, event);
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.callcount, 0);
+      obj.getProp();
+      assert.equal(obj.callcount, 1);
+      obj.invalidateProp();
+      assert.isFalse(obj.getPropertyInstance('prop').isImmediate());
       return assert.equal(obj.callcount, 1);
     });
     it('get ready to emit an event when a property is invalidated by an event', function() {
@@ -290,7 +338,7 @@
         });
 
         TestClass.prototype.emitEvent = function(event, params) {
-          assert.equal(event, 'propChanged');
+          assert.include(updateEvents, event);
           assert.equal(params[0], lastValue - 1);
           return this.callcount += 1;
         };
@@ -306,7 +354,7 @@
       assert.equal(obj.calculed, 1, 'calculed');
       assert.equal(obj.callcount, 0);
       emitter.emit();
-      return assert.equal(obj.callcount, 1, 'event emmited');
+      return assert.equal(obj.callcount, updateEvents.length, 'event emmited');
     });
     it('should not emit event when a property is invalidated and is not changed', function() {
       var TestClass, obj;
@@ -346,14 +394,15 @@
       return assert.equal(obj.callcount, 0);
     });
     it('have a method to unbind all invalidators', function() {
-      var TestClass, calls, emitter, obj, res;
+      var TestClass, calls, emitter, obj, propEvents, res;
+      propEvents = ['testInvalidated', 'testUpdated'];
       calls = 0;
       emitter = {
         addListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
+          return assert.include(propEvents, evt);
         },
         removeListener: function(evt, listener) {
-          assert.equal(evt, 'testChanged');
+          assert.include(propEvents, evt);
           return calls += 1;
         },
         test: 4
@@ -377,7 +426,7 @@
       obj = new TestClass();
       obj.getProp();
       res = obj.destroyProperties();
-      return assert.equal(calls, 1);
+      return assert.equal(calls, propEvents.length);
     });
     it('can mass assign properties', function() {
       var TestClass, obj;

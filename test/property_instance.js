@@ -12,6 +12,9 @@
   Collection = require('../lib/Collection');
 
   describe('PropertyInstance', function() {
+    var propEvents, updateEvents;
+    propEvents = ['testInvalidated', 'testUpdated'];
+    updateEvents = ['propChanged', 'propUpdated'];
     it('should not call calcul when using set', function() {
       var calls, prop, res;
       calls = 0;
@@ -298,10 +301,10 @@
       var emitter, prop;
       emitter = {
         addListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
+          return assert.include(propEvents, evt);
         },
         removeListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
+          return assert.include(propEvents, evt);
         },
         test: 4
       };
@@ -317,10 +320,10 @@
       var emitter, prop, res;
       emitter = {
         addListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
+          return assert.include(propEvents, evt);
         },
         removeListener: function(evt, listener) {
-          return assert.equal(evt, 'testChanged');
+          return assert.include(propEvents, evt);
         },
         test: 4
       };
@@ -412,8 +415,8 @@
     it('should trigger change event when collection changed', function() {
       var emitter, prop, res;
       emitter = {
-        emitEvent: function(event, params) {
-          assert.equal(event, 'propChanged');
+        emitEvent: function(evt, params) {
+          assert.include(updateEvents, evt);
           return this.callcount += 1;
         },
         callcount: 0
@@ -426,7 +429,7 @@
       assert.equal(emitter.callcount, 0);
       res.set(2, 4);
       assert.equal(res.toString(), '1,2,4');
-      return assert.equal(emitter.callcount, 1);
+      return assert.equal(emitter.callcount, updateEvents.length);
     });
     it('can add method to a collection', function() {
       var prop, res;

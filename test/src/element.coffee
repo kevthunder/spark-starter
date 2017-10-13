@@ -3,6 +3,9 @@ Element = require('../lib/Element')
 
 describe 'Element', ->
   
+  invalidateEvents = ['propInvalidated']
+  updateEvents = ['propChanged','propUpdated']
+
   it 'should get property', ->
     class TestClass extends Element
         constructor: () ->
@@ -69,7 +72,7 @@ describe 'Element', ->
           prop: 
             default: 1
         emitEvent: (event,params)->
-          assert.equal event, 'propChanged'
+          assert.include updateEvents, event
           assert.equal params[0], 1
           @callcount += 1
     obj = new TestClass();
@@ -77,7 +80,7 @@ describe 'Element', ->
     assert.equal obj.callcount, 0
     obj.prop = 7
     assert.equal obj.prop, 7
-    assert.equal obj.callcount, 1
+    assert.equal obj.callcount, updateEvents.length
     
   it 'allow access to old and new value in change function', ->
     class TestClass extends Element
@@ -124,7 +127,7 @@ describe 'Element', ->
     obj.getProp()
     assert.equal obj.callcount, 1
     
-  it 'should emit event when a property is invalidated and is changed', ->
+  it 'should emit changed event when a property is invalidated and is changed', ->
     lastValue = 0
     class TestClass extends Element
         constructor: () ->
@@ -133,10 +136,13 @@ describe 'Element', ->
           prop: 
             calcul: ->
                lastValue += 1
-        getListeners: -> 
-          [{}]
+        getListeners: (event)-> 
+          if event == 'propChanged'
+            [{}]
+          else
+            []
         emitEvent: (event,params)->
-          assert.equal event, 'propChanged'
+          assert.include updateEvents, event
           assert.equal params[0], lastValue-1
           @callcount += 1
     obj = new TestClass();
@@ -144,6 +150,30 @@ describe 'Element', ->
     assert.equal obj.callcount, 0
     obj.getProp()
     assert.equal obj.callcount, 0
+    obj.invalidateProp()
+    assert.equal obj.callcount, updateEvents.length
+    
+  it 'should not calcul when a property is invalidated with update event', ->
+    lastValue = 0
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+              @callcount += 1
+        getListeners: (event)-> 
+          if event == 'propUpdated'
+            [{}]
+          else
+            []
+        emitEvent: (event,params)->
+          assert.include invalidateEvents, event
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    obj.getProp()
+    assert.equal obj.callcount, 1
     obj.invalidateProp()
     assert.equal obj.callcount, 1
     
@@ -176,7 +206,7 @@ describe 'Element', ->
               @calculed += 1
               lastValue += 1
         emitEvent: (event,params)->
-          assert.equal event, 'propChanged'
+          assert.include updateEvents, event
           assert.equal params[0], lastValue-1
           @callcount += 1
     obj = new TestClass();
@@ -188,7 +218,7 @@ describe 'Element', ->
     assert.equal obj.calculed, 1, 'calculed'
     assert.equal obj.callcount, 0
     emitter.emit()
-    assert.equal obj.callcount, 1, 'event emmited'
+    assert.equal obj.callcount, updateEvents.length, 'event emmited'
     
   it 'should not emit event when a property is invalidated and is not changed', ->
     class TestClass extends Element
@@ -213,12 +243,13 @@ describe 'Element', ->
     assert.equal obj.callcount, 0
     
   it 'have a method to unbind all invalidators', ->
+    propEvents = ['testInvalidated','testUpdated']
     calls = 0
     emitter = {
       addListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
+        assert.include propEvents, evt
       removeListener: (evt, listener) ->
-        assert.equal evt, 'testChanged'
+        assert.include propEvents, evt
         calls += 1
       test: 4
     }
@@ -232,7 +263,7 @@ describe 'Element', ->
     
     obj.getProp()
     res = obj.destroyProperties()
-    assert.equal calls, 1
+    assert.equal calls, propEvents.length
     
   it 'can mass assign properties', ->
     class TestClass extends Element

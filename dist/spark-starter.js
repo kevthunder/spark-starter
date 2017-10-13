@@ -81,6 +81,8 @@
       this.obj = obj1 != null ? obj1 : null;
       this.invalidationEvents = [];
       this.recycled = [];
+      this.unknowns = [];
+      this.unknownCallbacks = [];
       this.invalidateCallback = (function(_this) {
         return function() {
           _this.invalidate();
@@ -103,17 +105,36 @@
       }
     };
 
-    Invalidator.prototype.event = function(event, target) {
-      if (target == null) {
-        target = this.obj;
-      }
+    Invalidator.prototype.addEventBind = function(event, target, callback) {
       if (!this.invalidationEvents.some(function(eventBind) {
         return eventBind.match(event, target);
       })) {
         return this.invalidationEvents.push(pluck(this.recycled, function(eventBind) {
           return eventBind.match(event, target);
-        }) || new EventBind(event, target, this.invalidateCallback));
+        }) || new EventBind(event, target, callback));
       }
+    };
+
+    Invalidator.prototype.getUnknownCallback = function(prop, target) {
+      return (function(_this) {
+        return function() {
+          if (!_this.unknowns.some(function(unknown) {
+            return unknown.prop === prop && unknown.target === target;
+          })) {
+            return _this.unknowns.push({
+              "prop": prop,
+              "target": target
+            });
+          }
+        };
+      })(this);
+    };
+
+    Invalidator.prototype.event = function(event, target) {
+      if (target == null) {
+        target = this.obj;
+      }
+      return this.addEventBind(event, target, this.invalidateCallback);
     };
 
     Invalidator.prototype.value = function(val, event, target) {
@@ -128,7 +149,20 @@
       if (target == null) {
         target = this.obj;
       }
-      return this.value(target[prop], prop + 'Changed', target);
+      this.addEventBind(prop + 'Invalidated', target, this.getUnknownCallback(prop, target));
+      return this.value(target[prop], prop + 'Updated', target);
+    };
+
+    Invalidator.prototype.validateUnknowns = function(prop, target) {
+      var unknowns;
+      if (target == null) {
+        target = this.obj;
+      }
+      unknowns = this.unknowns;
+      this.unknowns = [];
+      return unknowns.forEach(function(unknown) {
+        return unknown.target[unknown.prop];
+      });
     };
 
     Invalidator.prototype.isEmpty = function() {
@@ -341,6 +375,9 @@
       } else if (typeof this.property.options.get === 'function') {
         return this.callOptionFunct("get");
       } else {
+        if (this.invalidator) {
+          this.invalidator.validateUnknowns();
+        }
         if (!this.calculated) {
           old = this.value;
           initiated = this.initiated;
@@ -378,7 +415,10 @@
         if (this.isImmediate()) {
           return this.get();
         } else if (this.invalidator != null) {
-          return this.invalidator.unbind();
+          this.invalidator.unbind();
+          if (typeof this.obj.emitEvent === 'function') {
+            return this.obj.emitEvent(this.property.getInvalidateEventName());
+          }
         }
       }
     };
@@ -472,6 +512,7 @@
         this.callOptionFunct("change", old);
       }
       if (typeof this.obj.emitEvent === 'function') {
+        this.obj.emitEvent(this.property.getUpdateEventName(), [old]);
         return this.obj.emitEvent(this.property.getChangeEventName(), [old]);
       }
     };
@@ -600,6 +641,14 @@
 
     Property.prototype.getChangeEventName = function() {
       return this.options.changeEventName || this.name + 'Changed';
+    };
+
+    Property.prototype.getUpdateEventName = function() {
+      return this.options.changeEventName || this.name + 'Updated';
+    };
+
+    Property.prototype.getInvalidateEventName = function() {
+      return this.options.changeEventName || this.name + 'Invalidated';
     };
 
     Property.fn = {
