@@ -1,5 +1,6 @@
 assert = require('chai').assert
 Invalidator = require('../lib/Invalidator')
+EventEmitter = require("wolfy87-eventemitter")
 
 describe 'Invalidator', ->
 
@@ -263,3 +264,87 @@ describe 'Invalidator', ->
     assert.equal invalidated.test, 1
   
   
+  it 'should store unknown values', ->
+    class Source extends EventEmitter
+      constructor: () ->
+        @test = 2
+    invalidated = {
+      test: 1
+    }
+    invalidator = new Invalidator('test', invalidated);
+    source = new Source()
+
+    assert.equal invalidator.unknowns.length, 0, "unknowns at beginning"
+
+    res = invalidator.prop('test',source)
+    invalidator.bind()
+
+    assert.equal res, 2
+    assert.equal invalidator.unknowns.length, 0, "unknowns after call prop"
+
+    source.emit('testInvalidated')
+
+    assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
+  
+  it 'should call unknown when there is a new unknown', ->
+    unknownCalls = 0
+    class Source extends EventEmitter
+      constructor: () ->
+        @test = 2
+    invalidated = {
+      test: 1
+    }
+    invalidator = new Invalidator('test', invalidated);
+    invalidator.unknown = ->
+      unknownCalls+=1
+    source = new Source()
+
+    assert.equal invalidator.unknowns.length, 0, "unknowns at beginning"
+    assert.equal unknownCalls, 0, "unknownCalls at beginning"
+
+    res = invalidator.prop('test',source)
+    invalidator.bind()
+
+    assert.equal res, 2
+    assert.equal invalidator.unknowns.length, 0, "unknowns after call prop"
+    assert.equal unknownCalls, 0, "unknownCalls after call prop"
+
+    source.emit('testInvalidated')
+
+    assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
+    assert.equal unknownCalls, 1, "unknownCalls after invalidation"
+  
+  it 'can validate unknowns', ->
+    class Source extends EventEmitter
+      constructor: () ->
+        @getCalls = 0
+        Object.defineProperty this, 'test', {
+          get: ->
+            @getCalls+=1
+            2
+        }
+    invalidated = {
+      test: 1
+    }
+    invalidator = new Invalidator('test', invalidated);
+    source = new Source()
+
+    assert.equal invalidator.unknowns.length, 0, "unknowns at beginning"
+    assert.equal source.getCalls, 0, "getCalls at beginning"
+
+    res = invalidator.prop('test',source)
+    invalidator.bind()
+
+    assert.equal res, 2
+    assert.equal invalidator.unknowns.length, 0, "unknowns after call prop"
+    assert.equal source.getCalls, 1, "getCalls after call prop"
+
+    source.emit('testInvalidated')
+
+    assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
+    assert.equal source.getCalls, 1, "getCalls after invalidation"
+
+    invalidator.validateUnknowns()
+
+    assert.equal invalidator.unknowns.length, 0, "unknowns after validating Unknowns"
+    assert.equal source.getCalls, 2, "getCalls validating Unknowns"

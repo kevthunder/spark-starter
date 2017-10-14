@@ -3,6 +3,7 @@ PropertyInstance = require('../lib/PropertyInstance')
 Property = require('../lib/Property')
 Invalidator = require('../lib/Invalidator')
 Collection = require('../lib/Collection')
+Updater = require('../lib/Updater')
 
 describe 'PropertyInstance', ->
 
@@ -240,6 +241,41 @@ describe 'PropertyInstance', ->
     assert.equal changeCalls, 1, "nb change calls"
     assert.equal prop.value, 5
     assert.equal prop.calculated, true
+
+  it 'should only recalcul when the updater tells it, if it is defined', ->
+    calculCalls = 0
+    changeCalls = 0
+    val = 3
+    updater = new Updater()
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: (invalidated)->
+        calculCalls += 1
+        val += 1
+      change: (old)->
+        changeCalls += 1
+      updater: updater
+    }),{});
+    
+    assert.equal calculCalls, 0, "nb calcul calls, before get"
+    assert.equal changeCalls, 0, "nb change calls, before get"
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    prop.get()
+    assert.equal calculCalls, 1, "nb calcul calls, after get"
+    assert.equal changeCalls, 0, "nb change calls, after get"
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal calculCalls, 1, "nb calcul calls, after invalidate"
+    assert.equal changeCalls, 0, "nb change calls, after invalidate"
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, false
+    updater.update()
+    assert.equal calculCalls, 2, "nb calcul calls, after update"
+    assert.equal changeCalls, 1, "nb change calls, after update"
+    assert.equal prop.value, 5
+    assert.equal prop.calculated, true
+
     
   it 'should re-calcul immediately if there is a listener on the change event', ->
     callcount = 0

@@ -1,5 +1,5 @@
 (function() {
-  var Collection, Invalidator, Property, PropertyInstance, assert;
+  var Collection, Invalidator, Property, PropertyInstance, Updater, assert;
 
   assert = require('chai').assert;
 
@@ -10,6 +10,8 @@
   Invalidator = require('../lib/Invalidator');
 
   Collection = require('../lib/Collection');
+
+  Updater = require('../lib/Updater');
 
   describe('PropertyInstance', function() {
     var propEvents, updateEvents;
@@ -265,6 +267,42 @@
       prop.get();
       assert.equal(calculCalls, 2, "nb calcul calls");
       assert.equal(changeCalls, 1, "nb change calls");
+      assert.equal(prop.value, 5);
+      return assert.equal(prop.calculated, true);
+    });
+    it('should only recalcul when the updater tells it, if it is defined', function() {
+      var calculCalls, changeCalls, prop, updater, val;
+      calculCalls = 0;
+      changeCalls = 0;
+      val = 3;
+      updater = new Updater();
+      prop = new PropertyInstance(new Property('prop', {
+        calcul: function(invalidated) {
+          calculCalls += 1;
+          return val += 1;
+        },
+        change: function(old) {
+          return changeCalls += 1;
+        },
+        updater: updater
+      }), {});
+      assert.equal(calculCalls, 0, "nb calcul calls, before get");
+      assert.equal(changeCalls, 0, "nb change calls, before get");
+      assert.equal(prop.value, void 0);
+      assert.equal(prop.calculated, false);
+      prop.get();
+      assert.equal(calculCalls, 1, "nb calcul calls, after get");
+      assert.equal(changeCalls, 0, "nb change calls, after get");
+      assert.equal(prop.value, 4);
+      assert.equal(prop.calculated, true);
+      prop.invalidate();
+      assert.equal(calculCalls, 1, "nb calcul calls, after invalidate");
+      assert.equal(changeCalls, 0, "nb change calls, after invalidate");
+      assert.equal(prop.value, 4);
+      assert.equal(prop.calculated, false);
+      updater.update();
+      assert.equal(calculCalls, 2, "nb calcul calls, after update");
+      assert.equal(changeCalls, 1, "nb change calls, after update");
       assert.equal(prop.value, 5);
       return assert.equal(prop.calculated, true);
     });

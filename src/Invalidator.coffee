@@ -17,7 +17,6 @@ class Invalidator
     @invalidationEvents = []
     @recycled = []
     @unknowns = []
-    @unknownCallbacks = []
     @invalidateCallback = => 
       @invalidate()
       null
@@ -31,6 +30,12 @@ class Invalidator
         @obj[functName]()
       else
         @obj[@property] = null
+
+  unknown: ->
+    if typeof @property.unknown == "function"
+      @property.unknown()
+    else
+      @invalidate()
         
   addEventBind: (event, target, callback) ->
     unless @invalidationEvents.some( (eventBind)-> eventBind.match(event,target))
@@ -47,6 +52,7 @@ class Invalidator
         unknown.prop == prop && unknown.target == target
       )
         @unknowns.push({"prop": prop, "target": target})
+        @unknown()
       
   event: (event, target = @obj) ->
     @addEventBind(event, target, @invalidateCallback)

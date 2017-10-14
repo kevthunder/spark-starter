@@ -1,5 +1,7 @@
 assert = require('chai').assert
 Element = require('../lib/Element')
+EventEmitter = require("wolfy87-eventemitter")
+
 
 describe 'Element', ->
   
@@ -413,3 +415,93 @@ describe 'Element', ->
     assert.equal obj.getProperty("prop"), newProp
     
             
+  it 'should propagate invalidation', ->
+    val = 1
+    class TestClass extends Element
+      @include EventEmitter.prototype
+      constructor: (@source) ->
+        @calculCount = 0
+      @properties
+        source: {}
+        forwarded:
+          calcul: (invalidator)->
+            @calculCount++
+            if invalidator.prop('source')?
+              invalidator.prop('forwarded',@source)
+            else
+              val
+
+    lvl1 = new TestClass()
+    lvl2 = new TestClass(lvl1)
+    lvl3 = new TestClass(lvl2)
+
+    assert.equal lvl1.calculCount, 0, "lvl1 calculCount beginning"
+    assert.equal lvl2.calculCount, 0, "lvl2 calculCount beginning"
+    assert.equal lvl3.calculCount, 0, "lvl3 calculCount beginning"
+
+    res = lvl3.getForwarded()
+
+    assert.equal res, 1, "result for get"
+    assert.equal lvl1.calculCount, 1, "lvl1 calculCount after get"
+    assert.equal lvl2.calculCount, 1, "lvl2 calculCount after get"
+    assert.equal lvl3.calculCount, 1, "lvl3 calculCount after get"
+
+    val+=1
+    lvl1.invalidateForwarded()
+
+    assert.equal lvl1.calculCount, 1, "lvl1 calculCount after invalidate"
+    assert.equal lvl2.calculCount, 1, "lvl2 calculCount after invalidate"
+    assert.equal lvl3.calculCount, 1, "lvl3 calculCount after invalidate"
+
+    res = lvl3.getForwarded()
+
+    assert.equal res, 2, "result for get 2"
+    assert.equal lvl1.calculCount, 2, "lvl1 calculCount after get 2"
+    assert.equal lvl2.calculCount, 2, "lvl2 calculCount after get 2"
+    assert.equal lvl3.calculCount, 2, "lvl3 calculCount after get 2"
+
+  it 'should not recalculate if no change while propagating', ->
+    val = 1
+    class TestClass extends Element
+      @include EventEmitter.prototype
+      constructor: (@source) ->
+        @calculCount = 0
+      @properties
+        source: {}
+        forwarded:
+          calcul: (invalidator)->
+            @calculCount++
+            if invalidator.prop('source')?
+              invalidator.prop('forwarded',@source)
+            else
+              val
+
+    lvl1 = new TestClass()
+    lvl2 = new TestClass(lvl1)
+    lvl3 = new TestClass(lvl2)
+
+    assert.equal lvl1.calculCount, 0, "lvl1 calculCount beginning"
+    assert.equal lvl2.calculCount, 0, "lvl2 calculCount beginning"
+    assert.equal lvl3.calculCount, 0, "lvl3 calculCount beginning"
+
+    res = lvl3.getForwarded()
+
+    assert.equal res, 1, "result for get"
+    assert.equal lvl1.calculCount, 1, "lvl1 calculCount after get"
+    assert.equal lvl2.calculCount, 1, "lvl2 calculCount after get"
+    assert.equal lvl3.calculCount, 1, "lvl3 calculCount after get"
+
+    lvl1.invalidateForwarded()
+
+    assert.equal lvl1.calculCount, 1, "lvl1 calculCount after invalidate"
+    assert.equal lvl2.calculCount, 1, "lvl2 calculCount after invalidate"
+    assert.equal lvl3.calculCount, 1, "lvl3 calculCount after invalidate"
+
+    lvl3.getForwarded()
+
+    assert.equal res, 1, "result for get 2"
+    assert.equal lvl1.calculCount, 2, "lvl1 calculCount after get 2"
+    assert.equal lvl2.calculCount, 1, "lvl2 calculCount after get 2"
+    assert.equal lvl3.calculCount, 1, "lvl3 calculCount after get 2"
+
+

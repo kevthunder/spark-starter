@@ -10,6 +10,8 @@ class PropertyInstance
     @value = @ingest(@property.options.default)
     @calculated = false
     @initiated = false
+    @revalidateCallback = =>
+      @get()
   get: ->
     if @property.options.get == false
       undefined
@@ -33,8 +35,7 @@ class PropertyInstance
       @callOptionFunct("set",val)
     else
       val = @ingest(val)
-      @calculated = true
-      @initiated = true
+      @revalidated()
       if @value != val
         old = @value
         @value = val
@@ -44,12 +45,27 @@ class PropertyInstance
   invalidate: ->
     if @calculated
       @calculated = false
-      if @isImmediate()
-        @get()
-      else if @invalidator?
-        @invalidator.unbind()
-        if typeof @obj.emitEvent == 'function'
-          @obj.emitEvent(@property.getInvalidateEventName())
+      if @_invalidateNotice()
+        if @invalidator?
+          @invalidator.unbind()
+    this
+
+  unknown: ->
+    if @calculated
+      @_invalidateNotice()
+    this
+
+  _invalidateNotice: ->
+    if @isImmediate()
+      @get()
+      false
+    else 
+      if typeof @obj.emitEvent == 'function'
+        @obj.emitEvent(@property.getInvalidateEventName())
+      if @getUpdater()?
+        @getUpdater().bind()
+      true
+
 
   destroy: ->
     if @invalidator?
@@ -74,9 +90,29 @@ class PropertyInstance
           @invalidator = null
         else
           invalidator.bind()
+    @revalidated()
+    @value
+
+  revalidated: ->
     @calculated = true
     @initiated = true
-    @value
+    if @getUpdater()?
+      @getUpdater().unbind()
+
+  getUpdater: ->
+    if typeof @updater == 'undefined'
+      if @property.options.updater?
+        @updater = @property.options.updater
+        if typeof @updater.getBinder == 'function'
+          @updater = @updater.getBinder()
+        if typeof @updater.bind != 'function' or typeof @updater.unbind != 'function'
+          console.error 'Invalid updater'
+          @updater = null
+        else
+          @updater.callback = @revalidateCallback
+      else
+        @updater = null
+    @updater
     
   isACollection: (val)->
     @property.options.collection?
@@ -120,11 +156,13 @@ class PropertyInstance
       @property.options.immediate == true or
         if typeof @property.options.immediate == 'function' then @callOptionFunct("immediate")
         else
-          (
-            typeof @obj.getListeners == 'function' and
-            @obj.getListeners(@property.getChangeEventName()).length > 0
-          ) or
-          typeof @property.options.change == 'function'
+          !@getUpdater()? and (
+            (
+              typeof @obj.getListeners == 'function' and
+              @obj.getListeners(@property.getChangeEventName()).length > 0
+            ) or
+            typeof @property.options.change == 'function'
+          )
     )
     
     

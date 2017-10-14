@@ -1,11 +1,13 @@
 (function() {
-  var Element, assert,
+  var Element, EventEmitter, assert,
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
   assert = require('chai').assert;
 
   Element = require('../lib/Element');
+
+  EventEmitter = require("wolfy87-eventemitter");
 
   describe('Element', function() {
     var invalidateEvents, updateEvents;
@@ -289,7 +291,6 @@
       obj.getProp();
       assert.equal(obj.callcount, 1);
       obj.invalidateProp();
-      assert.isFalse(obj.getPropertyInstance('prop').isImmediate());
       return assert.equal(obj.callcount, 1);
     });
     it('get ready to emit an event when a property is invalidated by an event', function() {
@@ -662,7 +663,7 @@
       assert.equal(obj.callcount1, 1, "original callcount");
       return assert.equal(obj.callcount2, 1, "new callcount");
     });
-    return it('return new Property when calling getProperty after an override', function() {
+    it('return new Property when calling getProperty after an override', function() {
       var TestClass, newProp, obj, oldProp;
       TestClass = (function(superClass) {
         extend(TestClass, superClass);
@@ -682,6 +683,109 @@
       });
       obj = new TestClass();
       return assert.equal(obj.getProperty("prop"), newProp);
+    });
+    it('should propagate invalidation', function() {
+      var TestClass, lvl1, lvl2, lvl3, res, val;
+      val = 1;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        TestClass.include(EventEmitter.prototype);
+
+        function TestClass(source) {
+          this.source = source;
+          this.calculCount = 0;
+        }
+
+        TestClass.properties({
+          source: {},
+          forwarded: {
+            calcul: function(invalidator) {
+              this.calculCount++;
+              if (invalidator.prop('source') != null) {
+                return invalidator.prop('forwarded', this.source);
+              } else {
+                return val;
+              }
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      lvl1 = new TestClass();
+      lvl2 = new TestClass(lvl1);
+      lvl3 = new TestClass(lvl2);
+      assert.equal(lvl1.calculCount, 0, "lvl1 calculCount beginning");
+      assert.equal(lvl2.calculCount, 0, "lvl2 calculCount beginning");
+      assert.equal(lvl3.calculCount, 0, "lvl3 calculCount beginning");
+      res = lvl3.getForwarded();
+      assert.equal(res, 1, "result for get");
+      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after get");
+      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get");
+      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get");
+      val += 1;
+      lvl1.invalidateForwarded();
+      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after invalidate");
+      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after invalidate");
+      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after invalidate");
+      res = lvl3.getForwarded();
+      assert.equal(res, 2, "result for get 2");
+      assert.equal(lvl1.calculCount, 2, "lvl1 calculCount after get 2");
+      assert.equal(lvl2.calculCount, 2, "lvl2 calculCount after get 2");
+      return assert.equal(lvl3.calculCount, 2, "lvl3 calculCount after get 2");
+    });
+    return it('should not recalculate if no change while propagating', function() {
+      var TestClass, lvl1, lvl2, lvl3, res, val;
+      val = 1;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        TestClass.include(EventEmitter.prototype);
+
+        function TestClass(source) {
+          this.source = source;
+          this.calculCount = 0;
+        }
+
+        TestClass.properties({
+          source: {},
+          forwarded: {
+            calcul: function(invalidator) {
+              this.calculCount++;
+              if (invalidator.prop('source') != null) {
+                return invalidator.prop('forwarded', this.source);
+              } else {
+                return val;
+              }
+            }
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      lvl1 = new TestClass();
+      lvl2 = new TestClass(lvl1);
+      lvl3 = new TestClass(lvl2);
+      assert.equal(lvl1.calculCount, 0, "lvl1 calculCount beginning");
+      assert.equal(lvl2.calculCount, 0, "lvl2 calculCount beginning");
+      assert.equal(lvl3.calculCount, 0, "lvl3 calculCount beginning");
+      res = lvl3.getForwarded();
+      assert.equal(res, 1, "result for get");
+      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after get");
+      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get");
+      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get");
+      lvl1.invalidateForwarded();
+      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after invalidate");
+      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after invalidate");
+      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after invalidate");
+      lvl3.getForwarded();
+      assert.equal(res, 1, "result for get 2");
+      assert.equal(lvl1.calculCount, 2, "lvl1 calculCount after get 2");
+      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get 2");
+      return assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get 2");
     });
   });
 

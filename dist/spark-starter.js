@@ -1,5 +1,5 @@
 (function() {
-  var Collection, Element, EventBind, Invalidator, Property, PropertyInstance, Spark, pluck,
+  var Collection, Element, EventBind, Invalidator, Property, PropertyInstance, Spark, Updater, pluck,
     slice = [].slice,
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty,
@@ -7,6 +7,67 @@
 
   if (typeof Spark === "undefined" || Spark === null) {
     Spark = {};
+  }
+
+  Updater = (function() {
+    function Updater() {
+      this.callbacks = [];
+    }
+
+    Updater.prototype.update = function() {
+      return this.callbacks.forEach(function(callback) {
+        return callback();
+      });
+    };
+
+    Updater.prototype.addCallback = function(callback) {
+      if (!this.callbacks.includes(callback)) {
+        return this.callbacks.push(callback);
+      }
+    };
+
+    Updater.prototype.removeCallback = function(callback) {
+      var index;
+      index = this.callbacks.indexOf(callback);
+      if (index !== -1) {
+        return this.callbacks.splice(index);
+      }
+    };
+
+    Updater.prototype.getBinder = function() {
+      return new Updater.Binder(this);
+    };
+
+    return Updater;
+
+  })();
+
+  Updater.Binder = (function() {
+    function Binder(target1) {
+      this.target = target1;
+      this.binded = false;
+    }
+
+    Binder.prototype.bind = function() {
+      if (!this.binded && (this.callback != null)) {
+        this.target.addCallback(this.callback);
+      }
+      return this.binded = true;
+    };
+
+    Binder.prototype.unbind = function() {
+      if (this.binded && (this.callback != null)) {
+        this.target.removeCallback(this.callback);
+      }
+      return this.binded = false;
+    };
+
+    return Binder;
+
+  })();
+
+  if (Spark != null) {
+    Spark.Updater = Updater;
   }
 
   EventBind = (function() {
@@ -82,7 +143,6 @@
       this.invalidationEvents = [];
       this.recycled = [];
       this.unknowns = [];
-      this.unknownCallbacks = [];
       this.invalidateCallback = (function(_this) {
         return function() {
           _this.invalidate();
@@ -105,6 +165,14 @@
       }
     };
 
+    Invalidator.prototype.unknown = function() {
+      if (typeof this.property.unknown === "function") {
+        return this.property.unknown();
+      } else {
+        return this.invalidate();
+      }
+    };
+
     Invalidator.prototype.addEventBind = function(event, target, callback) {
       if (!this.invalidationEvents.some(function(eventBind) {
         return eventBind.match(event, target);
@@ -121,10 +189,11 @@
           if (!_this.unknowns.some(function(unknown) {
             return unknown.prop === prop && unknown.target === target;
           })) {
-            return _this.unknowns.push({
+            _this.unknowns.push({
               "prop": prop,
               "target": target
             });
+            return _this.unknown();
           }
         };
       })(this);
@@ -366,6 +435,11 @@
       this.value = this.ingest(this.property.options["default"]);
       this.calculated = false;
       this.initiated = false;
+      this.revalidateCallback = (function(_this) {
+        return function() {
+          return _this.get();
+        };
+      })(this);
     }
 
     PropertyInstance.prototype.get = function() {
@@ -398,8 +472,7 @@
         this.callOptionFunct("set", val);
       } else {
         val = this.ingest(val);
-        this.calculated = true;
-        this.initiated = true;
+        this.revalidated();
         if (this.value !== val) {
           old = this.value;
           this.value = val;
@@ -412,14 +485,34 @@
     PropertyInstance.prototype.invalidate = function() {
       if (this.calculated) {
         this.calculated = false;
-        if (this.isImmediate()) {
-          return this.get();
-        } else if (this.invalidator != null) {
-          this.invalidator.unbind();
-          if (typeof this.obj.emitEvent === 'function') {
-            return this.obj.emitEvent(this.property.getInvalidateEventName());
+        if (this._invalidateNotice()) {
+          if (this.invalidator != null) {
+            this.invalidator.unbind();
           }
         }
+      }
+      return this;
+    };
+
+    PropertyInstance.prototype.unknown = function() {
+      if (this.calculated) {
+        this._invalidateNotice();
+      }
+      return this;
+    };
+
+    PropertyInstance.prototype._invalidateNotice = function() {
+      if (this.isImmediate()) {
+        this.get();
+        return false;
+      } else {
+        if (typeof this.obj.emitEvent === 'function') {
+          this.obj.emitEvent(this.property.getInvalidateEventName());
+        }
+        if (this.getUpdater() != null) {
+          this.getUpdater().bind();
+        }
+        return true;
       }
     };
 
@@ -464,9 +557,36 @@
           };
         })(this));
       }
+      this.revalidated();
+      return this.value;
+    };
+
+    PropertyInstance.prototype.revalidated = function() {
       this.calculated = true;
       this.initiated = true;
-      return this.value;
+      if (this.getUpdater() != null) {
+        return this.getUpdater().unbind();
+      }
+    };
+
+    PropertyInstance.prototype.getUpdater = function() {
+      if (typeof this.updater === 'undefined') {
+        if (this.property.options.updater != null) {
+          this.updater = this.property.options.updater;
+          if (typeof this.updater.getBinder === 'function') {
+            this.updater = this.updater.getBinder();
+          }
+          if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
+            console.error('Invalid updater');
+            this.updater = null;
+          } else {
+            this.updater.callback = this.revalidateCallback;
+          }
+        } else {
+          this.updater = null;
+        }
+      }
+      return this.updater;
     };
 
     PropertyInstance.prototype.isACollection = function(val) {
@@ -518,7 +638,7 @@
     };
 
     PropertyInstance.prototype.isImmediate = function() {
-      return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0) || typeof this.property.options.change === 'function'));
+      return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && ((typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0) || typeof this.property.options.change === 'function')));
     };
 
     return PropertyInstance;
