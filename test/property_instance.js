@@ -1,5 +1,5 @@
 (function() {
-  var Collection, Invalidator, Property, PropertyInstance, Updater, assert;
+  var Invalidator, Property, PropertyInstance, Updater, assert;
 
   assert = require('chai').assert;
 
@@ -8,8 +8,6 @@
   Property = require('../lib/Property');
 
   Invalidator = require('../lib/Invalidator');
-
-  Collection = require('../lib/Collection');
 
   Updater = require('../lib/Updater');
 
@@ -372,135 +370,6 @@
       }), emitter);
       res = prop.get();
       return assert.equal(res, 4);
-    });
-    it('should not edit original value of a collection property', function() {
-      var original, prop, res;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: true
-      }), {});
-      original = [1, 2, 3];
-      prop.set(original);
-      res = prop.get();
-      res.push(4);
-      assert.equal(res.toString(), '1,2,3,4');
-      assert.equal(prop.get().toString(), '1,2,3,4');
-      return assert.equal(original.toString(), '1,2,3');
-    });
-    it('should return collection when collection config is on', function() {
-      var prop, res;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: true,
-        "default": [1, 2, 3]
-      }), {});
-      res = prop.get();
-      assert.instanceOf(res, Collection);
-      return assert.equal(res.toString(), '1,2,3');
-    });
-    it('should not return collection when collection config is undefined', function() {
-      var prop, res;
-      prop = new PropertyInstance(new Property('prop', {
-        "default": 1
-      }), {});
-      assert.isFalse(prop.isACollection());
-      res = prop.get();
-      return assert.notInstanceOf(res, Collection);
-    });
-    it('can edit collection when no initial value', function() {
-      var prop;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: true
-      }), {});
-      assert.equal(prop.get().count(), 0);
-      prop.get().push(4);
-      assert.equal(prop.get().count(), 1);
-      return assert.equal(prop.get().toString(), '4');
-    });
-    it('should call change function when collection changed', function() {
-      var callcount, prop, res;
-      callcount = 0;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: true,
-        "default": [1, 2, 3],
-        change: function(old) {
-          assert.isArray(old);
-          return callcount += 1;
-        }
-      }), {});
-      res = prop.get();
-      assert.equal(callcount, 0);
-      assert.equal(res.count(), 3);
-      res.push(4);
-      assert.equal(res.count(), 4);
-      assert.equal(res.toString(), '1,2,3,4');
-      return assert.equal(callcount, 1);
-    });
-    it('should pass the old value of an uninitiated collection as an array', function() {
-      var callcount, prop;
-      callcount = 0;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: true,
-        change: function(old) {
-          assert.isArray(old);
-          return callcount += 1;
-        }
-      }), {});
-      assert.equal(callcount, 0);
-      prop.set(4);
-      assert.equal(prop.get().count(), 1);
-      assert.equal(prop.get().toString(), '4');
-      return assert.equal(callcount, 1);
-    });
-    it('should trigger change event when collection changed', function() {
-      var emitter, prop, res;
-      emitter = {
-        emitEvent: function(evt, params) {
-          assert.include(updateEvents, evt);
-          return this.callcount += 1;
-        },
-        callcount: 0
-      };
-      prop = new PropertyInstance(new Property('prop', {
-        collection: true,
-        "default": [1, 2, 3]
-      }), emitter);
-      res = prop.get();
-      assert.equal(emitter.callcount, 0);
-      res.set(2, 4);
-      assert.equal(res.toString(), '1,2,4');
-      return assert.equal(emitter.callcount, updateEvents.length);
-    });
-    it('can add method to a collection', function() {
-      var prop, res;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: {
-          test: function() {
-            return 'test';
-          }
-        },
-        "default": [1, 2, 3]
-      }), {});
-      res = prop.get();
-      assert.instanceOf(res, Collection);
-      return assert.equal(res.test(), 'test');
-    });
-    it('can foward method added to a collection', function() {
-      var prop, res;
-      prop = new PropertyInstance(new Property('prop', {
-        collection: {
-          test: function() {
-            return 'test';
-          }
-        },
-        "default": [1, 2, 3]
-      }), {});
-      res = prop.get();
-      assert.instanceOf(res, Collection);
-      assert.equal(res.test(), 'test');
-      res = res.filter(function() {
-        return true;
-      });
-      assert.instanceOf(res, Collection);
-      return assert.equal(res.test(), 'test');
     });
     return it('should allow to alter the input value', function() {
       var prop;

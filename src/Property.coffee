@@ -1,6 +1,10 @@
 #= require <PropertyInstance>
+#= require <ComposedProperty>
+#= require <CollectionProperty>
 #--- Standalone ---
 PropertyInstance = @Spark?.PropertyInstance or require('./PropertyInstance')
+CollectionProperty = @Spark?.CollectionProperty or require('./CollectionProperty')
+ComposedProperty = @Spark?.ComposedProperty or require('./ComposedProperty')
 #--- Standalone end ---
 
 class Property
@@ -68,8 +72,16 @@ class Property
   getInstance: (obj) ->
     varName = @getInstanceVarName()
     unless @isInstantiated(obj)
-      obj[varName] = new PropertyInstance(this,obj)
+      Type = @getInstanceType()
+      obj[varName] = new Type(this,obj)
     obj[varName]
+
+  getInstanceType: () ->
+    if @options.composed?
+      return ComposedProperty
+    if @options.collection?
+      return CollectionProperty
+    return PropertyInstance
     
   getChangeEventName: ()->
     @options.changeEventName ||

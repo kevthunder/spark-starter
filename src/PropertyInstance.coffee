@@ -1,17 +1,18 @@
 #= require <Invalidator>
-#= require <Collection>
 #--- Standalone ---
 Invalidator = @Spark?.Invalidator or require('./Invalidator')
-Collection = @Spark?.Invalidator or require('./Collection')
 #--- Standalone end ---
 
 class PropertyInstance
   constructor: (@property, @obj) ->
+    @init()
+  init: ->
     @value = @ingest(@property.options.default)
     @calculated = false
     @initiated = false
     @revalidateCallback = =>
       @get()
+
   get: ->
     if @property.options.get == false
       undefined
@@ -114,32 +115,15 @@ class PropertyInstance
         @updater = null
     @updater
     
-  isACollection: (val)->
-    @property.options.collection?
-    
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)
-    else if @isACollection()
-      if !val?
-        []
-      else if typeof val.toArray == 'function'
-        val.toArray()
-      else if Array.isArray(val)
-        val.slice()
-      else
-        [val]
     else
       val
   
   output: ->
     if typeof @property.options.output == 'function'
       @callOptionFunct("output", @value)
-    else if @isACollection()
-      prop = this
-      col = Collection.newSubClass(@property.options.collection, @value)
-      col.changed = (old)-> prop.changed(old)
-      col
     else
       @value
       

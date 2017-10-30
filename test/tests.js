@@ -9,6 +9,10 @@
 
   require('./property_instance');
 
+  require('./collection_property');
+
+  require('./composed_property');
+
   require('./element');
 
 }).call(this);
