@@ -10,7 +10,7 @@ class EventBind
       else if typeof @target.on == 'function'
         @target.on(@event, @callback)
       else
-        throw 'No function to add a event listener found'
+        throw new Error('No function to add event listeners was found')
     @binded = true
   unbind: ->
     if @binded 
@@ -21,7 +21,7 @@ class EventBind
       else if typeof @target.off == 'function'
         @target.off(@event, @callback)
       else
-        throw 'No function to remove a event listener found'
+        throw new Error('No function to remove event listeners was found')
     @binded = false
   equals: (eventBind) -> 
     eventBind.event    == @event    and

@@ -50,7 +50,7 @@
       };
       emitter = {};
       bind = new EventBind(testEvent, emitter, testListener);
-      return assert.throws(bind.bind.bind(bind), 'No function to add a event listener found');
+      return assert.throws(bind.bind.bind(bind), 'No function to add event listeners was found');
     });
     it('should add listener once', function() {
       var bind, calls, emitter, testEvent, testListener;

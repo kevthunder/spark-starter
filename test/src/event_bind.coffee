@@ -39,7 +39,7 @@ describe 'EventBind', ->
     }
     
     bind = new EventBind(testEvent,emitter,testListener);
-    assert.throws bind.bind.bind(bind), 'No function to add a event listener found'
+    assert.throws bind.bind.bind(bind), 'No function to add event listeners was found'
     
   it 'should add listener once', ->
     testEvent = 'test'

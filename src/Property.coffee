@@ -15,22 +15,7 @@ class Property
     prop = this
     if typeof target.getProperty == 'function' and (parent = target.getProperty(@name))?
       @override(parent)
-    maj = @name.charAt(0).toUpperCase() + @name.slice(1)
-    Object.defineProperty target, @name, {
-      configurable: true
-      get: ->
-        prop.getInstance(this).get()
-      set: (val)->
-        prop.getInstance(this).set(val)
-    }
-    target['get'+maj] = ->
-        prop.getInstance(this).get()
-    target['set'+maj] = (val)->
-        prop.getInstance(this).set(val)
-        this
-    target['invalidate'+maj] = ->
-        prop.getInstance(this).invalidate()
-        this
+    @getInstanceType().bind(target,prop)
     target._properties = (target._properties || []).concat([prop])
     if parent?
       target._properties = target._properties.filter (existing)->

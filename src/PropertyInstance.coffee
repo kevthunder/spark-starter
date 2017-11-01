@@ -148,6 +148,24 @@ class PropertyInstance
             typeof @property.options.change == 'function'
           )
     )
+
+  @bind = (target,prop)->
+    maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1)
+    Object.defineProperty target, prop.name, {
+      configurable: true
+      get: ->
+        prop.getInstance(this).get()
+      set: (val)->
+        prop.getInstance(this).set(val)
+    }
+    target['get'+maj] = ->
+        prop.getInstance(this).get()
+    target['set'+maj] = (val)->
+        prop.getInstance(this).set(val)
+        this
+    target['invalidate'+maj] = ->
+        prop.getInstance(this).invalidate()
+        this
     
     
     
