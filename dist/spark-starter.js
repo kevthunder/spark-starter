@@ -218,6 +218,9 @@
       if (target == null) {
         target = this.obj;
       }
+      if (typeof prop !== 'string') {
+        throw new Error('Property name must be a string');
+      }
       this.addEventBind(prop + 'Invalidated', target, this.getUnknownCallback(prop, target));
       return this.value(target[prop], prop + 'Updated', target);
     };

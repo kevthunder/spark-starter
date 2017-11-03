@@ -67,6 +67,19 @@
       }
       return results;
     });
+    it('throws an error when prop name is not a string', function() {
+      var emitter, invalidated, invalidator;
+      invalidated = {
+        test: 1
+      };
+      emitter = {
+        test: 2
+      };
+      invalidator = new Invalidator('test', invalidated);
+      return assert.throws(function() {
+        return invalidator.prop(emitter, 'test');
+      }, 'Property name must be a string');
+    });
     it('should create a bind with invalidatedProperty with implicit target', function() {
       var i, invalidated, invalidator, j, len, propEvent, res, results;
       invalidated = {

@@ -59,6 +59,19 @@ describe 'Invalidator', ->
       assert.equal invalidator.invalidationEvents[i].target, emitter
       if invalidator.invalidationEvents[i].event == 'testUpdated'
         assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
+
+  it 'throws an error when prop name is not a string', ->
+    invalidated = {
+      test: 1
+    }
+    emitter = {
+      test: 2
+    }
+    invalidator = new Invalidator('test', invalidated);
+
+    assert.throws ->
+        invalidator.prop(emitter,'test')
+      , 'Property name must be a string'
     
   it 'should create a bind with invalidatedProperty with implicit target', ->
     invalidated = {

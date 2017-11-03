@@ -62,6 +62,8 @@ class Invalidator
     val
   
   prop: (prop, target = @obj) ->
+    if typeof prop != 'string'
+      throw new Error('Property name must be a string')
     @addEventBind(prop+'Invalidated', target, @getUnknownCallback(prop,target))
     @value(target[prop], prop+'Updated', target)
     
