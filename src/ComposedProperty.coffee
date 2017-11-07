@@ -1,11 +1,6 @@
-#= require <PropertyInstance>
-#= require <Invalidator>
-#= require <Collection>
-#--- Standalone ---
-PropertyInstance = @Spark?.PropertyInstance or require('./PropertyInstance')
-Invalidator = @Spark?.Invalidator or require('./Invalidator')
-Collection = @Spark?.Collection or require('./Collection')
-#--- Standalone end ---
+PropertyInstance = require('./PropertyInstance')
+Invalidator = require('./Invalidator')
+Collection = require('./Collection')
 
 class ComposedProperty extends PropertyInstance
   init: ()->
@@ -76,15 +71,3 @@ class ComposedProperty.Members extends Collection
       old = @toArray()
       @_array.splice(index, 1)
       @changed(old)
-
-  
-if Spark?
-  Spark.ComposedProperty = ComposedProperty
-#--- Standalone ---
-if module?
-  module.exports = ComposedProperty
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.ComposedProperty = ComposedProperty
-#--- Standalone end ---

@@ -1,7 +1,4 @@
-#= require <Property>
-#--- Standalone ---
-Property = @Spark?.Property or require('./Property')
-#--- Standalone end ---
+Property = require('./Property')
 
 class Element
   @elementKeywords = ['extended', 'included']
@@ -43,15 +40,3 @@ class Element
   @properties: (properties) ->
     for prop, desc of properties
       @property prop, desc
-
-if Spark?
-  Spark.Element = Element
-#--- Standalone ---
-if module?
-  module.exports = Element
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.Element = Element
-#--- Standalone end ---
-  

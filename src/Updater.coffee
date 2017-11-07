@@ -25,14 +25,3 @@ class Updater.Binder
     if @binded and @callback?
       @target.removeCallback(@callback)
     @binded = false
-  
-if Spark?
-  Spark.Updater = Updater
-#--- Standalone ---
-if module?
-  module.exports = Updater
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.Updater = Updater
-#--- Standalone end ---

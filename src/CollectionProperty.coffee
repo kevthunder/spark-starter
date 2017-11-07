@@ -1,9 +1,5 @@
-#= require <PropertyInstance>
-#= require <Collection>
-#--- Standalone ---
-PropertyInstance = @Spark?.PropertyInstance or require('./PropertyInstance')
-Collection = @Spark?.Collection or require('./Collection')
-#--- Standalone end ---
+PropertyInstance = require('./PropertyInstance')
+Collection = require('./Collection')
 
 class CollectionProperty extends PropertyInstance
   ingest: (val)->
@@ -26,15 +22,3 @@ class CollectionProperty extends PropertyInstance
     col = Collection.newSubClass(@property.options.collection, value)
     col.changed = (old)-> prop.changed(old)
     col
-
-  
-if Spark?
-  Spark.CollectionProperty = CollectionProperty
-#--- Standalone ---
-if module?
-  module.exports = CollectionProperty
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.CollectionProperty = CollectionProperty
-#--- Standalone end ---

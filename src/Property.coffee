@@ -1,11 +1,6 @@
-#= require <PropertyInstance>
-#= require <ComposedProperty>
-#= require <CollectionProperty>
-#--- Standalone ---
-PropertyInstance = @Spark?.PropertyInstance or require('./PropertyInstance')
-CollectionProperty = @Spark?.CollectionProperty or require('./CollectionProperty')
-ComposedProperty = @Spark?.ComposedProperty or require('./ComposedProperty')
-#--- Standalone end ---
+PropertyInstance = require('./PropertyInstance')
+CollectionProperty = require('./CollectionProperty')
+ComposedProperty = require('./ComposedProperty')
 
 class Property
   constructor: (@name, @options = {}) ->
@@ -122,15 +117,3 @@ class Property
       @_properties.forEach (prop)=>
         if prop.getChangeEventName() == event
           prop.getInstance(this).get()
-          
-          
-if Spark?
-  Spark.Property = Property
-#--- Standalone ---
-if module?
-  module.exports = Property
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.Property = Property
-#--- Standalone end ---

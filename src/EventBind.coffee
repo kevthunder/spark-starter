@@ -30,13 +30,3 @@ class EventBind
   match: (event, target) -> 
     event    == @event    and
     target   == @target
-if Spark?
-  Spark.EventBind = EventBind
-#--- Standalone ---
-if module?
-  module.exports = EventBind
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.EventBind = EventBind
-#--- Standalone end ---

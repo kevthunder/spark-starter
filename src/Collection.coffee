@@ -80,14 +80,3 @@ class Collection
   getRemovedFrom: (arr) -> 
     arr.filter (item)=>
       !@includes(item)
-  
-if Spark?
-  Spark.Collection = Collection
-#--- Standalone ---
-if module?
-  module.exports = Collection
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.Collection = Collection
-#--- Standalone end ---

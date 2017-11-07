@@ -2,27 +2,21 @@ var gulp = require('gulp');
 var rename = require("gulp-rename");
 var coffee = require('gulp-coffee');
 var uglify = require('gulp-uglify');
-var concat = require('gulp-coffeescript-concat');
-var stripCode = require('gulp-strip-code');
+var concat = require('gulp-concat');
 var mocha = require('gulp-mocha');
+var wraper = require('spark-wraper');
 
 gulp.task('coffee', function() {
-  return gulp.src(['./src/*.coffee', '!./src/_*.coffee'])
-    .pipe(stripCode({
-      pattern: /#--- Concatened ---[\s\S]*?#--- Concatened end ---/g,
-    }))
+  return gulp.src(['./src/*.coffee'])
     .pipe(coffee({bare: true}))
+    .pipe(wraper({namespace:'Spark'}))
     .pipe(gulp.dest('./lib/'));
 });
 
 gulp.task('concat', function() {
-  return gulp.src([
-    './src/*.coffee'
-  ])
+  return gulp.src(['./src/*.coffee'])
+    .pipe(wraper.compose({namespace:'Spark'}))
     .pipe(concat('spark-starter.coffee'))
-    .pipe(stripCode({
-      pattern: /#--- Standalone ---[\s\S]*?#--- Standalone end ---/g,
-    }))
     .pipe(gulp.dest('./tmp/'));
 });
 

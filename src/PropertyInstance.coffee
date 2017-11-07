@@ -1,7 +1,4 @@
-#= require <Invalidator>
-#--- Standalone ---
-Invalidator = @Spark?.Invalidator or require('./Invalidator')
-#--- Standalone end ---
+Invalidator = require('./Invalidator')
 
 class PropertyInstance
   constructor: (@property, @obj) ->
@@ -166,17 +163,3 @@ class PropertyInstance
     target['invalidate'+maj] = ->
         prop.getInstance(this).invalidate()
         this
-    
-    
-    
-if Spark?
-  Spark.PropertyInstance = PropertyInstance
-#--- Standalone ---
-if module?
-  module.exports = PropertyInstance
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.PropertyInstance = PropertyInstance
-#--- Standalone end ---
-    

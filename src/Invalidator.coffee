@@ -1,7 +1,4 @@
-#= require <EventBind>
-#--- Standalone ---
-EventBind = @Spark?.EventBind || require('./EventBind')
-#--- Standalone end ---
+EventBind = require('./EventBind')
 
 pluck = (arr,fn) ->
   index = arr.findIndex(fn)
@@ -99,15 +96,3 @@ class Invalidator
   
   unbind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.unbind()
-    
-    
-if Spark?
-  Spark.Invalidator = Invalidator
-#--- Standalone ---
-if module?
-  module.exports = Invalidator
-else
-  unless @Spark?
-    @Spark = {}
-  @Spark.Invalidator = Invalidator
-#--- Standalone end ---
