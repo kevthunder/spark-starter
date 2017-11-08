@@ -15,4 +15,6 @@
 
   require('./element');
 
+  require('./concat');
+
 }).call(this);

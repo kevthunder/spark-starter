@@ -10,6 +10,7 @@ gulp.task('coffee', function() {
   return gulp.src(['./src/*.coffee'])
     .pipe(coffee({bare: true}))
     .pipe(wraper({namespace:'Spark'}))
+    .pipe(wraper.loader({namespace:'Spark'}))
     .pipe(gulp.dest('./lib/'));
 });
 
@@ -43,7 +44,7 @@ gulp.task('build', ['coffee', 'concatCoffee', 'compress'], function () {
     console.log('Build Complete');
 });
 
-gulp.task('test', ['coffee','coffeeTest'], function() {
+gulp.task('test', ['build','coffeeTest'], function() {
   return gulp.src('./test/tests.js')
     .pipe(mocha());
 });
