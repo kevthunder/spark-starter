@@ -4,19 +4,19 @@ var coffee = require('gulp-coffee');
 var uglify = require('gulp-uglify');
 var concat = require('gulp-concat');
 var mocha = require('gulp-mocha');
-var wraper = require('spark-wraper');
+var wrapper = require('spark-wrapper');
 
 gulp.task('coffee', function() {
   return gulp.src(['./src/*.coffee'])
     .pipe(coffee({bare: true}))
-    .pipe(wraper({namespace:'Spark'}))
-    .pipe(wraper.loader({namespace:'Spark'}))
+    .pipe(wrapper({namespace:'Spark'}))
+    .pipe(wrapper.loader({namespace:'Spark'}))
     .pipe(gulp.dest('./lib/'));
 });
 
 gulp.task('concat', function() {
   return gulp.src(['./src/*.coffee'])
-    .pipe(wraper.compose({namespace:'Spark'}))
+    .pipe(wrapper.compose({namespace:'Spark'}))
     .pipe(concat('spark-starter.coffee'))
     .pipe(gulp.dest('./tmp/'));
 });

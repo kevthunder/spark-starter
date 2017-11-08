@@ -23,6 +23,6 @@
     "gulp-uglify": "^2.0.1",
     "mocha": "^3.2.0",
     "wolfy87-eventemitter": "^5.2.3",
-    "spark-wraper": "kevthunder/spark-wraper#dev"
+    "spark-wrapper": "kevthunder/spark-wrapper#dev"
   }
 }
