@@ -5,7 +5,7 @@
     hasProp = {}.hasOwnProperty,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  Spark = {};
+  Spark = typeof module !== "undefined" && module !== null ? module.exports = {} : (this.Spark == null ? this.Spark = {} : void 0, this.Spark);
 
   (function(definition) {
     Spark.Collection = definition();
@@ -1145,11 +1145,5 @@
     })();
     return Updater;
   });
-
-  if (typeof module !== "undefined" && module !== null) {
-    module.exports = Spark;
-  } else {
-    this.Spark = Spark;
-  }
 
 }).call(this);

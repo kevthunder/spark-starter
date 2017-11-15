@@ -10,7 +10,7 @@ gulp.task('coffee', function() {
   return gulp.src(['./src/*.coffee'])
     .pipe(coffee({bare: true}))
     .pipe(wrapper({namespace:'Spark'}))
-    .pipe(wrapper.loader({namespace:'Spark'}))
+    .pipe(wrapper.loader({namespace:'Spark','filename':'spark-starter'}))
     .pipe(gulp.dest('./lib/'));
 });
 
