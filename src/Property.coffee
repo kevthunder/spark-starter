@@ -36,7 +36,7 @@ class Property
         target[name] = funct
       
   checkAfterAddListener: (target) ->
-    if typeof target.addListener == 'function' and typeof target.afterAddListener == 'undefined'
+    if typeof target.addListener == 'function' and typeof target.afterAddListener == 'undefined' and typeof target.addListener.overrided == 'undefined'
       target.afterAddListener = Property.optionalFn.afterAddListener
       overrided = target.addListener
       target.addListener = (evt, listener)-> 

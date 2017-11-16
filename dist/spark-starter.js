@@ -866,7 +866,7 @@
 
       Property.prototype.checkAfterAddListener = function(target) {
         var overrided;
-        if (typeof target.addListener === 'function' && typeof target.afterAddListener === 'undefined') {
+        if (typeof target.addListener === 'function' && typeof target.afterAddListener === 'undefined' && typeof target.addListener.overrided === 'undefined') {
           target.afterAddListener = Property.optionalFn.afterAddListener;
           overrided = target.addListener;
           target.addListener = function(evt, listener) {
