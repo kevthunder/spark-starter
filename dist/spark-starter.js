@@ -1006,7 +1006,7 @@
     Element = (function() {
       function Element() {}
 
-      Element.elementKeywords = ['extended', 'included'];
+      Element.elementKeywords = ['extended', 'included', '__super__'];
 
       Element.prototype.tap = function(name) {
         var args;
