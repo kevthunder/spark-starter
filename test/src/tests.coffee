@@ -5,6 +5,7 @@ require './invalidator'
 require './property_instance'
 require './collection_property'
 require './composed_property'
+require './property'
 require './element'
 
 require './concat'

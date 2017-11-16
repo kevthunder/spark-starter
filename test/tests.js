@@ -13,6 +13,8 @@
 
   require('./composed_property');
 
+  require('./property');
+
   require('./element');
 
   require('./concat');

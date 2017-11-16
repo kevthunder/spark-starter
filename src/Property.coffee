@@ -8,15 +8,16 @@ class Property
     
   bind: (target) ->
     prop = this
-    if typeof target.getProperty == 'function' and (parent = target.getProperty(@name))?
-      @override(parent)
-    @getInstanceType().bind(target,prop)
-    target._properties = (target._properties || []).concat([prop])
-    if parent?
-      target._properties = target._properties.filter (existing)->
-        existing != parent
-    @checkFunctions(target)
-    @checkAfterAddListener(target)
+    unless typeof target.getProperty == 'function' and target.getProperty(@name) == this
+      if typeof target.getProperty == 'function' and (parent = target.getProperty(@name))?
+        @override(parent)
+      @getInstanceType().bind(target,prop)
+      target._properties = (target._properties || []).concat([prop])
+      if parent?
+        target._properties = target._properties.filter (existing)->
+          existing != parent
+      @checkFunctions(target)
+      @checkAfterAddListener(target)
     prop
     
   override: (parent) ->
