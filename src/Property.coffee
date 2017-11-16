@@ -20,12 +20,13 @@ class Property
     prop
     
   override: (parent) ->
-    @options.parent = parent.options
-    for key, value of parent.options
-      if typeof @options[key] == 'function' and typeof value == 'function'
-        @options[key].overrided = value
-      else if typeof @options[key] == 'undefined'
-        @options[key] = value
+    unless @options.parent?
+      @options.parent = parent.options
+      for key, value of parent.options
+        if typeof @options[key] == 'function' and typeof value == 'function'
+          @options[key].overrided = value
+        else if typeof @options[key] == 'undefined'
+          @options[key] = value
     
   checkFunctions: (target) ->
     @checkAfterAddListener(target)

@@ -233,8 +233,8 @@
       }
     };
     Invalidator = (function() {
-      function Invalidator(property, obj1) {
-        this.property = property;
+      function Invalidator(property1, obj1) {
+        this.property = property1;
         this.obj = obj1 != null ? obj1 : null;
         this.invalidationEvents = [];
         this.recycled = [];
@@ -390,8 +390,8 @@
     }
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     PropertyInstance = (function() {
-      function PropertyInstance(property, obj1) {
-        this.property = property;
+      function PropertyInstance(property1, obj1) {
+        this.property = property1;
         this.obj = obj1;
         this.init();
       }
@@ -828,20 +828,22 @@
 
       Property.prototype.override = function(parent) {
         var key, ref, results, value;
-        this.options.parent = parent.options;
-        ref = parent.options;
-        results = [];
-        for (key in ref) {
-          value = ref[key];
-          if (typeof this.options[key] === 'function' && typeof value === 'function') {
-            results.push(this.options[key].overrided = value);
-          } else if (typeof this.options[key] === 'undefined') {
-            results.push(this.options[key] = value);
-          } else {
-            results.push(void 0);
+        if (this.options.parent == null) {
+          this.options.parent = parent.options;
+          ref = parent.options;
+          results = [];
+          for (key in ref) {
+            value = ref[key];
+            if (typeof this.options[key] === 'function' && typeof value === 'function') {
+              results.push(this.options[key].overrided = value);
+            } else if (typeof this.options[key] === 'undefined') {
+              results.push(this.options[key] = value);
+            } else {
+              results.push(void 0);
+            }
           }
+          return results;
         }
-        return results;
       };
 
       Property.prototype.checkFunctions = function(target) {
@@ -1043,6 +1045,9 @@
             this[key] = value;
           }
         }
+        if (obj.prototype != null) {
+          this.include(obj.prototype);
+        }
         if ((ref = obj.extended) != null) {
           ref.apply(this);
         }
@@ -1050,11 +1055,18 @@
       };
 
       Element.include = function(obj) {
-        var key, ref, value;
+        var j, key, len, property, ref, value;
         for (key in obj) {
           value = obj[key];
           if (indexOf.call(Element.elementKeywords, key) < 0) {
-            this.prototype[key] = value;
+            if (key === '_properties') {
+              for (j = 0, len = value.length; j < len; j++) {
+                property = value[j];
+                property.bind(this.prototype);
+              }
+            } else {
+              this.prototype[key] = value;
+            }
           }
         }
         if ((ref = obj.included) != null) {

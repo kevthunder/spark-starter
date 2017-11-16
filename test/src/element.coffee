@@ -1,5 +1,6 @@
 assert = require('chai').assert
 Element = require('../lib/Element')
+Property = require('../lib/Property')
 EventEmitter = require("wolfy87-eventemitter")
 
 
@@ -7,6 +8,46 @@ describe 'Element', ->
   
   invalidateEvents = ['propInvalidated']
   updateEvents = ['propChanged','propUpdated']
+
+
+  it 'can include functions from an object', ->
+    toInclude = {
+      foo: 'hello'
+    }
+    class TestClass extends Element
+      @include toInclude
+    obj = new TestClass();
+    assert.equal obj.foo, 'hello'
+
+  it 'can extend a third class', ->
+    class BaseClass extends Element
+      foo: -> 'hello'
+      @bar = -> 'hey'
+      
+    class TestClass extends Element
+      @extend BaseClass
+
+    assert.equal TestClass.bar(), 'hey'
+    obj = new TestClass();
+    assert.equal obj.foo(), 'hello'
+
+  it 'can extend a third class with properties', ->
+    class BaseClass extends Element
+      @properties
+        foo: 
+          default: 'hello'
+    class TestClass extends Element
+      @extend BaseClass
+      @properties
+        bar: 
+          default: 'hey'
+    obj = new TestClass();
+
+    assert.equal obj.foo, 'hello'
+    assert.equal obj.bar, 'hey'
+    assert.instanceOf obj.getProperty("foo"), Property
+    assert.instanceOf obj.getProperty("bar"), Property
+    
 
   it 'should get property', ->
     class TestClass extends Element

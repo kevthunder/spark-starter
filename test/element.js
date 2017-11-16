@@ -1,5 +1,5 @@
 (function() {
-  var Element, EventEmitter, assert,
+  var Element, EventEmitter, Property, assert,
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
@@ -7,12 +7,112 @@
 
   Element = require('../lib/Element');
 
+  Property = require('../lib/Property');
+
   EventEmitter = require("wolfy87-eventemitter");
 
   describe('Element', function() {
     var invalidateEvents, updateEvents;
     invalidateEvents = ['propInvalidated'];
     updateEvents = ['propChanged', 'propUpdated'];
+    it('can include functions from an object', function() {
+      var TestClass, obj, toInclude;
+      toInclude = {
+        foo: 'hello'
+      };
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.include(toInclude);
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      return assert.equal(obj.foo, 'hello');
+    });
+    it('can extend a third class', function() {
+      var BaseClass, TestClass, obj;
+      BaseClass = (function(superClass) {
+        extend(BaseClass, superClass);
+
+        function BaseClass() {
+          return BaseClass.__super__.constructor.apply(this, arguments);
+        }
+
+        BaseClass.prototype.foo = function() {
+          return 'hello';
+        };
+
+        BaseClass.bar = function() {
+          return 'hey';
+        };
+
+        return BaseClass;
+
+      })(Element);
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.extend(BaseClass);
+
+        return TestClass;
+
+      })(Element);
+      assert.equal(TestClass.bar(), 'hey');
+      obj = new TestClass();
+      return assert.equal(obj.foo(), 'hello');
+    });
+    it('can extend a third class with properties', function() {
+      var BaseClass, TestClass, obj;
+      BaseClass = (function(superClass) {
+        extend(BaseClass, superClass);
+
+        function BaseClass() {
+          return BaseClass.__super__.constructor.apply(this, arguments);
+        }
+
+        BaseClass.properties({
+          foo: {
+            "default": 'hello'
+          }
+        });
+
+        return BaseClass;
+
+      })(Element);
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.extend(BaseClass);
+
+        TestClass.properties({
+          bar: {
+            "default": 'hey'
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.foo, 'hello');
+      assert.equal(obj.bar, 'hey');
+      assert.instanceOf(obj.getProperty("foo"), Property);
+      return assert.instanceOf(obj.getProperty("bar"), Property);
+    });
     it('should get property', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {

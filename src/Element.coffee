@@ -24,13 +24,18 @@ class Element
   @extend: (obj) ->
     for key, value of obj when key not in Element.elementKeywords
       @[key] = value
+    if obj.prototype?
+      @include obj.prototype
     obj.extended?.apply(@)
     this
     
   @include: (obj) ->
     for key, value of obj when key not in Element.elementKeywords
-      # Assign properties to the prototype
-      @::[key] = value
+      if key == '_properties'
+        for property in value
+          property.bind(@.prototype)
+      else
+        @::[key] = value
     obj.included?.apply(@)
     this
     
