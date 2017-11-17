@@ -2,7 +2,7 @@ class Updater
   constructor: () ->
     @callbacks = []
   update: ->
-    @callbacks.forEach (callback)->
+    @callbacks.slice().forEach (callback)->
       callback()
   addCallback: (callback)->
     unless @callbacks.includes(callback)

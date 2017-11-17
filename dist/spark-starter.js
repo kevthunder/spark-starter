@@ -1108,7 +1108,7 @@
       }
 
       Updater.prototype.update = function() {
-        return this.callbacks.forEach(function(callback) {
+        return this.callbacks.slice().forEach(function(callback) {
           return callback();
         });
       };

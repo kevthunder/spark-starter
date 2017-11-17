@@ -47,6 +47,28 @@ describe 'Updater', ->
     updater.update()
     assert.equal calls, 1
 
+  it 'allow callback to remove themselves', ->
+    updater = new Updater()
+    callback = ->
+      callback.calls++
+      updater.removeCallback(callback)
+    callback.calls = 0
+    calls2 = 0
+    callback2 = ->
+      callback2.calls++
+      updater.removeCallback(callback2)
+    callback2.calls = 0
+    assert.equal updater.callbacks.length, 0
+    updater.addCallback(callback)
+    updater.addCallback(callback2)
+    assert.equal updater.callbacks.length, 2
+    assert.equal callback.calls, 0
+    assert.equal callback2.calls, 0
+    updater.update()
+    assert.equal callback.calls, 1
+    assert.equal callback2.calls, 1
+    assert.equal updater.callbacks.length, 0
+
 describe 'Updater.Binder', ->
   it 'adds the callback with bind', ->
     updater = new Updater()

@@ -51,7 +51,7 @@
       updater.removeCallback(callback2);
       return assert.equal(updater.callbacks.length, 0);
     });
-    return it('call callback on update', function() {
+    it('call callback on update', function() {
       var callback, calls, updater;
       updater = new Updater();
       calls = 0;
@@ -62,6 +62,31 @@
       assert.equal(calls, 0);
       updater.update();
       return assert.equal(calls, 1);
+    });
+    return it('allow callback to remove themselves', function() {
+      var callback, callback2, calls2, updater;
+      updater = new Updater();
+      callback = function() {
+        callback.calls++;
+        return updater.removeCallback(callback);
+      };
+      callback.calls = 0;
+      calls2 = 0;
+      callback2 = function() {
+        callback2.calls++;
+        return updater.removeCallback(callback2);
+      };
+      callback2.calls = 0;
+      assert.equal(updater.callbacks.length, 0);
+      updater.addCallback(callback);
+      updater.addCallback(callback2);
+      assert.equal(updater.callbacks.length, 2);
+      assert.equal(callback.calls, 0);
+      assert.equal(callback2.calls, 0);
+      updater.update();
+      assert.equal(callback.calls, 1);
+      assert.equal(callback2.calls, 1);
+      return assert.equal(updater.callbacks.length, 0);
     });
   });
 
