@@ -30,7 +30,6 @@ describe 'PropertyInstance', ->
     assert.equal calls, 0
     assert.equal prop.calculated, true
 
-
   it 'should be able to invalidate a property', ->
   
     prop = new PropertyInstance(new Property('prop',{
@@ -302,7 +301,7 @@ describe 'PropertyInstance', ->
     assert.equal callcount, 2
     assert.equal prop.value, 3
     assert.equal prop.calculated, true
-    
+
   it 'keeps properties invalidators', ->
     emitter = {
       addListener: (evt, listener) ->

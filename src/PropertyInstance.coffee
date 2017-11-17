@@ -18,13 +18,17 @@ class PropertyInstance
     else
       if @invalidator
         @invalidator.validateUnknowns()
-      if !@calculated
-        old = @value
-        initiated = @initiated
-        @calcul()
-        if initiated && @value != old
-          @changed(old)
-      @output()
+      if @isActive()
+        if !@calculated
+          old = @value
+          initiated = @initiated
+          @calcul()
+          if initiated && @value != old
+            @changed(old)
+        @output()
+      else
+        @initiated = true
+        undefined
   
   set: (val)->
     if @property.options.set == false
@@ -41,7 +45,7 @@ class PropertyInstance
     this
   
   invalidate: ->
-    if @calculated
+    if @calculated || @active == false
       @calculated = false
       if @_invalidateNotice()
         if @invalidator?
@@ -49,7 +53,7 @@ class PropertyInstance
     this
 
   unknown: ->
-    if @calculated
+    if @calculated || @active == false
       @_invalidateNotice()
     this
 
@@ -76,6 +80,25 @@ class PropertyInstance
       args.push (args...) => 
         @callOptionFunct funct.overrided, args...
     funct.apply(@obj,args)
+
+  isActive: ->
+    if typeof @property.options.active == "boolean"
+      @property.options.active
+    else if typeof @property.options.active == 'function'
+      invalidator = @activeInvalidator || new Invalidator(this, @obj)
+      invalidator.recycle (invalidator,done)=> 
+        @active = @callOptionFunct("active", invalidator)
+        done()
+        if @active || invalidator.isEmpty()
+          invalidator.unbind()
+          @activeInvalidator = null
+        else
+          @invalidator = invalidator
+          @activeInvalidator = invalidator
+          invalidator.bind()
+      @active
+    else
+      true
 
   calcul: ->
     if typeof @property.options.calcul == 'function'
@@ -125,11 +148,12 @@ class PropertyInstance
       @value
       
   changed: (old)->
-    if typeof @property.options.change == 'function'
-      @callOptionFunct("change", old)
-    if typeof @obj.emitEvent == 'function'
-      @obj.emitEvent(@property.getUpdateEventName(), [old])
-      @obj.emitEvent(@property.getChangeEventName(), [old])
+    if @isActive()
+      if typeof @property.options.change == 'function'
+        @callOptionFunct("change", old)
+      if typeof @obj.emitEvent == 'function'
+        @obj.emitEvent(@property.getUpdateEventName(), [old])
+        @obj.emitEvent(@property.getChangeEventName(), [old])
         
   isImmediate: ->
     @property.options.immediate != false and

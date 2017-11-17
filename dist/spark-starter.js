@@ -417,15 +417,20 @@
           if (this.invalidator) {
             this.invalidator.validateUnknowns();
           }
-          if (!this.calculated) {
-            old = this.value;
-            initiated = this.initiated;
-            this.calcul();
-            if (initiated && this.value !== old) {
-              this.changed(old);
+          if (this.isActive()) {
+            if (!this.calculated) {
+              old = this.value;
+              initiated = this.initiated;
+              this.calcul();
+              if (initiated && this.value !== old) {
+                this.changed(old);
+              }
             }
+            return this.output();
+          } else {
+            this.initiated = true;
+            return void 0;
           }
-          return this.output();
         }
       };
 
@@ -448,7 +453,7 @@
       };
 
       PropertyInstance.prototype.invalidate = function() {
-        if (this.calculated) {
+        if (this.calculated || this.active === false) {
           this.calculated = false;
           if (this._invalidateNotice()) {
             if (this.invalidator != null) {
@@ -460,7 +465,7 @@
       };
 
       PropertyInstance.prototype.unknown = function() {
-        if (this.calculated) {
+        if (this.calculated || this.active === false) {
           this._invalidateNotice();
         }
         return this;
@@ -503,6 +508,32 @@
           })(this));
         }
         return funct.apply(this.obj, args);
+      };
+
+      PropertyInstance.prototype.isActive = function() {
+        var invalidator;
+        if (typeof this.property.options.active === "boolean") {
+          return this.property.options.active;
+        } else if (typeof this.property.options.active === 'function') {
+          invalidator = this.activeInvalidator || new Invalidator(this, this.obj);
+          invalidator.recycle((function(_this) {
+            return function(invalidator, done) {
+              _this.active = _this.callOptionFunct("active", invalidator);
+              done();
+              if (_this.active || invalidator.isEmpty()) {
+                invalidator.unbind();
+                return _this.activeInvalidator = null;
+              } else {
+                _this.invalidator = invalidator;
+                _this.activeInvalidator = invalidator;
+                return invalidator.bind();
+              }
+            };
+          })(this));
+          return this.active;
+        } else {
+          return true;
+        }
       };
 
       PropertyInstance.prototype.calcul = function() {
@@ -571,12 +602,14 @@
       };
 
       PropertyInstance.prototype.changed = function(old) {
-        if (typeof this.property.options.change === 'function') {
-          this.callOptionFunct("change", old);
-        }
-        if (typeof this.obj.emitEvent === 'function') {
-          this.obj.emitEvent(this.property.getUpdateEventName(), [old]);
-          return this.obj.emitEvent(this.property.getChangeEventName(), [old]);
+        if (this.isActive()) {
+          if (typeof this.property.options.change === 'function') {
+            this.callOptionFunct("change", old);
+          }
+          if (typeof this.obj.emitEvent === 'function') {
+            this.obj.emitEvent(this.property.getUpdateEventName(), [old]);
+            return this.obj.emitEvent(this.property.getChangeEventName(), [old]);
+          }
         }
       };
 
