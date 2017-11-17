@@ -1123,7 +1123,7 @@
         var index;
         index = this.callbacks.indexOf(callback);
         if (index !== -1) {
-          return this.callbacks.splice(index);
+          return this.callbacks.splice(index, 1);
         }
       };
 

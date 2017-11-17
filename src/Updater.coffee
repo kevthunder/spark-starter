@@ -10,7 +10,7 @@ class Updater
   removeCallback: (callback)->
     index = @callbacks.indexOf(callback)
     if index != -1
-      @callbacks.splice(index)
+      @callbacks.splice(index,1)
   getBinder: ->
     new Updater.Binder(this)
   
