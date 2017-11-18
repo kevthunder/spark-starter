@@ -321,6 +321,18 @@
         return this.value(target[prop], prop + 'Updated', target);
       };
 
+      Invalidator.prototype.propInitiated = function(prop, target) {
+        var initiated;
+        if (target == null) {
+          target = this.obj;
+        }
+        initiated = target.getPropertyInstance(prop).initiated;
+        if (!initiated) {
+          this.event(prop + 'Updated', target);
+        }
+        return initiated;
+      };
+
       Invalidator.prototype.validateUnknowns = function(prop, target) {
         var unknowns;
         if (target == null) {
@@ -399,7 +411,7 @@
       PropertyInstance.prototype.init = function() {
         this.value = this.ingest(this.property.options["default"]);
         this.calculated = false;
-        this.initiated = false;
+        this.initiated = typeof this.property.options["default"] !== 'undefined';
         return this.revalidateCallback = (function(_this) {
           return function() {
             return _this.get();
@@ -422,8 +434,12 @@
               old = this.value;
               initiated = this.initiated;
               this.calcul();
-              if (initiated && this.value !== old) {
-                this.changed(old);
+              if (this.value !== old) {
+                if (initiated) {
+                  this.changed(old);
+                } else if (typeof this.obj.emitEvent === 'function') {
+                  this.obj.emitEvent(this.property.getUpdateEventName(), [old]);
+                }
               }
             }
             return this.output();
@@ -573,7 +589,6 @@
               this.updater = this.updater.getBinder();
             }
             if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
-              console.error('Invalid updater');
               this.updater = null;
             } else {
               this.updater.callback = this.revalidateCallback;

@@ -127,22 +127,23 @@ describe 'Element', ->
           else
             []
         emitEvent: (event,params)->
-          assert.include updateEvents, event
-          assert.equal params[0], lastValue-1
-          @callcount += 1
+          if event == 'propChanged'
+            assert.equal params[0], lastValue-1
+            @callcount += 1
     obj = new TestClass();
     
     assert.equal obj.callcount, 0
     obj.getProp()
     assert.equal obj.callcount, 0
     obj.invalidateProp()
-    assert.equal obj.callcount, updateEvents.length
+    assert.equal obj.callcount, 1
     
   it 'should not calcul when a property is invalidated with update event', ->
     lastValue = 0
     class TestClass extends Element
         constructor: () ->
           @callcount = 0
+          @eventCount = 0
         @properties
           prop: 
             calcul: ->
@@ -153,14 +154,41 @@ describe 'Element', ->
           else
             []
         emitEvent: (event,params)->
-          assert.include invalidateEvents, event
+          if event == 'propInvalidated'
+              @eventCount += 1
+
+    obj = new TestClass();
+    
+    assert.equal obj.callcount, 0
+    assert.equal obj.eventCount, 0
+    obj.getProp()
+    assert.equal obj.callcount, 1
+    assert.equal obj.eventCount, 0
+    obj.invalidateProp()
+    assert.equal obj.callcount, 1
+    assert.equal obj.eventCount, 1
+    
+  it 'should not emit change event when a property is invalidated and is not changed', ->
+    class TestClass extends Element
+        constructor: () ->
+          @callcount = 0
+        @properties
+          prop: 
+            calcul: ->
+               5
+        getListeners: -> 
+          [{}]
+        emitEvent: (event,params)->
+          if event == 'propChanged'
+            assert.equal params[0], lastValue-1
+            @callcount += 1
     obj = new TestClass();
     
     assert.equal obj.callcount, 0
     obj.getProp()
-    assert.equal obj.callcount, 1
+    assert.equal obj.callcount, 0
     obj.invalidateProp()
-    assert.equal obj.callcount, 1
+    assert.equal obj.callcount, 0
     
   it 'get ready to emit an event when a property is invalidated by an event', ->
     lastValue = 0
@@ -177,7 +205,8 @@ describe 'Element', ->
     }
     class TestClass extends Element
         constructor: () ->
-          @callcount = 0
+          @changedCount = 0
+          @updatedCount = 0
           @added = 0
           @calculed = 0
         getListeners: -> 
@@ -191,41 +220,25 @@ describe 'Element', ->
               @calculed += 1
               lastValue += 1
         emitEvent: (event,params)->
-          assert.include updateEvents, event
-          assert.equal params[0], lastValue-1
-          @callcount += 1
+          if event == 'propChanged'
+            assert.equal params[0], lastValue-1
+            @changedCount += 1
+          if event == 'propUpdated'
+            @updatedCount += 1
     obj = new TestClass();
     
     assert.equal obj.added, 0
     assert.equal obj.calculed, 0
+    assert.equal obj.changedCount, 0
+    assert.equal obj.updatedCount, 0
     obj.addListener('propChanged',->)
     assert.equal obj.added, 1, 'listened added'
     assert.equal obj.calculed, 1, 'calculed'
-    assert.equal obj.callcount, 0
+    assert.equal obj.changedCount, 0
+    assert.equal obj.updatedCount, 1
     emitter.emit()
-    assert.equal obj.callcount, updateEvents.length, 'event emmited'
-    
-  it 'should not emit event when a property is invalidated and is not changed', ->
-    class TestClass extends Element
-        constructor: () ->
-          @callcount = 0
-        @properties
-          prop: 
-            calcul: ->
-               5
-        getListeners: -> 
-          [{}]
-        emitEvent: (event,params)->
-          assert.equal event, 'propChanged'
-          assert.equal params[0], lastValue-1
-          @callcount += 1
-    obj = new TestClass();
-    
-    assert.equal obj.callcount, 0
-    obj.getProp()
-    assert.equal obj.callcount, 0
-    obj.invalidateProp()
-    assert.equal obj.callcount, 0
+    assert.equal obj.changedCount, 1, 'event emmited'
+    assert.equal obj.updatedCount, 2
     
   it 'have a method to unbind all invalidators', ->
     propEvents = ['testInvalidated','testUpdated']

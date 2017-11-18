@@ -1,9 +1,11 @@
 (function() {
-  var EventEmitter, Property, assert;
+  var EventEmitter, Invalidator, Property, assert;
 
   assert = require('chai').assert;
 
   Property = require('../lib/Property');
+
+  Invalidator = require('../lib/Invalidator');
 
   EventEmitter = require("wolfy87-eventemitter");
 
@@ -101,7 +103,7 @@
       assert.equal(calls, 0);
       return assert.equal(obj.getPropertyInstance('prop').calculated, false);
     });
-    return it('should not call change when not active', function() {
+    it('should not call change when not active', function() {
       var calculCalls, changeCalls, emitter, res;
       emitter = new EventEmitter();
       calculCalls = 0;
@@ -151,6 +153,39 @@
       assert.equal(res, 'foobar!');
       assert.equal(calculCalls, 2, 'calculCalls after get 2');
       return assert.equal(changeCalls, 2, 'changeCalls after get 2');
+    });
+    return it('can trigger an invalidator when initialising a property', function() {
+      var calls, emitter, initiated, invalidated, invalidator, prop, res;
+      emitter = new EventEmitter();
+      prop = (new Property('hello', {
+        calcul: function() {
+          return 'hello';
+        }
+      })).bind(emitter);
+      calls = 0;
+      invalidated = {
+        invalidateTest: function() {
+          return calls += 1;
+        },
+        test: 1
+      };
+      invalidator = new Invalidator('test', invalidated);
+      assert.equal(calls, 0, 'nb calls initial');
+      initiated = invalidator.propInitiated('hello', emitter);
+      assert.isFalse(initiated);
+      invalidator.bind();
+      assert.equal(calls, 0, 'nb calls after propInitiated');
+      res = emitter.hello;
+      assert.equal(res, 'hello');
+      assert.equal(calls, 1, 'nb calls after get');
+      invalidator.recycle(function() {
+        return initiated = invalidator.propInitiated('hello', emitter);
+      });
+      invalidator.bind();
+      assert.isTrue(initiated);
+      assert.equal(calls, 1, 'nb calls after propInitiated 2');
+      emitter.hello = 'meh';
+      return assert.equal(calls, 1, 'nb calls after set');
     });
   });
 

@@ -63,6 +63,12 @@ class Invalidator
       throw new Error('Property name must be a string')
     @addEventBind(prop+'Invalidated', target, @getUnknownCallback(prop,target))
     @value(target[prop], prop+'Updated', target)
+
+  propInitiated:  (prop, target = @obj) ->
+    initiated = target.getPropertyInstance(prop).initiated
+    unless initiated
+      @event(prop+'Updated', target)
+    initiated
     
   validateUnknowns: (prop, target = @obj) ->
     unknowns = @unknowns

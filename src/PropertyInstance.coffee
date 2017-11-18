@@ -6,7 +6,7 @@ class PropertyInstance
   init: ->
     @value = @ingest(@property.options.default)
     @calculated = false
-    @initiated = false
+    @initiated = typeof @property.options.default != 'undefined'
     @revalidateCallback = =>
       @get()
 
@@ -23,8 +23,11 @@ class PropertyInstance
           old = @value
           initiated = @initiated
           @calcul()
-          if initiated && @value != old
-            @changed(old)
+          if @value != old
+            if initiated 
+              @changed(old)
+            else if typeof @obj.emitEvent == 'function'
+              @obj.emitEvent(@property.getUpdateEventName(), [old])
         @output()
       else
         @initiated = true
@@ -127,7 +130,6 @@ class PropertyInstance
         if typeof @updater.getBinder == 'function'
           @updater = @updater.getBinder()
         if typeof @updater.bind != 'function' or typeof @updater.unbind != 'function'
-          console.error 'Invalid updater'
           @updater = null
         else
           @updater.callback = @revalidateCallback

@@ -1,5 +1,6 @@
 assert = require('chai').assert
 Property = require('../lib/Property')
+Invalidator = require('../lib/Invalidator')
 EventEmitter = require("wolfy87-eventemitter")
 
 describe 'Property', ->
@@ -141,3 +142,42 @@ describe 'Property', ->
     assert.equal res, 'foobar!'
     assert.equal calculCalls, 2, 'calculCalls after get 2'
     assert.equal changeCalls, 2, 'changeCalls after get 2'
+
+
+
+  it 'can trigger an invalidator when initialising a property', ->
+
+    emitter = new EventEmitter()
+    prop = (new Property('hello',{
+      calcul: ->
+        'hello'
+    })).bind(emitter)
+
+    calls = 0
+    invalidated = {
+      invalidateTest: ->
+        calls += 1
+      test: 1
+    }
+    invalidator = new Invalidator('test', invalidated);
+
+    assert.equal calls, 0, 'nb calls initial'
+
+    initiated = invalidator.propInitiated('hello',emitter)
+    assert.isFalse initiated
+    invalidator.bind()
+    assert.equal calls, 0, 'nb calls after propInitiated'
+
+    res = emitter.hello
+    assert.equal res, 'hello'
+    assert.equal calls, 1, 'nb calls after get'
+
+    invalidator.recycle ->
+        initiated = invalidator.propInitiated('hello',emitter)
+    invalidator.bind()
+    assert.isTrue initiated
+    assert.equal calls, 1, 'nb calls after propInitiated 2'
+
+    emitter.hello = 'meh'
+    assert.equal calls, 1, 'nb calls after set'
+
