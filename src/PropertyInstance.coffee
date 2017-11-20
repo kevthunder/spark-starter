@@ -28,6 +28,8 @@ class PropertyInstance
               @changed(old)
             else if typeof @obj.emitEvent == 'function'
               @obj.emitEvent(@property.getUpdateEventName(), [old])
+        if @pendingChanges
+          @changed(@pendingOld)
         @output()
       else
         @initiated = true
@@ -151,11 +153,18 @@ class PropertyInstance
       
   changed: (old)->
     if @isActive()
+      @pendingChanges = false
+      @pendingOld = undefined
       if typeof @property.options.change == 'function'
         @callOptionFunct("change", old)
       if typeof @obj.emitEvent == 'function'
         @obj.emitEvent(@property.getUpdateEventName(), [old])
         @obj.emitEvent(@property.getChangeEventName(), [old])
+    else
+      @pendingChanges = true
+      if typeof @pendingOld == 'undefined'
+        @pendingOld = old
+    this
         
   isImmediate: ->
     @property.options.immediate != false and

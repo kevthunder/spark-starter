@@ -442,6 +442,9 @@
                 }
               }
             }
+            if (this.pendingChanges) {
+              this.changed(this.pendingOld);
+            }
             return this.output();
           } else {
             this.initiated = true;
@@ -618,14 +621,22 @@
 
       PropertyInstance.prototype.changed = function(old) {
         if (this.isActive()) {
+          this.pendingChanges = false;
+          this.pendingOld = void 0;
           if (typeof this.property.options.change === 'function') {
             this.callOptionFunct("change", old);
           }
           if (typeof this.obj.emitEvent === 'function') {
             this.obj.emitEvent(this.property.getUpdateEventName(), [old]);
-            return this.obj.emitEvent(this.property.getChangeEventName(), [old]);
+            this.obj.emitEvent(this.property.getChangeEventName(), [old]);
+          }
+        } else {
+          this.pendingChanges = true;
+          if (typeof this.pendingOld === 'undefined') {
+            this.pendingOld = old;
           }
         }
+        return this;
       };
 
       PropertyInstance.prototype.isImmediate = function() {

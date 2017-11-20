@@ -154,6 +154,35 @@
       assert.equal(calculCalls, 2, 'calculCalls after get 2');
       return assert.equal(changeCalls, 2, 'changeCalls after get 2');
     });
+    it('trigger change when re-activeted', function() {
+      var changeCalls, emitter, res;
+      emitter = new EventEmitter();
+      changeCalls = 0;
+      (new Property('foo', {
+        "default": null
+      })).bind(emitter);
+      (new Property('bar', {
+        active: function(invalidator) {
+          return invalidator.prop('foo') != null;
+        },
+        change: function() {
+          return changeCalls += 1;
+        }
+      })).bind(emitter);
+      assert.equal(changeCalls, 0, 'changeCalls initial');
+      res = emitter.bar;
+      assert.isUndefined(res);
+      assert.equal(changeCalls, 0, 'changeCalls after get');
+      emitter.bar = 'hello';
+      assert.equal(changeCalls, 0, 'changeCalls after set');
+      emitter.foo = 'foo';
+      assert.equal(changeCalls, 1, 'changeCalls after change foo');
+      res = emitter.bar;
+      assert.equal(res, 'hello');
+      assert.equal(changeCalls, 1, 'changeCalls after get 2');
+      emitter.bar = 'hey';
+      return assert.equal(changeCalls, 2, 'changeCalls after set');
+    });
     return it('can trigger an invalidator when initialising a property', function() {
       var calls, emitter, initiated, invalidated, invalidator, prop, res;
       emitter = new EventEmitter();
