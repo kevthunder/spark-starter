@@ -70,6 +70,60 @@
       res = prop.get();
       return assert.isFalse(res);
     });
+    it('returns a value composed of many ref value', function() {
+      var prop, res;
+      prop = new ComposedProperty(new Property('prop', {
+        composed: true,
+        members: []
+      }), {});
+      res = prop.get();
+      assert.isTrue(res, 'initial result');
+      prop.members.addValueRef(true, 'prop1');
+      prop.members.addValueRef(true, 'prop2');
+      res = prop.get();
+      assert.isTrue(res, 'after added 2 true values');
+      prop.members.addValueRef(false, 'prop3');
+      prop.members.addValueRef(false, 'prop4');
+      res = prop.get();
+      assert.isFalse(res, 'after added 2 false values');
+      prop.members.removeRef('prop3');
+      res = prop.get();
+      assert.isFalse(res, 'removed 1 false values');
+      prop.members.removeRef('prop4');
+      res = prop.get();
+      return assert.isTrue(res, 'removed 2 false values');
+    });
+    it('returns a value composed of many ref functions', function() {
+      var prop, res;
+      prop = new ComposedProperty(new Property('prop', {
+        composed: true,
+        members: []
+      }), {});
+      res = prop.get();
+      assert.isTrue(res, 'initial result');
+      prop.members.addFunctionRef((function() {
+        return true;
+      }), 'prop1');
+      prop.members.addFunctionRef((function() {
+        return true;
+      }), 'prop2');
+      res = prop.get();
+      assert.isTrue(res, 'after added 2 true values');
+      prop.members.addFunctionRef((function() {
+        return false;
+      }), 'prop3');
+      prop.members.addFunctionRef((function() {
+        return false;
+      }), 'prop4');
+      res = prop.get();
+      assert.isFalse(res, 'after added 2 false values');
+      prop.members.removeRef('prop3');
+      res = prop.get();
+      assert.isFalse(res, 'removed 1 false values');
+      prop.members.removeRef('prop4');
+      res = prop.get();
+      return assert.isTrue(res, 'removed 2 false values');
+    });
     it('returns a value composed of many remote properties', function() {
       var prop, remote, res;
       remote = {
@@ -96,7 +150,7 @@
       prop.members.addPropertyRef('prop3', remote);
       res = prop.get();
       assert.isFalse(res, 'added property');
-      prop.members.removePropertyRef('prop3', remote);
+      prop.members.removeRef('prop3', remote);
       res = prop.get();
       return assert.isTrue(res, 'removed property');
     });

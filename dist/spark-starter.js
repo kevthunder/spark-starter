@@ -814,7 +814,7 @@
 
       Members.prototype.addPropertyRef = function(name, obj) {
         var fn;
-        if (this.findPropertyRefIndex(name, obj) === -1) {
+        if (this.findRefIndex(name, obj) === -1) {
           fn = function(invalidator) {
             return invalidator.prop(name, obj);
           };
@@ -826,15 +826,39 @@
         }
       };
 
-      Members.prototype.findPropertyRefIndex = function(name, obj) {
+      Members.prototype.addValueRef = function(val, name, obj) {
+        var fn;
+        if (this.findRefIndex(name, obj) === -1) {
+          fn = function(invalidator) {
+            return val;
+          };
+          fn.ref = {
+            name: name,
+            obj: obj
+          };
+          return this.push(fn);
+        }
+      };
+
+      Members.prototype.addFunctionRef = function(fn, name, obj) {
+        if (this.findRefIndex(name, obj) === -1) {
+          fn.ref = {
+            name: name,
+            obj: obj
+          };
+          return this.push(fn);
+        }
+      };
+
+      Members.prototype.findRefIndex = function(name, obj) {
         return this._array.findIndex(function(member) {
           return (member.ref != null) && member.ref.obj === obj && member.ref.name === name;
         });
       };
 
-      Members.prototype.removePropertyRef = function(name, obj) {
+      Members.prototype.removeRef = function(name, obj) {
         var index, old;
-        index = this.findPropertyRefIndex(name, obj);
+        index = this.findRefIndex(name, obj);
         if (index !== -1) {
           old = this.toArray();
           this._array.splice(index, 1);

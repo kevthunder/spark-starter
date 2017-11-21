@@ -54,7 +54,7 @@ class ComposedProperty extends PropertyInstance
 
 class ComposedProperty.Members extends Collection
   addPropertyRef: (name,obj)->
-    if @findPropertyRefIndex(name,obj) == -1
+    if @findRefIndex(name,obj) == -1
       fn = (invalidator)->
         invalidator.prop(name,obj)
       fn.ref = {
@@ -62,11 +62,27 @@ class ComposedProperty.Members extends Collection
         obj: obj
       }
       @push(fn)
-  findPropertyRefIndex: (name,obj)->
+  addValueRef: (val,name,obj)->
+    if @findRefIndex(name,obj) == -1
+      fn = (invalidator)->
+        val
+      fn.ref = {
+        name: name
+        obj: obj
+      }
+      @push(fn)
+  addFunctionRef: (fn,name,obj)->
+    if @findRefIndex(name,obj) == -1
+      fn.ref = {
+        name: name
+        obj: obj
+      }
+      @push(fn)
+  findRefIndex: (name,obj)->
     @_array.findIndex (member)->
-      member.ref? && member.ref .obj == obj && member.ref .name == name
-  removePropertyRef: (name,obj)->
-    index = @findPropertyRefIndex(name,obj)
+      member.ref? && member.ref.obj == obj && member.ref.name == name
+  removeRef: (name,obj)->
+    index = @findRefIndex(name,obj)
     if index != -1
       old = @toArray()
       @_array.splice(index, 1)
