@@ -46,6 +46,8 @@ describe 'Updater', ->
     assert.equal calls, 0
     updater.update()
     assert.equal calls, 1
+    updater.update()
+    assert.equal calls, 2
 
   it 'allow callback to remove themselves', ->
     updater = new Updater()
@@ -68,6 +70,56 @@ describe 'Updater', ->
     assert.equal callback.calls, 1
     assert.equal callback2.calls, 1
     assert.equal updater.callbacks.length, 0
+    updater.update()
+    assert.equal callback.calls, 1
+    assert.equal callback2.calls, 1
+    assert.equal updater.callbacks.length, 0
+
+  it 'calls callback added on the same tick', ->
+    updater = new Updater()
+    callback = ->
+      callback.calls++
+      updater.addCallback(callback2)
+    callback.calls = 0
+    calls2 = 0
+    callback2 = ->
+      callback2.calls++
+    callback2.calls = 0
+
+    updater.addCallback(callback)
+    assert.equal updater.callbacks.length, 1
+
+    updater.update()
+    assert.equal callback.calls, 1
+    assert.equal callback2.calls, 1
+    assert.equal updater.callbacks.length, 2
+
+  it 'allow to add callbacks for the next tick', ->
+    updater = new Updater()
+    callback = ->
+      callback.calls++
+      updater.nextTick(callback2)
+      updater.removeCallback(callback)
+    callback.calls = 0
+    calls2 = 0
+    callback2 = ->
+      callback2.calls++
+    callback2.calls = 0
+
+    updater.addCallback(callback)
+    assert.equal updater.callbacks.length, 1
+
+    updater.update()
+    assert.equal callback.calls, 1
+    assert.equal callback2.calls, 0
+    assert.equal updater.callbacks.length, 1
+
+    updater.update()
+    assert.equal callback.calls, 1
+    assert.equal callback2.calls, 1
+    assert.equal updater.callbacks.length, 1
+
+
 
 describe 'Updater.Binder', ->
   it 'adds the callback with bind', ->

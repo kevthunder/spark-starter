@@ -61,9 +61,11 @@
       updater.addCallback(callback);
       assert.equal(calls, 0);
       updater.update();
-      return assert.equal(calls, 1);
+      assert.equal(calls, 1);
+      updater.update();
+      return assert.equal(calls, 2);
     });
-    return it('allow callback to remove themselves', function() {
+    it('allow callback to remove themselves', function() {
       var callback, callback2, calls2, updater;
       updater = new Updater();
       callback = function() {
@@ -86,7 +88,56 @@
       updater.update();
       assert.equal(callback.calls, 1);
       assert.equal(callback2.calls, 1);
+      assert.equal(updater.callbacks.length, 0);
+      updater.update();
+      assert.equal(callback.calls, 1);
+      assert.equal(callback2.calls, 1);
       return assert.equal(updater.callbacks.length, 0);
+    });
+    it('calls callback added on the same tick', function() {
+      var callback, callback2, calls2, updater;
+      updater = new Updater();
+      callback = function() {
+        callback.calls++;
+        return updater.addCallback(callback2);
+      };
+      callback.calls = 0;
+      calls2 = 0;
+      callback2 = function() {
+        return callback2.calls++;
+      };
+      callback2.calls = 0;
+      updater.addCallback(callback);
+      assert.equal(updater.callbacks.length, 1);
+      updater.update();
+      assert.equal(callback.calls, 1);
+      assert.equal(callback2.calls, 1);
+      return assert.equal(updater.callbacks.length, 2);
+    });
+    return it('allow to add callback for the next tick', function() {
+      var callback, callback2, calls2, updater;
+      updater = new Updater();
+      callback = function() {
+        callback.calls++;
+        updater.nextTick(callback2);
+        return updater.removeCallback(callback);
+      };
+      callback.calls = 0;
+      calls2 = 0;
+      callback2 = function() {
+        return callback2.calls++;
+      };
+      callback2.calls = 0;
+      updater.addCallback(callback);
+      assert.equal(updater.callbacks.length, 1);
+      updater.update();
+      assert.equal(callback.calls, 1);
+      assert.equal(callback2.calls, 0);
+      assert.equal(updater.callbacks.length, 1);
+      updater.update();
+      assert.equal(callback.calls, 1);
+      assert.equal(callback2.calls, 1);
+      return assert.equal(updater.callbacks.length, 1);
     });
   });
 
