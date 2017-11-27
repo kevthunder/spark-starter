@@ -30,3 +30,11 @@ class EventBind
   match: (event, target) -> 
     event    == @event    and
     target   == @target
+
+  @checkEmitter = (emitter,fatal=true)->
+      if typeof emitter.addEventListener == 'function' or typeof emitter.addListener == 'function' or typeof emitter.on == 'function'
+        true
+      else if fatal
+        throw new Error('No function to add event listeners was found')
+      else 
+        false

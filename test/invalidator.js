@@ -12,12 +12,17 @@
   describe('Invalidator', function() {
     var propEvents;
     propEvents = ['testInvalidated', 'testUpdated'];
+    afterEach(function() {
+      return Invalidator.strict = true;
+    });
     it('should create a bind with invalidationEvent', function() {
       var emitter, invalidated, invalidator;
       invalidated = {
         test: 1
       };
-      emitter = {};
+      emitter = {
+        on: function() {}
+      };
       invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);
       invalidator.event('testChanged', emitter);
@@ -31,7 +36,9 @@
       invalidated = {
         test: 1
       };
-      emitter = {};
+      emitter = {
+        on: function() {}
+      };
       invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);
       res = invalidator.value(2, 'testChanged', emitter);
@@ -47,7 +54,8 @@
         test: 1
       };
       emitter = {
-        test: 2
+        test: 2,
+        on: function() {}
       };
       invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);
@@ -67,6 +75,37 @@
       }
       return results;
     });
+    it('should throw error if a bind target is not a emitter', function() {
+      var bind, invalidated, invalidator, nonEmitter;
+      invalidated = {
+        test: 1
+      };
+      nonEmitter = {
+        test: 2
+      };
+      invalidator = new Invalidator('test', invalidated);
+      bind = function() {
+        var res;
+        return res = invalidator.prop('test', nonEmitter);
+      };
+      return assert.throws(bind, 'No function to add event listeners was found');
+    });
+    it('should not throw error for a non-emitter when strict is false', function() {
+      var bind, invalidated, invalidator, nonEmitter;
+      Invalidator.strict = false;
+      invalidated = {
+        test: 1
+      };
+      nonEmitter = {
+        test: 2
+      };
+      invalidator = new Invalidator('test', invalidated);
+      bind = function() {
+        var res;
+        return res = invalidator.prop('test', nonEmitter);
+      };
+      return assert.doesNotThrow(bind);
+    });
     it('throws an error when prop name is not a string', function() {
       var emitter, invalidated, invalidator;
       invalidated = {
@@ -83,7 +122,8 @@
     it('should create a bind with invalidatedProperty with implicit target', function() {
       var i, invalidated, invalidator, j, len, propEvent, res, results;
       invalidated = {
-        test: 1
+        test: 1,
+        on: function() {}
       };
       invalidator = new Invalidator('test', invalidated);
       assert.equal(invalidator.invalidationEvents.length, 0);

@@ -114,7 +114,7 @@
       assert.equal(callback2.calls, 1);
       return assert.equal(updater.callbacks.length, 2);
     });
-    return it('allow to add callback for the next tick', function() {
+    return it('allow to add callbacks for the next tick', function() {
       var callback, callback2, calls2, updater;
       updater = new Updater();
       callback = function() {

@@ -6,11 +6,14 @@ describe 'Invalidator', ->
 
   propEvents = ['testInvalidated','testUpdated']
 
+  afterEach ->
+    Invalidator.strict = true
+
   it 'should create a bind with invalidationEvent', ->
     invalidated = {
       test: 1
     }
-    emitter = {}
+    emitter = {on:->}
     invalidator = new Invalidator('test', invalidated);
     
     assert.equal invalidator.invalidationEvents.length, 0
@@ -26,7 +29,7 @@ describe 'Invalidator', ->
     invalidated = {
       test: 1
     }
-    emitter = {}
+    emitter = {on:->}
     invalidator = new Invalidator('test', invalidated);
     
     assert.equal invalidator.invalidationEvents.length, 0
@@ -45,6 +48,7 @@ describe 'Invalidator', ->
     }
     emitter = {
       test: 2
+      on:->
     }
     invalidator = new Invalidator('test', invalidated);
     
@@ -59,6 +63,38 @@ describe 'Invalidator', ->
       assert.equal invalidator.invalidationEvents[i].target, emitter
       if invalidator.invalidationEvents[i].event == 'testUpdated'
         assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
+
+
+  it 'should throw error if a bind target is not a emitter', ->
+    invalidated = {
+      test: 1
+    }
+    nonEmitter = {
+      test: 2
+    }
+    invalidator = new Invalidator('test', invalidated);
+    
+    bind = ->
+      res = invalidator.prop('test',nonEmitter)
+
+    assert.throws bind, 'No function to add event listeners was found'
+
+  it 'should not throw error for a non-emitter when strict is false', ->
+    Invalidator.strict = false
+
+    invalidated = {
+      test: 1
+    }
+    nonEmitter = {
+      test: 2
+    }
+    invalidator = new Invalidator('test', invalidated);
+    
+    bind = ->
+      res = invalidator.prop('test',nonEmitter)
+
+    assert.doesNotThrow bind
+
 
   it 'throws an error when prop name is not a string', ->
     invalidated = {
@@ -76,6 +112,7 @@ describe 'Invalidator', ->
   it 'should create a bind with invalidatedProperty with implicit target', ->
     invalidated = {
       test: 1
+      on:->
     }
     invalidator = new Invalidator('test', invalidated);
     

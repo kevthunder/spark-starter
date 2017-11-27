@@ -206,6 +206,19 @@
         return event === this.event && target === this.target;
       };
 
+      EventBind.checkEmitter = function(emitter, fatal) {
+        if (fatal == null) {
+          fatal = true;
+        }
+        if (typeof emitter.addEventListener === 'function' || typeof emitter.addListener === 'function' || typeof emitter.on === 'function') {
+          return true;
+        } else if (fatal) {
+          throw new Error('No function to add event listeners was found');
+        } else {
+          return false;
+        }
+      };
+
       return EventBind;
 
     })();
@@ -233,12 +246,15 @@
       }
     };
     Invalidator = (function() {
+      Invalidator.strict = true;
+
       function Invalidator(property1, obj1) {
         this.property = property1;
         this.obj = obj1 != null ? obj1 : null;
         this.invalidationEvents = [];
         this.recycled = [];
         this.unknowns = [];
+        this.strict = this.constructor.strict;
         this.invalidateCallback = (function(_this) {
           return function() {
             _this.invalidate();
@@ -299,7 +315,9 @@
         if (target == null) {
           target = this.obj;
         }
-        return this.addEventBind(event, target, this.invalidateCallback);
+        if (this.checkEmitter(target)) {
+          return this.addEventBind(event, target, this.invalidateCallback);
+        }
       };
 
       Invalidator.prototype.value = function(val, event, target) {
@@ -317,8 +335,12 @@
         if (typeof prop !== 'string') {
           throw new Error('Property name must be a string');
         }
-        this.addEventBind(prop + 'Invalidated', target, this.getUnknownCallback(prop, target));
-        return this.value(target[prop], prop + 'Updated', target);
+        if (this.checkEmitter(target)) {
+          this.addEventBind(prop + 'Invalidated', target, this.getUnknownCallback(prop, target));
+          return this.value(target[prop], prop + 'Updated', target);
+        } else {
+          return target[prop];
+        }
       };
 
       Invalidator.prototype.propInitiated = function(prop, target) {
@@ -327,7 +349,7 @@
           target = this.obj;
         }
         initiated = target.getPropertyInstance(prop).initiated;
-        if (!initiated) {
+        if (!initiated && this.checkEmitter(target)) {
           this.event(prop + 'Updated', target);
         }
         return initiated;
@@ -378,6 +400,10 @@
         } else {
           return done;
         }
+      };
+
+      Invalidator.prototype.checkEmitter = function(emitter) {
+        return EventBind.checkEmitter(emitter, this.strict);
       };
 
       Invalidator.prototype.unbind = function() {

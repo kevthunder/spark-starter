@@ -10,10 +10,12 @@ pluck = (arr,fn) ->
     null
 
 class Invalidator
+  @strict = true
   constructor: (@property, @obj = null) ->
     @invalidationEvents = []
     @recycled = []
     @unknowns = []
+    @strict = @constructor.strict
     @invalidateCallback = => 
       @invalidate()
       null
@@ -52,7 +54,8 @@ class Invalidator
         @unknown()
       
   event: (event, target = @obj) ->
-    @addEventBind(event, target, @invalidateCallback)
+    if @checkEmitter(target)
+      @addEventBind(event, target, @invalidateCallback)
   
   value: (val, event, target = @obj) ->
     @event(event, target)
@@ -61,12 +64,15 @@ class Invalidator
   prop: (prop, target = @obj) ->
     if typeof prop != 'string'
       throw new Error('Property name must be a string')
-    @addEventBind(prop+'Invalidated', target, @getUnknownCallback(prop,target))
-    @value(target[prop], prop+'Updated', target)
+    if @checkEmitter(target)
+      @addEventBind(prop+'Invalidated', target, @getUnknownCallback(prop,target))
+      @value(target[prop], prop+'Updated', target)
+    else
+      target[prop]
 
   propInitiated:  (prop, target = @obj) ->
     initiated = target.getPropertyInstance(prop).initiated
-    unless initiated
+    if !initiated and @checkEmitter(target)
       @event(prop+'Updated', target)
     initiated
     
@@ -99,6 +105,9 @@ class Invalidator
         res
     else
       done
-  
+
+  checkEmitter: (emitter)->
+    EventBind.checkEmitter(emitter,@strict)
+
   unbind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.unbind()
