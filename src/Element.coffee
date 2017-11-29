@@ -18,7 +18,7 @@ class Element
       @_callbacks[name]
     else
       @_callbacks[name] = (args...)=> 
-        this[name].call(this,args)
+        this[name].apply(this,args)
         null
   
   @extend: (obj) ->

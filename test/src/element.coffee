@@ -353,6 +353,21 @@ describe 'Element', ->
     
     obj.callback('doSomething')()
     assert.equal obj.test, 1
+
+
+  it 'can forward argument with callback', ->
+    calls = 0
+    class TestClass extends Element
+      doSomething: (arg1,arg2,arg3)->
+        assert.equal arg1, 3
+        assert.equal arg2, 'test'
+        assert.deepEqual arg3, {hi:5}
+        calls+=1
+    obj = new TestClass();
+    
+    
+    obj.callback('doSomething')(3,'test',{hi:5})
+    assert.equal calls, 1
   
   it 'keeps old options when overriding a property', ->
     class TestClass extends Element

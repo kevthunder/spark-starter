@@ -1141,7 +1141,7 @@
             return function() {
               var args;
               args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-              _this[name].call(_this, args);
+              _this[name].apply(_this, args);
               return null;
             };
           })(this);

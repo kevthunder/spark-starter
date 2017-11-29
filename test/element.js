@@ -620,6 +620,34 @@
       obj.callback('doSomething')();
       return assert.equal(obj.test, 1);
     });
+    it('can forward argument with callback', function() {
+      var TestClass, calls, obj;
+      calls = 0;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.prototype.doSomething = function(arg1, arg2, arg3) {
+          assert.equal(arg1, 3);
+          assert.equal(arg2, 'test');
+          assert.deepEqual(arg3, {
+            hi: 5
+          });
+          return calls += 1;
+        };
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      obj.callback('doSomething')(3, 'test', {
+        hi: 5
+      });
+      return assert.equal(calls, 1);
+    });
     it('keeps old options when overriding a property', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {
