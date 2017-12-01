@@ -14,7 +14,9 @@ class PropertyInstance
     if @property.options.get == false
       undefined
     else if typeof @property.options.get == 'function'
-      @callOptionFunct("get")
+      res = @callOptionFunct("get")
+      @revalidated()
+      res
     else
       if @invalidator
         @invalidator.validateUnknowns()

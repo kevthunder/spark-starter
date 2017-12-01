@@ -36,7 +36,7 @@
       assert.equal(calls, 0);
       return assert.equal(prop.calculated, true);
     });
-    it('should be able to invalidate a property', function() {
+    it('can invalidate a property', function() {
       var prop;
       prop = new PropertyInstance(new Property('prop', {
         calcul: function() {
@@ -52,7 +52,22 @@
       assert.equal(prop.value, 3);
       return assert.equal(prop.calculated, false);
     });
-    it('should be able to invalidate a property from an event', function() {
+    it('can invalidate a property that has a get function', function() {
+      var prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        get: function() {
+          return 3;
+        }
+      }), {});
+      assert.equal(prop.value, void 0);
+      assert.equal(prop.calculated, false);
+      res = prop.get();
+      assert.equal(res, 3);
+      assert.equal(prop.calculated, true);
+      prop.invalidate();
+      return assert.equal(prop.calculated, false);
+    });
+    it('can invalidate a property from an event', function() {
       var emitter, prop;
       emitter = {
         addListener: function(evt, listener) {
@@ -84,7 +99,7 @@
       assert.equal(prop.value, 3);
       return assert.equal(prop.calculated, false, 'calculated false after invalidation');
     });
-    it('Can handle indirect event target for invalidators', function() {
+    it('can handle indirect event target for invalidators', function() {
       var Emitter, binded, prop, val;
       val = 3;
       binded = false;

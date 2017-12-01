@@ -30,7 +30,7 @@ describe 'PropertyInstance', ->
     assert.equal calls, 0
     assert.equal prop.calculated, true
 
-  it 'should be able to invalidate a property', ->
+  it 'can invalidate a property', ->
   
     prop = new PropertyInstance(new Property('prop',{
       calcul: ->
@@ -45,8 +45,23 @@ describe 'PropertyInstance', ->
     prop.invalidate()
     assert.equal prop.value, 3
     assert.equal prop.calculated, false
+
+  it 'can invalidate a property that has a get function', ->
+  
+    prop = new PropertyInstance(new Property('prop',{
+      get: ->
+         3
+    }),{});
     
-  it 'should be able to invalidate a property from an event', ->
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    res = prop.get()
+    assert.equal res, 3
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal prop.calculated, false
+    
+  it 'can invalidate a property from an event', ->
     emitter = {
       addListener: (evt, listener) ->
         @event = evt
@@ -73,7 +88,7 @@ describe 'PropertyInstance', ->
     assert.equal prop.value, 3
     assert.equal prop.calculated, false, 'calculated false after invalidation'
     
-  it 'Can handle indirect event target for invalidators', ->
+  it 'can handle indirect event target for invalidators', ->
     val = 3
     binded = false
     class Emitter
