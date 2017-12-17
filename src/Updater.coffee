@@ -32,6 +32,9 @@ class Updater
       @next.splice(index,1)
   getBinder: ->
     new Updater.Binder(this)
+  destroy: ->
+    @callbacks = []
+    @next = []
   
 class Updater.Binder
   constructor: (@target) ->

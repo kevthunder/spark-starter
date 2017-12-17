@@ -1268,6 +1268,11 @@
         return new Updater.Binder(this);
       };
 
+      Updater.prototype.destroy = function() {
+        this.callbacks = [];
+        return this.next = [];
+      };
+
       return Updater;
 
     })();

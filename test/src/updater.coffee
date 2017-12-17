@@ -37,6 +37,21 @@ describe 'Updater', ->
     assert.equal updater.callbacks.length, 1
     updater.removeCallback(callback2)
     assert.equal updater.callbacks.length, 0
+  it 'remove callbacks when destroyed', ->
+    updater = new Updater()
+    callback = ->
+      1
+    callback2 = ->
+      2
+    assert.equal updater.callbacks.length, 0
+    updater.addCallback(callback)
+    assert.equal updater.callbacks[0], callback
+    assert.equal updater.callbacks.length, 1
+    updater.addCallback(callback2)
+    assert.equal updater.callbacks[1], callback2
+    assert.equal updater.callbacks.length, 2
+    updater.destroy()
+    assert.equal updater.callbacks.length, 0
   it 'call callback on update', ->
     updater = new Updater()
     calls = 0

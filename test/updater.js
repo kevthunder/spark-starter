@@ -51,6 +51,25 @@
       updater.removeCallback(callback2);
       return assert.equal(updater.callbacks.length, 0);
     });
+    it('remove callbacks when destroyed', function() {
+      var callback, callback2, updater;
+      updater = new Updater();
+      callback = function() {
+        return 1;
+      };
+      callback2 = function() {
+        return 2;
+      };
+      assert.equal(updater.callbacks.length, 0);
+      updater.addCallback(callback);
+      assert.equal(updater.callbacks[0], callback);
+      assert.equal(updater.callbacks.length, 1);
+      updater.addCallback(callback2);
+      assert.equal(updater.callbacks[1], callback2);
+      assert.equal(updater.callbacks.length, 2);
+      updater.destroy();
+      return assert.equal(updater.callbacks.length, 0);
+    });
     it('call callback on update', function() {
       var callback, calls, updater;
       updater = new Updater();
