@@ -9,6 +9,23 @@ describe 'PropertyInstance', ->
   propEvents = ['testInvalidated','testUpdated']
   updateEvents = ['propChanged','propUpdated']
   
+  it 'should flag as manual setted properties', ->
+    prop = new PropertyInstance(new Property('prop',{}),{});
+
+    prop.set(10)
+    assert.equal prop.manual, true
+
+  it 'should flag as not-manual calculated properties', ->
+    prop = new PropertyInstance(new Property('prop',{
+      calcul: ->
+        3
+    }),{});
+
+    res = prop.get()
+    assert.equal res, 3
+    assert.equal prop.manual, false
+
+
   it 'should not call calcul when using set', ->
 
     calls = 0

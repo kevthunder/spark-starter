@@ -100,6 +100,15 @@ class Property
       .map (prop)=>
         prop.getInstance(this)
 
+    getManualDataProperties: ->
+      @_properties.reduce (res,prop)=>
+        if prop.isInstantiated(this)
+          instance = prop.getInstance(this)
+          if instance.calculated && instance.manual
+            res[prop.name] = instance.value
+        res
+      , {}
+
     setProperties: (data, options = {})->
       for key,val of data
         if (!options.whitelist? or options.whitelist.indexOf(key) != -1) and (!options.blacklist? or options.blacklist.indexOf(key) == -1)

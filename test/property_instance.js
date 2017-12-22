@@ -15,6 +15,23 @@
     var propEvents, updateEvents;
     propEvents = ['testInvalidated', 'testUpdated'];
     updateEvents = ['propChanged', 'propUpdated'];
+    it('should flag as manual setted properties', function() {
+      var prop;
+      prop = new PropertyInstance(new Property('prop', {}), {});
+      prop.set(10);
+      return assert.equal(prop.manual, true);
+    });
+    it('should flag as not-manual calculated properties', function() {
+      var prop, res;
+      prop = new PropertyInstance(new Property('prop', {
+        calcul: function() {
+          return 3;
+        }
+      }), {});
+      res = prop.get();
+      assert.equal(res, 3);
+      return assert.equal(prop.manual, false);
+    });
     it('should not call calcul when using set', function() {
       var calls, prop, res;
       calls = 0;

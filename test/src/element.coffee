@@ -285,6 +285,40 @@ describe 'Element', ->
     assert.equal obj.b, 2
     assert.equal obj.c, 3
     assert.equal obj.d, 0
+
+
+  it 'can get all manually setted properties', ->
+    class TestClass extends Element
+        constructor: () ->
+        @properties
+          a:
+            default: 0
+          b:
+            default: 0
+          c:
+            default: 0
+          d:
+            calcul: ->
+              4
+
+    obj = new TestClass();
+    assert.deepEqual obj.getManualDataProperties(), {}, 'initial'
+
+    obj.a = 1
+    obj.b = 2
+    obj.c = 3
+    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2,c:3}, 'after assign'
+
+    obj.invalidateC()
+    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2}, 'after invalidate'
+
+    assert.equal obj.d, 4
+    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2}, 'after cacul'
+
+    obj.d = 5
+    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2,d:5}, 'after assign over caculated value'
+
+
     
   it 'can mass assign properties with whitelist', ->
     class TestClass extends Element

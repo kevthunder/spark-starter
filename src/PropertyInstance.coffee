@@ -48,6 +48,7 @@ class PropertyInstance
       if @value != val
         old = @value
         @value = val
+        @manual = true
         @changed(old)
     this
   
@@ -113,6 +114,7 @@ class PropertyInstance
         @invalidator = new Invalidator(this, @obj)
       @invalidator.recycle (invalidator,done)=> 
         @value = @callOptionFunct("calcul", invalidator)
+        @manual = false
         done()
         if invalidator.isEmpty()
           @invalidator = null
