@@ -9,12 +9,18 @@
     it('can count items', function() {
       var coll;
       coll = new Collection([1, 2, 3]);
-      return assert.equal(coll.count(), 3);
+      assert.equal(coll.count(), 3);
+      return assert.equal(coll.length, 3);
     });
     it('can get item', function() {
       var coll;
       coll = new Collection([1, 2, 3]);
       return assert.equal(coll.get(1), 2);
+    });
+    it('can be iterated', function() {
+      var coll;
+      coll = new Collection([1, 2, 3]);
+      return assert.equal(JSON.stringify([...coll]), '[1,2,3]');
     });
     it('can set item', function() {
       var coll;

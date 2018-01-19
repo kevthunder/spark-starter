@@ -152,6 +152,16 @@
       return Collection;
 
     })();
+    Object.defineProperty(Collection.prototype, 'length', {
+      get: function() {
+        return this.count();
+      }
+    });
+    if (typeof Symbol !== "undefined" && Symbol !== null ? Symbol.iterator : void 0) {
+      Collection.prototype[Symbol.iterator] = function() {
+        return this._array[Symbol.iterator]();
+      };
+    }
     return Collection;
   });
 

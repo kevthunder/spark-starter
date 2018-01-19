@@ -80,3 +80,12 @@ class Collection
   getRemovedFrom: (arr) -> 
     arr.filter (item)=>
       !@includes(item)
+
+Object.defineProperty Collection.prototype, 'length', {
+  get: ->
+    this.count()
+}
+
+if Symbol?.iterator
+  Collection.prototype[Symbol.iterator] = ->
+    return @_array[Symbol.iterator]()

@@ -5,10 +5,15 @@ describe 'Collection', ->
   it 'can count items', ->
     coll = new Collection([1,2,3])
     assert.equal coll.count(), 3
+    assert.equal coll.length, 3
     
   it 'can get item', ->
     coll = new Collection([1,2,3])
     assert.equal coll.get(1), 2
+
+  it 'can be iterated', ->
+    coll = new Collection([1,2,3])
+    assert.equal JSON.stringify(`[...coll]`), '[1,2,3]'
     
   it 'can set item', ->
     coll = new Collection([1,2,3])
