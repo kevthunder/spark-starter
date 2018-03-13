@@ -47,6 +47,32 @@ describe 'Element', ->
     assert.equal obj.bar, 'hey'
     assert.instanceOf obj.getProperty("foo"), Property
     assert.instanceOf obj.getProperty("bar"), Property
+
+  it 'can extend a third class with merged properties', ->
+    class BaseClass extends Element
+      @properties
+        foo: 
+          default: 'hello'
+
+    class Test1Class extends Element
+      @extend BaseClass
+      @properties
+        foo: 
+          calcul: -> 'hey'
+
+    class Test2Class extends Element
+      @extend BaseClass
+      @properties
+        foo: 
+          default: 'hi'
+          
+    class Test3Class extends Test1Class
+      @extend BaseClass
+
+    assert.equal (new BaseClass()).foo, 'hello'
+    assert.equal (new Test1Class()).foo, 'hey'
+    assert.equal (new Test2Class()).foo, 'hi'
+    assert.equal (new Test3Class()).foo, 'hey'
     
   it 'should emit event when value change', ->
     

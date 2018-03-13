@@ -33,7 +33,7 @@ class Element
     for key, value of obj when key not in Element.elementKeywords
       if key == '_properties'
         for property in value
-          property.bind(@.prototype)
+          @property(property.name, Object.assign({},property.options))
       else
         @::[key] = value
     obj.included?.apply(@)

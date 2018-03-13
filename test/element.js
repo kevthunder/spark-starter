@@ -113,6 +113,79 @@
       assert.instanceOf(obj.getProperty("foo"), Property);
       return assert.instanceOf(obj.getProperty("bar"), Property);
     });
+    it('can extend a third class with merged properties', function() {
+      var BaseClass, Test1Class, Test2Class, Test3Class;
+      BaseClass = (function(superClass) {
+        extend(BaseClass, superClass);
+
+        function BaseClass() {
+          return BaseClass.__super__.constructor.apply(this, arguments);
+        }
+
+        BaseClass.properties({
+          foo: {
+            "default": 'hello'
+          }
+        });
+
+        return BaseClass;
+
+      })(Element);
+      Test1Class = (function(superClass) {
+        extend(Test1Class, superClass);
+
+        function Test1Class() {
+          return Test1Class.__super__.constructor.apply(this, arguments);
+        }
+
+        Test1Class.extend(BaseClass);
+
+        Test1Class.properties({
+          foo: {
+            calcul: function() {
+              return 'hey';
+            }
+          }
+        });
+
+        return Test1Class;
+
+      })(Element);
+      Test2Class = (function(superClass) {
+        extend(Test2Class, superClass);
+
+        function Test2Class() {
+          return Test2Class.__super__.constructor.apply(this, arguments);
+        }
+
+        Test2Class.extend(BaseClass);
+
+        Test2Class.properties({
+          foo: {
+            "default": 'hi'
+          }
+        });
+
+        return Test2Class;
+
+      })(Element);
+      Test3Class = (function(superClass) {
+        extend(Test3Class, superClass);
+
+        function Test3Class() {
+          return Test3Class.__super__.constructor.apply(this, arguments);
+        }
+
+        Test3Class.extend(BaseClass);
+
+        return Test3Class;
+
+      })(Test1Class);
+      assert.equal((new BaseClass()).foo, 'hello');
+      assert.equal((new Test1Class()).foo, 'hey');
+      assert.equal((new Test2Class()).foo, 'hi');
+      return assert.equal((new Test3Class()).foo, 'hey');
+    });
     it('should emit event when value change', function() {
       var TestClass, obj;
       TestClass = (function(superClass) {

@@ -1201,7 +1201,7 @@
             if (key === '_properties') {
               for (j = 0, len = value.length; j < len; j++) {
                 property = value[j];
-                property.bind(this.prototype);
+                this.property(property.name, Object.assign({}, property.options));
               }
             } else {
               this.prototype[key] = value;
