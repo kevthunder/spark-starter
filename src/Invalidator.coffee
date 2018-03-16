@@ -37,25 +37,33 @@ class Invalidator
       @invalidate()
         
   addEventBind: (event, target, callback) ->
-    unless @invalidationEvents.some( (eventBind)-> eventBind.match(event,target))
+    @addBinder(new EventBind(event, target, callback))
+        
+  addBinder: (binder) ->
+    unless binder.callback?
+      binder.callback = @invalidateCallback
+    unless @invalidationEvents.some( (eventBind)-> eventBind.equals(binder))
       @invalidationEvents.push(
         pluck(@recycled, (eventBind)-> 
-          eventBind.match(event,target)
+          eventBind.equals(binder)
         ) or
-        new EventBind(event, target, callback)
+        binder
       )
       
   getUnknownCallback: (prop, target) ->
-    => 
+    callback = => 
       unless @unknowns.some( (unknown)-> 
         unknown.prop == prop && unknown.target == target
       )
         @unknowns.push({"prop": prop, "target": target})
         @unknown()
+    callback.maker = arguments.callee
+    callback.uses = Array.from(arguments)
+    callback
       
   event: (event, target = @obj) ->
     if @checkEmitter(target)
-      @addEventBind(event, target, @invalidateCallback)
+      @addEventBind(event, target)
   
   value: (val, event, target = @obj) ->
     @event(event, target)

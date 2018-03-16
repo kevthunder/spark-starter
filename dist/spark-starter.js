@@ -8,6 +8,56 @@
   Spark = typeof module !== "undefined" && module !== null ? module.exports = {} : (this.Spark == null ? this.Spark = {} : void 0, this.Spark);
 
   (function(definition) {
+    Spark.Binder = definition();
+    return Spark.Binder.definition = definition;
+  })(function() {
+    var Binder;
+    Binder = (function() {
+      function Binder(target1, callback1) {
+        this.target = target1;
+        this.callback = callback1;
+        this.binded = false;
+      }
+
+      Binder.prototype.bind = function() {
+        if (!this.binded && (this.callback != null) && (this.target != null)) {
+          this.doBind();
+        }
+        return this.binded = true;
+      };
+
+      Binder.prototype.doBind = function() {
+        throw new Error('Not implemented');
+      };
+
+      Binder.prototype.unbind = function() {
+        if (this.binded && (this.callback != null) && (this.target != null)) {
+          this.doUnbind();
+        }
+        return this.binded = false;
+      };
+
+      Binder.prototype.doUnbind = function() {
+        throw new Error('Not implemented');
+      };
+
+      Binder.prototype.equals = function(binder) {
+        return binder.constructor === this.constructor && binder.target === this.target && this.compareCallback(binder.callback);
+      };
+
+      Binder.prototype.compareCallback = function(callback) {
+        return callback === this.callback || ((callback.maker != null) && callback.maker === this.callback.maker && callback.uses.length === this.callback.uses.length && this.callback.uses.every(function(arg, i) {
+          return arg === callback.uses[i];
+        }));
+      };
+
+      return Binder;
+
+    })();
+    return Binder;
+  });
+
+  (function(definition) {
     Spark.Collection = definition();
     return Spark.Collection.definition = definition;
   })(function() {
@@ -168,48 +218,46 @@
   (function(definition) {
     Spark.EventBind = definition();
     return Spark.EventBind.definition = definition;
-  })(function() {
-    var EventBind;
-    EventBind = (function() {
-      function EventBind(event1, target1, callback1) {
+  })(function(dependencies) {
+    var Binder, EventBind;
+    if (dependencies == null) {
+      dependencies = {};
+    }
+    Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
+    EventBind = (function(superClass) {
+      extend(EventBind, superClass);
+
+      function EventBind(event1, target, callback) {
         this.event = event1;
-        this.target = target1;
-        this.callback = callback1;
-        this.binded = false;
+        EventBind.__super__.constructor.call(this, target, callback);
       }
 
-      EventBind.prototype.bind = function() {
-        if (!this.binded) {
-          if (typeof this.target.addEventListener === 'function') {
-            this.target.addEventListener(this.event, this.callback);
-          } else if (typeof this.target.addListener === 'function') {
-            this.target.addListener(this.event, this.callback);
-          } else if (typeof this.target.on === 'function') {
-            this.target.on(this.event, this.callback);
-          } else {
-            throw new Error('No function to add event listeners was found');
-          }
+      EventBind.prototype.doBind = function() {
+        if (typeof this.target.addEventListener === 'function') {
+          return this.target.addEventListener(this.event, this.callback);
+        } else if (typeof this.target.addListener === 'function') {
+          return this.target.addListener(this.event, this.callback);
+        } else if (typeof this.target.on === 'function') {
+          return this.target.on(this.event, this.callback);
+        } else {
+          throw new Error('No function to add event listeners was found');
         }
-        return this.binded = true;
       };
 
-      EventBind.prototype.unbind = function() {
-        if (this.binded) {
-          if (typeof this.target.removeEventListener === 'function') {
-            this.target.removeEventListener(this.event, this.callback);
-          } else if (typeof this.target.removeListener === 'function') {
-            this.target.removeListener(this.event, this.callback);
-          } else if (typeof this.target.off === 'function') {
-            this.target.off(this.event, this.callback);
-          } else {
-            throw new Error('No function to remove event listeners was found');
-          }
+      EventBind.prototype.doUnbind = function() {
+        if (typeof this.target.removeEventListener === 'function') {
+          return this.target.removeEventListener(this.event, this.callback);
+        } else if (typeof this.target.removeListener === 'function') {
+          return this.target.removeListener(this.event, this.callback);
+        } else if (typeof this.target.off === 'function') {
+          return this.target.off(this.event, this.callback);
+        } else {
+          throw new Error('No function to remove event listeners was found');
         }
-        return this.binded = false;
       };
 
       EventBind.prototype.equals = function(eventBind) {
-        return eventBind.event === this.event && eventBind.target === this.target && eventBind.callback === this.callback;
+        return EventBind.__super__.equals.call(this, eventBind) && eventBind.event === this.event;
       };
 
       EventBind.prototype.match = function(event, target) {
@@ -231,7 +279,7 @@
 
       return EventBind;
 
-    })();
+    })(Binder);
     return EventBind;
   });
 
@@ -296,17 +344,25 @@
       };
 
       Invalidator.prototype.addEventBind = function(event, target, callback) {
+        return this.addBinder(new EventBind(event, target, callback));
+      };
+
+      Invalidator.prototype.addBinder = function(binder) {
+        if (binder.callback == null) {
+          binder.callback = this.invalidateCallback;
+        }
         if (!this.invalidationEvents.some(function(eventBind) {
-          return eventBind.match(event, target);
+          return eventBind.equals(binder);
         })) {
           return this.invalidationEvents.push(pluck(this.recycled, function(eventBind) {
-            return eventBind.match(event, target);
-          }) || new EventBind(event, target, callback));
+            return eventBind.equals(binder);
+          }) || binder);
         }
       };
 
       Invalidator.prototype.getUnknownCallback = function(prop, target) {
-        return (function(_this) {
+        var callback;
+        callback = (function(_this) {
           return function() {
             if (!_this.unknowns.some(function(unknown) {
               return unknown.prop === prop && unknown.target === target;
@@ -319,6 +375,9 @@
             }
           };
         })(this);
+        callback.maker = arguments.callee;
+        callback.uses = Array.from(arguments);
+        return callback;
       };
 
       Invalidator.prototype.event = function(event, target) {
@@ -326,7 +385,7 @@
           target = this.obj;
         }
         if (this.checkEmitter(target)) {
-          return this.addEventBind(event, target, this.invalidateCallback);
+          return this.addEventBind(event, target);
         }
       };
 
@@ -1237,8 +1296,12 @@
   (function(definition) {
     Spark.Updater = definition();
     return Spark.Updater.definition = definition;
-  })(function() {
-    var Updater;
+  })(function(dependencies) {
+    var Binder, Updater;
+    if (dependencies == null) {
+      dependencies = {};
+    }
+    Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
     Updater = (function() {
       function Updater() {
         this.callbacks = [];
@@ -1302,29 +1365,24 @@
       return Updater;
 
     })();
-    Updater.Binder = (function() {
-      function Binder(target1) {
-        this.target = target1;
-        this.binded = false;
+    Updater.Binder = (function(superClass) {
+      extend(Binder, superClass);
+
+      function Binder() {
+        return Binder.__super__.constructor.apply(this, arguments);
       }
 
-      Binder.prototype.bind = function() {
-        if (!this.binded && (this.callback != null)) {
-          this.target.addCallback(this.callback);
-        }
-        return this.binded = true;
+      Binder.prototype.doBind = function() {
+        return this.target.addCallback(this.callback);
       };
 
-      Binder.prototype.unbind = function() {
-        if (this.binded && (this.callback != null)) {
-          this.target.removeCallback(this.callback);
-        }
-        return this.binded = false;
+      Binder.prototype.doUnbind = function() {
+        return this.target.removeCallback(this.callback);
       };
 
       return Binder;
 
-    })();
+    })(Binder);
     return Updater;
   });
 

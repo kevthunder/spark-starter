@@ -6,6 +6,26 @@
   EventBind = require('../lib/EventBind');
 
   describe('EventBind', function() {
+    it('can compare 2 EventBinds', function() {
+      var bind1, bind2, bind3, calls, emitter, maker, testEvent;
+      testEvent = 'test';
+      maker = function(val) {
+        var callback;
+        callback = function() {
+          return null;
+        };
+        callback.maker = arguments.callee;
+        callback.uses = Array.from(arguments);
+        return callback;
+      };
+      calls = 0;
+      emitter = {};
+      bind1 = new EventBind(testEvent, emitter, maker(1));
+      bind2 = new EventBind(testEvent, emitter, maker(1));
+      bind3 = new EventBind(testEvent, emitter, maker(2));
+      assert.isTrue(bind1.equals(bind2));
+      return assert.isFalse(bind1.equals(bind3));
+    });
     it('should add listener on bind', function() {
       var bind, calls, emitter, testEvent, testListener;
       testEvent = 'test';

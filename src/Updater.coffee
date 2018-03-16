@@ -1,3 +1,5 @@
+Binder = require('./Binder')
+
 class Updater
   constructor: () ->
     @callbacks = []
@@ -36,14 +38,8 @@ class Updater
     @callbacks = []
     @next = []
   
-class Updater.Binder
-  constructor: (@target) ->
-    @binded = false
-  bind: ->
-    if !@binded and @callback?
-      @target.addCallback(@callback)
-    @binded = true
-  unbind: ->
-    if @binded and @callback?
-      @target.removeCallback(@callback)
-    @binded = false
+class Updater.Binder extends Binder
+  doBind: ->
+    @target.addCallback(@callback)
+  doUnbind: ->
+    @target.removeCallback(@callback)

@@ -2,6 +2,25 @@ assert = require('chai').assert
 EventBind = require('../lib/EventBind')
 
 describe 'EventBind', ->
+    
+  it 'can compare 2 EventBinds', ->
+    testEvent = 'test'
+    maker = (val)->
+        callback = -> null
+        callback.maker = arguments.callee
+        callback.uses = Array.from(arguments)
+        callback
+    
+    calls = 0
+    emitter = {}
+
+    bind1 = new EventBind(testEvent,emitter,maker(1))
+    bind2 = new EventBind(testEvent,emitter,maker(1))
+    bind3 = new EventBind(testEvent,emitter,maker(2))
+
+    assert.isTrue bind1.equals(bind2)
+    assert.isFalse bind1.equals(bind3)
+
   it 'should add listener on bind', ->
     testEvent = 'test'
     testListener = -> null
@@ -56,7 +75,7 @@ describe 'EventBind', ->
     bind.bind()
     bind.bind()
     assert.equal calls, 1
-    
+
   it 'should remove listener on unbind', ->
     testEvent = 'test'
     testListener = -> null
