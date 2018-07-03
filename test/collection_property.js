@@ -73,6 +73,44 @@
       assert.equal(res.toString(), '1,2,3,4');
       return assert.equal(callcount, 1);
     });
+    it('should call itemAdded function when something is added', function() {
+      var callcount, prop, res;
+      callcount = 0;
+      prop = new CollectionProperty(new Property('prop', {
+        collection: true,
+        "default": [1, 2, 3],
+        itemAdded: function(item) {
+          assert.include([4, 5], item);
+          return callcount += 1;
+        }
+      }), {});
+      res = prop.get();
+      assert.equal(callcount, 0);
+      assert.equal(res.count(), 3);
+      res.splice(4, 0, 4, 5);
+      assert.equal(res.count(), 5);
+      assert.equal(res.toString(), '1,2,3,4,5');
+      return assert.equal(callcount, 2);
+    });
+    it('should call itemRemoved function when something is removed', function() {
+      var callcount, prop, res;
+      callcount = 0;
+      prop = new CollectionProperty(new Property('prop', {
+        collection: true,
+        "default": [1, 2, 3, 4, 5],
+        itemRemoved: function(item) {
+          assert.include([4, 5], item);
+          return callcount += 1;
+        }
+      }), {});
+      res = prop.get();
+      assert.equal(callcount, 0);
+      assert.equal(res.count(), 5);
+      res.splice(3, 2);
+      assert.equal(res.count(), 3);
+      assert.equal(res.toString(), '1,2,3');
+      return assert.equal(callcount, 2);
+    });
     it('should pass the old value of an uninitiated collection as an array', function() {
       var callcount, prop;
       callcount = 0;

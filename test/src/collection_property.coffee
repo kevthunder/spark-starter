@@ -66,6 +66,43 @@ describe 'CollectionProperty', ->
     assert.equal res.count(), 4
     assert.equal res.toString(), '1,2,3,4'
     assert.equal callcount, 1
+
+  it 'should call itemAdded function when something is added', ->
+    callcount = 0
+    prop = new CollectionProperty(new Property('prop',{
+      collection: true
+      default: [1,2,3]
+      itemAdded: (item)->
+        assert.include [4,5], item
+        callcount+=1
+    }),{});
+    
+    res = prop.get()
+    assert.equal callcount, 0
+    assert.equal res.count(), 3
+    res.splice(4,0,  4, 5)
+    assert.equal res.count(), 5
+    assert.equal res.toString(), '1,2,3,4,5'
+    assert.equal callcount, 2
+
+  it 'should call itemRemoved function when something is removed', ->
+    callcount = 0
+    prop = new CollectionProperty(new Property('prop',{
+      collection: true
+      default: [1,2,3,4,5]
+      itemRemoved: (item)->
+        assert.include [4,5], item
+        callcount+=1
+    }),{});
+    
+    res = prop.get()
+    assert.equal callcount, 0
+    assert.equal res.count(), 5
+    res.splice(3,2)
+    assert.equal res.count(), 3
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 2
+
     
   it 'should pass the old value of an uninitiated collection as an array', ->
     callcount = 0

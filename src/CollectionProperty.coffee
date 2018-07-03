@@ -22,3 +22,14 @@ class CollectionProperty extends PropertyInstance
     col = Collection.newSubClass(@property.options.collection, value)
     col.changed = (old)-> prop.changed(old)
     col
+
+  callChangedFunctions: (old)->
+    if typeof @property.options.itemAdded == 'function'
+      @value.forEach (item, i)=>
+        unless old.includes(item)
+          @callOptionFunct("itemAdded", item, i)
+    if typeof @property.options.itemRemoved == 'function'
+      old.forEach (item, i)=>
+        unless @value.includes(item)
+          @callOptionFunct("itemRemoved", item, i)
+    super(old)

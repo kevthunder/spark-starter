@@ -722,9 +722,7 @@
         if (this.isActive()) {
           this.pendingChanges = false;
           this.pendingOld = void 0;
-          if (typeof this.property.options.change === 'function') {
-            this.callOptionFunct("change", old);
-          }
+          this.callChangedFunctions(old);
           if (typeof this.obj.emitEvent === 'function') {
             this.obj.emitEvent(this.property.getUpdateEventName(), [old]);
             this.obj.emitEvent(this.property.getChangeEventName(), [old]);
@@ -736,6 +734,12 @@
           }
         }
         return this;
+      };
+
+      PropertyInstance.prototype.callChangedFunctions = function(old) {
+        if (typeof this.property.options.change === 'function') {
+          return this.callOptionFunct("change", old);
+        }
       };
 
       PropertyInstance.prototype.isImmediate = function() {
@@ -817,6 +821,28 @@
           return prop.changed(old);
         };
         return col;
+      };
+
+      CollectionProperty.prototype.callChangedFunctions = function(old) {
+        if (typeof this.property.options.itemAdded === 'function') {
+          this.value.forEach((function(_this) {
+            return function(item, i) {
+              if (!old.includes(item)) {
+                return _this.callOptionFunct("itemAdded", item, i);
+              }
+            };
+          })(this));
+        }
+        if (typeof this.property.options.itemRemoved === 'function') {
+          old.forEach((function(_this) {
+            return function(item, i) {
+              if (!_this.value.includes(item)) {
+                return _this.callOptionFunct("itemRemoved", item, i);
+              }
+            };
+          })(this));
+        }
+        return CollectionProperty.__super__.callChangedFunctions.call(this, old);
       };
 
       return CollectionProperty;

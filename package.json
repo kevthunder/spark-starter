@@ -14,15 +14,15 @@
   "author": "kevthunder",
   "license": "ISC",
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.1",
     "gulp": "^3.9.1",
-    "gulp-coffee": "^2.3.3",
+    "gulp-coffee": "^2.3.5",
     "gulp-concat": "^2.6.1",
-    "gulp-mocha": "^4.3.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^2.0.1",
-    "mocha": "^3.2.0",
-    "wolfy87-eventemitter": "^5.2.3",
-    "spark-wrapper": "kevthunder/spark-wrapper"
+    "gulp-mocha": "^6.0.0",
+    "gulp-rename": "^1.3.0",
+    "gulp-uglify": "^3.0.0",
+    "mocha": "^5.2.0",
+    "spark-wrapper": "github:kevthunder/spark-wrapper",
+    "wolfy87-eventemitter": "^5.2.5"
   }
 }

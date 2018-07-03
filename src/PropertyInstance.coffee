@@ -159,8 +159,7 @@ class PropertyInstance
     if @isActive()
       @pendingChanges = false
       @pendingOld = undefined
-      if typeof @property.options.change == 'function'
-        @callOptionFunct("change", old)
+      @callChangedFunctions(old)
       if typeof @obj.emitEvent == 'function'
         @obj.emitEvent(@property.getUpdateEventName(), [old])
         @obj.emitEvent(@property.getChangeEventName(), [old])
@@ -169,6 +168,10 @@ class PropertyInstance
       if typeof @pendingOld == 'undefined'
         @pendingOld = old
     this
+
+  callChangedFunctions: (old)->
+    if typeof @property.options.change == 'function'
+      @callOptionFunct("change", old)
         
   isImmediate: ->
     @property.options.immediate != false and
