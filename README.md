@@ -52,3 +52,4 @@ apple.color = 'green'; // trigger an alert
 
 ## todo
   - Support for node's `require('events')`
+  - option to forward methods from a property's value
