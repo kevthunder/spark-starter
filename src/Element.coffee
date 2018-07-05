@@ -1,7 +1,7 @@
 Property = require('./Property')
 
 class Element
-  @elementKeywords = ['extended', 'included','__super__','constructor']
+  @elementKeywords = ['extended', 'included','constructor']
   
   tap: (name) ->
     args = Array::slice.call(arguments)
@@ -20,7 +20,7 @@ class Element
       @_callbacks[name] = (args...)=> 
         this[name].apply(this,args)
         null
-  
+
   @extend: (obj) ->
     for key, value of obj when key not in Element.elementKeywords
       @[key] = value
@@ -28,14 +28,29 @@ class Element
       @include obj.prototype
     obj.extended?.apply(@)
     this
+  
+  @getIncludableProperties: (obj) ->
+    exclude = Element.elementKeywords
+    if obj._properties?
+      exclude = exclude.concat(obj._properties.map((prop)->prop.name))
+      exclude.push("_properties")
+    
+    props = []
+    loop
+      props = props.concat(
+        Object.getOwnPropertyNames(obj).filter (key)=>
+          !@::hasOwnProperty(key) and key.substr(0,2) != "__" and key not in exclude and key not in props
+      )
+      unless (obj = Object.getPrototypeOf(obj)) and obj != Object and obj != Element.prototype
+        break
+    props
     
   @include: (obj) ->
-    for key, value of obj when key not in Element.elementKeywords
-      if key == '_properties'
-        for property in value
+    for key in @getIncludableProperties( obj )
+      @::[key] = obj[key]
+    if obj._properties?
+      for property in obj._properties
           @property(property.name, Object.assign({},property.options))
-      else
-        @::[key] = value
     obj.included?.apply(@)
     this
     

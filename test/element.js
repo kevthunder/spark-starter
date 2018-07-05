@@ -15,6 +15,34 @@
     var invalidateEvents, updateEvents;
     invalidateEvents = ['propInvalidated'];
     updateEvents = ['propChanged', 'propUpdated'];
+    it('can get includable attributes', function() {
+      var TestClass, TestClass2;
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.prototype.foo = function() {
+          return 'hello';
+        };
+
+        return TestClass;
+
+      })(Element);
+      TestClass2 = (function(superClass) {
+        extend(TestClass2, superClass);
+
+        function TestClass2() {
+          return TestClass2.__super__.constructor.apply(this, arguments);
+        }
+
+        return TestClass2;
+
+      })(Element);
+      return assert.deepEqual(TestClass2.getIncludableProperties(TestClass.prototype), ['foo']);
+    });
     it('can include functions from an object', function() {
       var TestClass, obj, toInclude;
       toInclude = {
@@ -71,6 +99,52 @@
       obj = new TestClass();
       return assert.equal(obj.foo(), 'hello');
     });
+    it('can extend a nested class', function() {
+      var BaseClass, SupClass, TestClass, obj;
+      BaseClass = (function(superClass) {
+        extend(BaseClass, superClass);
+
+        function BaseClass() {
+          return BaseClass.__super__.constructor.apply(this, arguments);
+        }
+
+        BaseClass.prototype.foo = function() {
+          return 'hello';
+        };
+
+        BaseClass.bar = function() {
+          return 'hey';
+        };
+
+        return BaseClass;
+
+      })(Element);
+      SupClass = (function(superClass) {
+        extend(SupClass, superClass);
+
+        function SupClass() {
+          return SupClass.__super__.constructor.apply(this, arguments);
+        }
+
+        return SupClass;
+
+      })(BaseClass);
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.extend(SupClass);
+
+        return TestClass;
+
+      })(Element);
+      assert.equal(TestClass.bar(), 'hey');
+      obj = new TestClass();
+      return assert.equal(obj.foo(), 'hello');
+    });
     it('can extend a third class with properties', function() {
       var BaseClass, TestClass, obj;
       BaseClass = (function(superClass) {
@@ -97,6 +171,58 @@
         }
 
         TestClass.extend(BaseClass);
+
+        TestClass.properties({
+          bar: {
+            "default": 'hey'
+          }
+        });
+
+        return TestClass;
+
+      })(Element);
+      obj = new TestClass();
+      assert.equal(obj.foo, 'hello');
+      assert.equal(obj.bar, 'hey');
+      assert.instanceOf(obj.getProperty("foo"), Property);
+      return assert.instanceOf(obj.getProperty("bar"), Property);
+    });
+    it('can extend a nested class with properties', function() {
+      var BaseClass, SupClass, TestClass, obj;
+      BaseClass = (function(superClass) {
+        extend(BaseClass, superClass);
+
+        function BaseClass() {
+          return BaseClass.__super__.constructor.apply(this, arguments);
+        }
+
+        BaseClass.properties({
+          foo: {
+            "default": 'hello'
+          }
+        });
+
+        return BaseClass;
+
+      })(Element);
+      SupClass = (function(superClass) {
+        extend(SupClass, superClass);
+
+        function SupClass() {
+          return SupClass.__super__.constructor.apply(this, arguments);
+        }
+
+        return SupClass;
+
+      })(BaseClass);
+      TestClass = (function(superClass) {
+        extend(TestClass, superClass);
+
+        function TestClass() {
+          return TestClass.__super__.constructor.apply(this, arguments);
+        }
+
+        TestClass.extend(SupClass);
 
         TestClass.properties({
           bar: {

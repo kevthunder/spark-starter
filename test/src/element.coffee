@@ -10,12 +10,22 @@ describe 'Element', ->
   updateEvents = ['propChanged','propUpdated']
 
 
+  it 'can get includable attributes', ->
+    class TestClass extends Element
+      foo: ->
+        'hello'
+
+    class TestClass2 extends Element
+
+    assert.deepEqual TestClass2.getIncludableProperties(TestClass.prototype), ['foo']
+
   it 'can include functions from an object', ->
     toInclude = {
       foo: 'hello'
     }
     class TestClass extends Element
       @include toInclude
+
     obj = new TestClass();
     assert.equal obj.foo, 'hello'
 
@@ -26,6 +36,20 @@ describe 'Element', ->
       
     class TestClass extends Element
       @extend BaseClass
+
+    assert.equal TestClass.bar(), 'hey'
+    obj = new TestClass();
+    assert.equal obj.foo(), 'hello'
+
+  it 'can extend a nested class', ->
+    class BaseClass extends Element
+      foo: -> 'hello'
+      @bar = -> 'hey'
+
+    class SupClass extends BaseClass
+      
+    class TestClass extends Element
+      @extend SupClass
 
     assert.equal TestClass.bar(), 'hey'
     obj = new TestClass();
@@ -48,6 +72,26 @@ describe 'Element', ->
     assert.instanceOf obj.getProperty("foo"), Property
     assert.instanceOf obj.getProperty("bar"), Property
 
+  it 'can extend a nested class with properties', ->
+    class BaseClass extends Element
+      @properties
+        foo: 
+          default: 'hello'
+
+    class SupClass extends BaseClass
+
+    class TestClass extends Element
+      @extend SupClass
+      @properties
+        bar: 
+          default: 'hey'
+    obj = new TestClass();
+
+    assert.equal obj.foo, 'hello'
+    assert.equal obj.bar, 'hey'
+    assert.instanceOf obj.getProperty("foo"), Property
+    assert.instanceOf obj.getProperty("bar"), Property
+
   it 'can extend a third class with merged properties', ->
     class BaseClass extends Element
       @properties
@@ -60,12 +104,14 @@ describe 'Element', ->
         foo: 
           calcul: -> 'hey'
 
+
     class Test2Class extends Element
       @extend BaseClass
       @properties
         foo: 
           default: 'hi'
           
+
     class Test3Class extends Test1Class
       @extend BaseClass
 

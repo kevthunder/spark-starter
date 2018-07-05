@@ -79,7 +79,7 @@ class Property
       
   @fn:
     getProperty: (name)->
-      @_properties.find (prop)->
+      @_properties && @_properties.find (prop)->
         prop.name == name
         
     getPropertyInstance: (name)->
