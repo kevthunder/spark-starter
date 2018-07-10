@@ -33,3 +33,8 @@ class CollectionProperty extends PropertyInstance
         unless @value.includes(item)
           @callOptionFunct("itemRemoved", item, i)
     super(old)
+
+  hasChangedFunctions: ()->
+    super() || 
+      typeof @property.options.itemAdded == 'function' || 
+      typeof @property.options.itemRemoved == 'function'

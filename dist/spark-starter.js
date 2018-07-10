@@ -742,8 +742,16 @@
         }
       };
 
+      PropertyInstance.prototype.hasChangedFunctions = function() {
+        return typeof this.property.options.change === 'function';
+      };
+
+      PropertyInstance.prototype.hasChangedEvents = function() {
+        return typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0;
+      };
+
       PropertyInstance.prototype.isImmediate = function() {
-        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && ((typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.property.getChangeEventName()).length > 0) || typeof this.property.options.change === 'function')));
+        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
       };
 
       PropertyInstance.bind = function(target, prop) {
@@ -843,6 +851,10 @@
           })(this));
         }
         return CollectionProperty.__super__.callChangedFunctions.call(this, old);
+      };
+
+      CollectionProperty.prototype.hasChangedFunctions = function() {
+        return CollectionProperty.__super__.hasChangedFunctions.call(this) || typeof this.property.options.itemAdded === 'function' || typeof this.property.options.itemRemoved === 'function';
       };
 
       return CollectionProperty;

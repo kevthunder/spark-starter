@@ -172,20 +172,22 @@ class PropertyInstance
   callChangedFunctions: (old)->
     if typeof @property.options.change == 'function'
       @callOptionFunct("change", old)
+
+  hasChangedFunctions: ()->
+    typeof @property.options.change == 'function'
+
+  hasChangedEvents: ()->
+    typeof @obj.getListeners == 'function' and
+      @obj.getListeners(@property.getChangeEventName()).length > 0
         
   isImmediate: ->
     @property.options.immediate != false and
     (
       @property.options.immediate == true or
-        if typeof @property.options.immediate == 'function' then @callOptionFunct("immediate")
+        if typeof @property.options.immediate == 'function'
+          @callOptionFunct("immediate")
         else
-          !@getUpdater()? and (
-            (
-              typeof @obj.getListeners == 'function' and
-              @obj.getListeners(@property.getChangeEventName()).length > 0
-            ) or
-            typeof @property.options.change == 'function'
-          )
+          !@getUpdater()? and (@hasChangedEvents() or @hasChangedFunctions())
     )
 
   @bind = (target,prop)->

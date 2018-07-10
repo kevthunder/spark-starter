@@ -104,6 +104,7 @@
         }
       }), {});
       res = prop.get();
+      assert.isTrue(prop.isImmediate());
       assert.equal(callcount, 0);
       assert.equal(res.count(), 5);
       res.splice(3, 2);
