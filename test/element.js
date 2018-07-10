@@ -245,12 +245,15 @@
         extend(BaseClass, superClass);
 
         function BaseClass() {
-          return BaseClass.__super__.constructor.apply(this, arguments);
+          this.bar = 'bye';
         }
 
         BaseClass.properties({
           foo: {
             "default": 'hello'
+          },
+          bar: {
+            "default": 'adios'
           }
         });
 
@@ -261,7 +264,7 @@
         extend(Test1Class, superClass);
 
         function Test1Class() {
-          return Test1Class.__super__.constructor.apply(this, arguments);
+          this.bar = 'see you';
         }
 
         Test1Class.extend(BaseClass);
@@ -310,7 +313,11 @@
       assert.equal((new BaseClass()).foo, 'hello');
       assert.equal((new Test1Class()).foo, 'hey');
       assert.equal((new Test2Class()).foo, 'hi');
-      return assert.equal((new Test3Class()).foo, 'hey');
+      assert.equal((new Test3Class()).foo, 'hey');
+      assert.equal((new BaseClass()).bar, 'bye');
+      assert.equal((new Test1Class()).bar, 'see you');
+      assert.equal((new Test2Class()).bar, 'adios');
+      return assert.equal((new Test3Class()).bar, 'see you');
     });
     it('should emit event when value change', function() {
       var TestClass, obj;

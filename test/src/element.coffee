@@ -94,11 +94,17 @@ describe 'Element', ->
 
   it 'can extend a third class with merged properties', ->
     class BaseClass extends Element
+      constructor: () ->
+        @bar = 'bye'
       @properties
         foo: 
           default: 'hello'
+        bar: 
+          default: 'adios'
 
     class Test1Class extends Element
+      constructor: () ->
+        @bar = 'see you'
       @extend BaseClass
       @properties
         foo: 
@@ -119,6 +125,11 @@ describe 'Element', ->
     assert.equal (new Test1Class()).foo, 'hey'
     assert.equal (new Test2Class()).foo, 'hi'
     assert.equal (new Test3Class()).foo, 'hey'
+
+    assert.equal (new BaseClass()).bar, 'bye'
+    assert.equal (new Test1Class()).bar, 'see you'
+    assert.equal (new Test2Class()).bar, 'adios'
+    assert.equal (new Test3Class()).bar, 'see you'
     
   it 'should emit event when value change', ->
     

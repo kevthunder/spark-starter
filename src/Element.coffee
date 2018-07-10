@@ -1,7 +1,7 @@
 Property = require('./Property')
 
 class Element
-  @elementKeywords = ['extended', 'included','constructor']
+  @elementKeywords = ['extended', 'included', '__super__','constructor']
   
   tap: (name) ->
     args = Array::slice.call(arguments)
