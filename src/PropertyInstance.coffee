@@ -38,9 +38,7 @@ class PropertyInstance
         undefined
   
   set: (val)->
-    if @property.options.set == false
-      undefined
-    else if typeof @property.options.set == 'function'
+    if typeof @property.options.set == 'function'
       @callOptionFunct("set",val)
     else
       val = @ingest(val)
@@ -190,18 +188,25 @@ class PropertyInstance
           !@getUpdater()? and (@hasChangedEvents() or @hasChangedFunctions())
     )
 
+  @detect = (prop)->
+    unless prop.instanceType?
+      prop.instanceType = PropertyInstance
+
   @bind = (target,prop)->
     maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1)
-    Object.defineProperty target, prop.name, {
+    opt = {
       configurable: true
       get: ->
         prop.getInstance(this).get()
-      set: (val)->
-        prop.getInstance(this).set(val)
     }
+    unless prop.options.set == false
+      opt.set = (val)->
+        prop.getInstance(this).set(val)
+    Object.defineProperty target, prop.name, opt
     target['get'+maj] = ->
-        prop.getInstance(this).get()
-    target['set'+maj] = (val)->
+      prop.getInstance(this).get()
+    unless prop.options.set == false
+      target['set'+maj] = (val)->
         prop.getInstance(this).set(val)
         this
     target['invalidate'+maj] = ->

@@ -54,6 +54,18 @@
       obj.setProp(11);
       return assert.equal(obj.prop, 11);
     });
+    it('cant set read-only property', function() {
+      var obj, prop;
+      prop = new Property('prop', {
+        set: false,
+        "default": 7
+      });
+      obj = {};
+      prop.bind(obj);
+      obj.prop = 9;
+      assert.equal(obj.prop, 7);
+      return assert.isNotFunction(obj.setProp);
+    });
     it('should return self while using set function', function() {
       var obj, prop, res;
       prop = new Property('prop', {});

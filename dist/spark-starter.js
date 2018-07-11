@@ -552,9 +552,7 @@
 
       PropertyInstance.prototype.set = function(val) {
         var old;
-        if (this.property.options.set === false) {
-          void 0;
-        } else if (typeof this.property.options.set === 'function') {
+        if (typeof this.property.options.set === 'function') {
           this.callOptionFunct("set", val);
         } else {
           val = this.ingest(val);
@@ -754,25 +752,36 @@
         return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
       };
 
+      PropertyInstance.detect = function(prop) {
+        if (prop.instanceType == null) {
+          return prop.instanceType = PropertyInstance;
+        }
+      };
+
       PropertyInstance.bind = function(target, prop) {
-        var maj;
+        var maj, opt;
         maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1);
-        Object.defineProperty(target, prop.name, {
+        opt = {
           configurable: true,
           get: function() {
             return prop.getInstance(this).get();
-          },
-          set: function(val) {
-            return prop.getInstance(this).set(val);
           }
-        });
+        };
+        if (prop.options.set !== false) {
+          opt.set = function(val) {
+            return prop.getInstance(this).set(val);
+          };
+        }
+        Object.defineProperty(target, prop.name, opt);
         target['get' + maj] = function() {
           return prop.getInstance(this).get();
         };
-        target['set' + maj] = function(val) {
-          prop.getInstance(this).set(val);
-          return this;
-        };
+        if (prop.options.set !== false) {
+          target['set' + maj] = function(val) {
+            prop.getInstance(this).set(val);
+            return this;
+          };
+        }
         return target['invalidate' + maj] = function() {
           prop.getInstance(this).invalidate();
           return this;
@@ -857,6 +866,12 @@
         return CollectionProperty.__super__.hasChangedFunctions.call(this) || typeof this.property.options.itemAdded === 'function' || typeof this.property.options.itemRemoved === 'function';
       };
 
+      CollectionProperty.detect = function(prop) {
+        if (prop.options.collection != null) {
+          return prop.instanceType = CollectionProperty;
+        }
+      };
+
       return CollectionProperty;
 
     })(PropertyInstance);
@@ -918,6 +933,12 @@
         })(this));
         this.revalidated();
         return this.value;
+      };
+
+      ComposedProperty.detect = function(prop) {
+        if (prop.options.composed != null) {
+          return prop.instanceType = ComposedProperty;
+        }
       };
 
       ComposedProperty.bind = function(target, prop) {
@@ -1021,11 +1042,11 @@
     CollectionProperty = dependencies.hasOwnProperty("CollectionProperty") ? dependencies.CollectionProperty : Spark.CollectionProperty;
     ComposedProperty = dependencies.hasOwnProperty("ComposedProperty") ? dependencies.ComposedProperty : Spark.ComposedProperty;
     Property = (function() {
+      Property.prototype.detectors = [ComposedProperty, CollectionProperty, PropertyInstance];
+
       function Property(name1, options1) {
-        var calculated;
         this.name = name1;
         this.options = options1 != null ? options1 : {};
-        calculated = false;
       }
 
       Property.prototype.bind = function(target) {
@@ -1116,13 +1137,14 @@
       };
 
       Property.prototype.getInstanceType = function() {
-        if (this.options.composed != null) {
-          return ComposedProperty;
+        if (!this.instanceType) {
+          this.detectors.forEach((function(_this) {
+            return function(detector) {
+              return detector.detect(_this);
+            };
+          })(this));
         }
-        if (this.options.collection != null) {
-          return CollectionProperty;
-        }
-        return PropertyInstance;
+        return this.instanceType;
       };
 
       Property.prototype.getChangeEventName = function() {

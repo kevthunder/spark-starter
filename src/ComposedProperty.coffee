@@ -37,6 +37,10 @@ class ComposedProperty extends PropertyInstance
     @revalidated()
     @value
 
+  @detect = (prop)->
+    if prop.options.composed?
+      prop.instanceType = ComposedProperty
+
   @bind = (target,prop)->
     PropertyInstance.bind(target,prop)
     Object.defineProperty target, prop.name+'Members', {

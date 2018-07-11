@@ -3,8 +3,10 @@ CollectionProperty = require('./CollectionProperty')
 ComposedProperty = require('./ComposedProperty')
 
 class Property
+  @::detectors = [ComposedProperty, CollectionProperty, PropertyInstance]
+
   constructor: (@name, @options = {}) ->
-    calculated = false
+    
     
   bind: (target) ->
     prop = this
@@ -59,11 +61,10 @@ class Property
     obj[varName]
 
   getInstanceType: () ->
-    if @options.composed?
-      return ComposedProperty
-    if @options.collection?
-      return CollectionProperty
-    return PropertyInstance
+    if !@instanceType
+      @detectors.forEach (detector)=>
+        detector.detect(this)
+    @instanceType
     
   getChangeEventName: ()->
     @options.changeEventName ||
