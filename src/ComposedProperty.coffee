@@ -5,6 +5,9 @@ Collection = require('./Collection')
 class ComposedProperty extends PropertyInstance
   init: ()->
     super()
+    @initComposed()
+
+  initComposed: ()->
     if @property.options.hasOwnProperty('default')
       @default = @property.options.default
     else
@@ -39,7 +42,7 @@ class ComposedProperty extends PropertyInstance
 
   @detect = (prop)->
     if prop.options.composed?
-      prop.instanceType = ComposedProperty
+      prop.instanceType = class extends ComposedProperty
 
   @bind = (target,prop)->
     PropertyInstance.bind(target,prop)

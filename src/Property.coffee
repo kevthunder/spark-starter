@@ -66,18 +66,6 @@ class Property
         detector.detect(this)
     @instanceType
     
-  getChangeEventName: ()->
-    @options.changeEventName ||
-      @name+'Changed'
-      
-  getUpdateEventName: ()->
-    @options.changeEventName ||
-      @name+'Updated'
-      
-  getInvalidateEventName: ()->
-    @options.changeEventName ||
-      @name+'Invalidated'
-      
   @fn:
     getProperty: (name)->
       @_properties && @_properties.find (prop)->
@@ -127,5 +115,5 @@ class Property
   @optionalFn:
     afterAddListener: (event)->
       @_properties.forEach (prop)=>
-        if prop.getChangeEventName() == event
+        if prop.getInstanceType()::changeEventName == event
           prop.getInstance(this).get()

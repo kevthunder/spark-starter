@@ -10,16 +10,16 @@ describe 'PropertyInstance', ->
   updateEvents = ['propChanged','propUpdated']
   
   it 'should flag as manual setted properties', ->
-    prop = new PropertyInstance(new Property('prop',{}),{});
+    prop = new Property('prop',{}).getInstance({});
 
     prop.set(10)
     assert.equal prop.manual, true
 
   it 'should flag as not-manual calculated properties', ->
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: ->
         3
-    }),{});
+    }).getInstance({});
 
     res = prop.get()
     assert.equal res, 3
@@ -29,11 +29,11 @@ describe 'PropertyInstance', ->
   it 'should not call calcul when using set', ->
 
     calls = 0
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: ->
         calls+=1
         3
-    }),{});
+    }).getInstance({});
 
     assert.equal prop.value, undefined
     assert.equal prop.calculated, false
@@ -49,10 +49,10 @@ describe 'PropertyInstance', ->
 
   it 'can invalidate a property', ->
   
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: ->
          3
-    }),{});
+    }).getInstance({});
     
     assert.equal prop.value, undefined
     assert.equal prop.calculated, false
@@ -65,10 +65,10 @@ describe 'PropertyInstance', ->
 
   it 'can invalidate a property that has a get function', ->
   
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       get: ->
          3
-    }),{});
+    }).getInstance({});
     
     assert.equal prop.value, undefined
     assert.equal prop.calculated, false
@@ -90,11 +90,11 @@ describe 'PropertyInstance', ->
         if @listener?
           @listener()
     }
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         invalidated.event('testChanged',emitter)
         3
-    }),{});
+    }).getInstance({});
     
     assert.equal prop.value, undefined
     assert.equal prop.calculated, false, 'calculated initially false'
@@ -114,12 +114,12 @@ describe 'PropertyInstance', ->
       removeListener: (evt, listener) ->
         binded = false
     
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         invalidated.event('testChanged',new Emitter())
         val+=1
       immediate: true
-    }),{});
+    }).getInstance({});
     
     assert.equal prop.calculated, false, 'calculated initially false'
     assert.isFalse binded
@@ -132,11 +132,11 @@ describe 'PropertyInstance', ->
     
   it 'should re-calcul only on the next get after an invalidation', ->
     callcount = 0
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         callcount += 1
         3
-    }),{});
+    }).getInstance({});
     
     assert.equal callcount, 0
     assert.equal prop.value, undefined
@@ -156,12 +156,12 @@ describe 'PropertyInstance', ->
     
   it 'should re-calcul immediately when the option is true', ->
     callcount = 0
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         callcount += 1
         3
       immediate: true
-    }),{});
+    }).getInstance({});
     
     assert.equal callcount, 0
     assert.equal prop.value, undefined
@@ -181,13 +181,13 @@ describe 'PropertyInstance', ->
 
   it 'can use a function to determine immediate re-calcul', ->
     callcount = 0
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         callcount += 1
         3
       immediate: ->
         true
-    }),{});
+    }).getInstance({});
     
     assert.equal callcount, 0
     assert.equal prop.value, undefined
@@ -210,13 +210,13 @@ describe 'PropertyInstance', ->
     calculCalls = 0
     changeCalls = 0
     val = 3
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         calculCalls += 1
         val += 1
       change: (old)->
         changeCalls += 1
-    }),{});
+    }).getInstance({});
     
     assert.equal calculCalls, 0, "nb calcul calls"
     assert.equal changeCalls, 0, "nb change calls"
@@ -242,7 +242,7 @@ describe 'PropertyInstance', ->
     calculCalls = 0
     changeCalls = 0
     val = 3
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         calculCalls += 1
         val += 1
@@ -250,7 +250,7 @@ describe 'PropertyInstance', ->
         changeCalls += 1
       immediate: ->
         false
-    }),{});
+    }).getInstance({});
     
     assert.equal calculCalls, 0, "nb calcul calls"
     assert.equal changeCalls, 0, "nb change calls"
@@ -277,14 +277,14 @@ describe 'PropertyInstance', ->
     changeCalls = 0
     val = 3
     updater = new Updater()
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         calculCalls += 1
         val += 1
       change: (old)->
         changeCalls += 1
       updater: updater
-    }),{});
+    }).getInstance({});
     
     assert.equal calculCalls, 0, "nb calcul calls, before get"
     assert.equal changeCalls, 0, "nb change calls, before get"
@@ -309,11 +309,11 @@ describe 'PropertyInstance', ->
     
   it 'should re-calcul immediately if there is a listener on the change event', ->
     callcount = 0
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         callcount += 1
         3
-    }),{
+    }).getInstance({
         getListeners: -> 
           [{}]
     });
@@ -342,10 +342,10 @@ describe 'PropertyInstance', ->
         assert.include propEvents, evt
       test: 4
     }
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         invalidated.prop('test',emitter)
-    }),{});
+    }).getInstance({});
     
     prop.get()
     assert.instanceOf(prop.invalidator,Invalidator)
@@ -358,22 +358,22 @@ describe 'PropertyInstance', ->
         assert.include propEvents, evt
       test: 4
     }
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       calcul: (invalidated)->
         invalidated.prop('test')
-    }),emitter);
+    }).getInstance(emitter);
     
     res = prop.get()
     assert.equal res, 4
   
   it 'should allow to alter the input value', ->
-    prop = new PropertyInstance(new Property('prop',{
+    prop = new Property('prop',{
       ingest: (val)->
         if val == 2
           'two'
         else
           val
-    }),{});
+    }).getInstance({});
     
     prop.set(2)
     assert.equal prop.value, 'two'

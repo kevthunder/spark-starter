@@ -4,38 +4,35 @@ class PropertyInstance
   constructor: (@property, @obj) ->
     @init()
   init: ->
-    @value = @ingest(@property.options.default)
+    @value = @ingest(@default)
     @calculated = false
-    @initiated = typeof @property.options.default != 'undefined'
     @revalidateCallback = =>
       @get()
 
-  get: ->
-    if @property.options.get == false
-      undefined
-    else if typeof @property.options.get == 'function'
-      res = @callOptionFunct("get")
-      @revalidated()
-      res
+  callbackGet:->
+    res = @callOptionFunct("get")
+    @revalidated()
+    res
+
+  dynamicGet:->
+    if @invalidator
+      @invalidator.validateUnknowns()
+    if @isActive()
+      if !@calculated
+        old = @value
+        initiated = @initiated
+        @calcul()
+        if @value != old
+          if initiated 
+            @changed(old)
+          else if typeof @obj.emitEvent == 'function'
+            @obj.emitEvent(@updateEventName, [old])
+      if @pendingChanges
+        @changed(@pendingOld)
+      @output()
     else
-      if @invalidator
-        @invalidator.validateUnknowns()
-      if @isActive()
-        if !@calculated
-          old = @value
-          initiated = @initiated
-          @calcul()
-          if @value != old
-            if initiated 
-              @changed(old)
-            else if typeof @obj.emitEvent == 'function'
-              @obj.emitEvent(@property.getUpdateEventName(), [old])
-        if @pendingChanges
-          @changed(@pendingOld)
-        @output()
-      else
-        @initiated = true
-        undefined
+      @initiated = true
+      undefined
   
   set: (val)->
     if typeof @property.options.set == 'function'
@@ -69,7 +66,7 @@ class PropertyInstance
       false
     else 
       if typeof @obj.emitEvent == 'function'
-        @obj.emitEvent(@property.getInvalidateEventName())
+        @obj.emitEvent(@invalidateEventName)
       if @getUpdater()?
         @getUpdater().bind()
       true
@@ -85,7 +82,7 @@ class PropertyInstance
     if typeof funct.overrided == 'function'
       args.push (args...) => 
         @callOptionFunct funct.overrided, args...
-    funct.apply(@obj,args)
+    funct.apply(@obj, args)
 
   isActive: ->
     if typeof @property.options.active == "boolean"
@@ -159,8 +156,8 @@ class PropertyInstance
       @pendingOld = undefined
       @callChangedFunctions(old)
       if typeof @obj.emitEvent == 'function'
-        @obj.emitEvent(@property.getUpdateEventName(), [old])
-        @obj.emitEvent(@property.getChangeEventName(), [old])
+        @obj.emitEvent(@updateEventName, [old])
+        @obj.emitEvent(@changeEventName, [old])
     else
       @pendingChanges = true
       if typeof @pendingOld == 'undefined'
@@ -176,7 +173,7 @@ class PropertyInstance
 
   hasChangedEvents: ()->
     typeof @obj.getListeners == 'function' and
-      @obj.getListeners(@property.getChangeEventName()).length > 0
+      @obj.getListeners(@changeEventName).length > 0
         
   isImmediate: ->
     @property.options.immediate != false and
@@ -190,7 +187,21 @@ class PropertyInstance
 
   @detect = (prop)->
     unless prop.instanceType?
-      prop.instanceType = PropertyInstance
+      prop.instanceType = class extends PropertyInstance
+
+    if typeof prop.options.get == 'function'
+      prop.instanceType::get = @::callbackGet
+    else
+      prop.instanceType::get = @::dynamicGet
+
+    prop.instanceType::default = prop.options.default
+    prop.instanceType::initiated = typeof prop.options.default != 'undefined'
+    @setEventNames(prop);
+
+  @setEventNames = (prop)->
+    prop.instanceType::changeEventName = prop.options.changeEventName || prop.name+'Changed'
+    prop.instanceType::updateEventName = prop.options.updateEventName || prop.name+'Updated'
+    prop.instanceType::invalidateEventName = prop.options.invalidateEventName || prop.name+'Invalidated'
 
   @bind = (target,prop)->
     maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1)

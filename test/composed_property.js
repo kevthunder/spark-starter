@@ -26,10 +26,10 @@
     });
     it('returns a value composed(and) of many values', function() {
       var prop, res;
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: [true, true]
-      }), {});
+      }).getInstance({});
       res = prop.get();
       assert.isTrue(res);
       prop.members.push(false);
@@ -38,11 +38,11 @@
     });
     it('returns a value composed(or) of many values', function() {
       var prop, res;
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: [false, false],
         "default": false
-      }), {});
+      }).getInstance({});
       res = prop.get();
       assert.isFalse(res);
       prop.members.push(true);
@@ -60,10 +60,10 @@
       fnFalse = function() {
         return false;
       };
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: [fnTrue, fnTrue2]
-      }), {});
+      }).getInstance({});
       res = prop.get();
       assert.isTrue(res);
       prop.members.push(fnFalse);
@@ -72,10 +72,10 @@
     });
     it('returns a value composed of many ref value', function() {
       var prop, res;
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: []
-      }), {});
+      }).getInstance({});
       res = prop.get();
       assert.isTrue(res, 'initial result');
       prop.members.addValueRef(true, 'prop1');
@@ -95,10 +95,10 @@
     });
     it('returns a value composed of many ref functions', function() {
       var prop, res;
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: []
-      }), {});
+      }).getInstance({});
       res = prop.get();
       assert.isTrue(res, 'initial result');
       prop.members.addFunctionRef((function() {
@@ -139,10 +139,10 @@
       new Property('prop3', {
         "default": false
       }).bind(remote);
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: []
-      }), {});
+      }).getInstance({});
       prop.members.addPropertyRef('prop1', remote);
       prop.members.addPropertyRef('prop2', remote);
       res = prop.get();
@@ -156,10 +156,10 @@
     });
     it('invalidate the result when adding a member', function() {
       var prop, res;
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: [true, true]
-      }), {});
+      }).getInstance({});
       assert.isFalse(prop.calculated);
       res = prop.get();
       assert.isTrue(prop.calculated);
@@ -187,10 +187,10 @@
       new Property('prop3', {
         "default": false
       }).bind(remote);
-      prop = new ComposedProperty(new Property('prop', {
+      prop = new Property('prop', {
         composed: true,
         members: []
-      }), {});
+      }).getInstance({});
       prop.members.addPropertyRef('prop1', remote);
       prop.members.addPropertyRef('prop2', remote);
       assert.isFalse(prop.calculated, 'initial calculated value');

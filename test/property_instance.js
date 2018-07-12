@@ -17,17 +17,17 @@
     updateEvents = ['propChanged', 'propUpdated'];
     it('should flag as manual setted properties', function() {
       var prop;
-      prop = new PropertyInstance(new Property('prop', {}), {});
+      prop = new Property('prop', {}).getInstance({});
       prop.set(10);
       return assert.equal(prop.manual, true);
     });
     it('should flag as not-manual calculated properties', function() {
       var prop, res;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function() {
           return 3;
         }
-      }), {});
+      }).getInstance({});
       res = prop.get();
       assert.equal(res, 3);
       return assert.equal(prop.manual, false);
@@ -35,12 +35,12 @@
     it('should not call calcul when using set', function() {
       var calls, prop, res;
       calls = 0;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function() {
           calls += 1;
           return 3;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false);
       prop.set(2);
@@ -55,11 +55,11 @@
     });
     it('can invalidate a property', function() {
       var prop;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function() {
           return 3;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false);
       prop.get();
@@ -71,11 +71,11 @@
     });
     it('can invalidate a property that has a get function', function() {
       var prop, res;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         get: function() {
           return 3;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false);
       res = prop.get();
@@ -101,12 +101,12 @@
           }
         }
       };
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           invalidated.event('testChanged', emitter);
           return 3;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false, 'calculated initially false');
       prop.get();
@@ -134,13 +134,13 @@
         return Emitter;
 
       })();
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           invalidated.event('testChanged', new Emitter());
           return val += 1;
         },
         immediate: true
-      }), {});
+      }).getInstance({});
       assert.equal(prop.calculated, false, 'calculated initially false');
       assert.isFalse(binded);
       prop.get();
@@ -153,12 +153,12 @@
     it('should re-calcul only on the next get after an invalidation', function() {
       var callcount, prop;
       callcount = 0;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           callcount += 1;
           return 3;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(callcount, 0);
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false);
@@ -178,13 +178,13 @@
     it('should re-calcul immediately when the option is true', function() {
       var callcount, prop;
       callcount = 0;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           callcount += 1;
           return 3;
         },
         immediate: true
-      }), {});
+      }).getInstance({});
       assert.equal(callcount, 0);
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false);
@@ -204,7 +204,7 @@
     it('can use a function to determine immediate re-calcul', function() {
       var callcount, prop;
       callcount = 0;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           callcount += 1;
           return 3;
@@ -212,7 +212,7 @@
         immediate: function() {
           return true;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(callcount, 0);
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false);
@@ -234,7 +234,7 @@
       calculCalls = 0;
       changeCalls = 0;
       val = 3;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           calculCalls += 1;
           return val += 1;
@@ -242,7 +242,7 @@
         change: function(old) {
           return changeCalls += 1;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(calculCalls, 0, "nb calcul calls");
       assert.equal(changeCalls, 0, "nb change calls");
       assert.equal(prop.value, void 0);
@@ -268,7 +268,7 @@
       calculCalls = 0;
       changeCalls = 0;
       val = 3;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           calculCalls += 1;
           return val += 1;
@@ -279,7 +279,7 @@
         immediate: function() {
           return false;
         }
-      }), {});
+      }).getInstance({});
       assert.equal(calculCalls, 0, "nb calcul calls");
       assert.equal(changeCalls, 0, "nb change calls");
       assert.equal(prop.value, void 0);
@@ -306,7 +306,7 @@
       changeCalls = 0;
       val = 3;
       updater = new Updater();
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           calculCalls += 1;
           return val += 1;
@@ -315,7 +315,7 @@
           return changeCalls += 1;
         },
         updater: updater
-      }), {});
+      }).getInstance({});
       assert.equal(calculCalls, 0, "nb calcul calls, before get");
       assert.equal(changeCalls, 0, "nb change calls, before get");
       assert.equal(prop.value, void 0);
@@ -339,12 +339,12 @@
     it('should re-calcul immediately if there is a listener on the change event', function() {
       var callcount, prop;
       callcount = 0;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           callcount += 1;
           return 3;
         }
-      }), {
+      }).getInstance({
         getListeners: function() {
           return [{}];
         }
@@ -376,11 +376,11 @@
         },
         test: 4
       };
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           return invalidated.prop('test', emitter);
         }
-      }), {});
+      }).getInstance({});
       prop.get();
       return assert.instanceOf(prop.invalidator, Invalidator);
     });
@@ -395,17 +395,17 @@
         },
         test: 4
       };
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         calcul: function(invalidated) {
           return invalidated.prop('test');
         }
-      }), emitter);
+      }).getInstance(emitter);
       res = prop.get();
       return assert.equal(res, 4);
     });
     return it('should allow to alter the input value', function() {
       var prop;
-      prop = new PropertyInstance(new Property('prop', {
+      prop = new Property('prop', {
         ingest: function(val) {
           if (val === 2) {
             return 'two';
@@ -413,7 +413,7 @@
             return val;
           }
         }
-      }), {});
+      }).getInstance({});
       prop.set(2);
       assert.equal(prop.value, 'two');
       prop.set('zero');

@@ -22,10 +22,10 @@ describe 'ComposedProperty', ->
 
 
   it 'returns a value composed(and) of many values', ->
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: [true,true]
-    }),{});
+    }).getInstance({});
 
     res = prop.get()
     assert.isTrue res
@@ -36,11 +36,11 @@ describe 'ComposedProperty', ->
     assert.isFalse res
 
   it 'returns a value composed(or) of many values', ->
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: [false,false]
       default: false
-    }),{});
+    }).getInstance({});
 
     res = prop.get()
     assert.isFalse res
@@ -57,10 +57,10 @@ describe 'ComposedProperty', ->
       true
     fnFalse = ->
       false
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: [fnTrue,fnTrue2]
-    }),{});
+    }).getInstance({});
 
     res = prop.get()
     assert.isTrue res
@@ -71,10 +71,10 @@ describe 'ComposedProperty', ->
     assert.isFalse res
 
   it 'returns a value composed of many ref value', ->
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: []
-    }),{});
+    }).getInstance({});
 
     res = prop.get()
     assert.isTrue res, 'initial result'
@@ -102,10 +102,10 @@ describe 'ComposedProperty', ->
     assert.isTrue res, 'removed 2 false values'
 
   it 'returns a value composed of many ref functions', ->
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: []
-    }),{});
+    }).getInstance({});
 
     res = prop.get()
     assert.isTrue res, 'initial result'
@@ -147,10 +147,10 @@ describe 'ComposedProperty', ->
     new Property('prop3',{
       default: false
     }).bind(remote)
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: []
-    }),{});
+    }).getInstance({});
 
     prop.members.addPropertyRef('prop1',remote)
     prop.members.addPropertyRef('prop2',remote)
@@ -169,10 +169,10 @@ describe 'ComposedProperty', ->
     assert.isTrue res, 'removed property'
 
   it 'invalidate the result when adding a member', ->
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: [true,true]
-    }),{});
+    }).getInstance({});
 
     assert.isFalse prop.calculated
     res = prop.get()
@@ -200,10 +200,10 @@ describe 'ComposedProperty', ->
     new Property('prop3',{
       default: false
     }).bind(remote)
-    prop = new ComposedProperty(new Property('prop',{
+    prop = new Property('prop',{
       composed: true
       members: []
-    }),{});
+    }).getInstance({});
 
     prop.members.addPropertyRef('prop1',remote)
     prop.members.addPropertyRef('prop2',remote)

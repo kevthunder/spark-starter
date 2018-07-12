@@ -38,7 +38,7 @@ class CollectionProperty extends PropertyInstance
     super() || 
       typeof @property.options.itemAdded == 'function' || 
       typeof @property.options.itemRemoved == 'function'
-      
+
   @detect = (prop)->
     if prop.options.collection?
-      prop.instanceType = CollectionProperty
+      prop.instanceType = class extends CollectionProperty

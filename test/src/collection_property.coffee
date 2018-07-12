@@ -8,7 +8,7 @@ describe 'CollectionProperty', ->
   updateEvents = ['propChanged','propUpdated']
   
   it 'should not edit original value of a collection property', ->
-    prop = new CollectionProperty(new Property('prop'),{});
+    prop = new Property('prop',{collection: true}).getInstance({});
     
     original = [1,2,3]
     prop.set(original)
@@ -40,9 +40,9 @@ describe 'CollectionProperty', ->
     assert.notInstanceOf res, Collection
     
   it 'can edit collection when no initial value', ->
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: true
-    }),{});
+    }).getInstance({});
   
     assert.equal prop.get().count(), 0
     prop.get().push(4)
@@ -51,13 +51,13 @@ describe 'CollectionProperty', ->
     
   it 'should call change function when collection changed', ->
     callcount = 0
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: true
       default: [1,2,3]
       change: (old)->
         assert.isArray old
         callcount+=1
-    }),{});
+    }).getInstance({});
     
     res = prop.get()
     assert.equal callcount, 0
@@ -69,13 +69,13 @@ describe 'CollectionProperty', ->
 
   it 'should call itemAdded function when something is added', ->
     callcount = 0
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: true
       default: [1,2,3]
       itemAdded: (item)->
         assert.include [4,5], item
         callcount+=1
-    }),{});
+    }).getInstance({});
     
     res = prop.get()
     assert.equal callcount, 0
@@ -87,13 +87,13 @@ describe 'CollectionProperty', ->
 
   it 'should call itemRemoved function when something is removed', ->
     callcount = 0
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: true
       default: [1,2,3,4,5]
       itemRemoved: (item)->
         assert.include [4,5], item
         callcount+=1
-    }),{});
+    }).getInstance({});
     
     res = prop.get()
     assert.isTrue prop.isImmediate()
@@ -107,12 +107,12 @@ describe 'CollectionProperty', ->
     
   it 'should pass the old value of an uninitiated collection as an array', ->
     callcount = 0
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: true
       change: (old)->
         assert.isArray old
         callcount+=1
-    }),{});
+    }).getInstance({});
     
     assert.equal callcount, 0
     #assert.equal prop.get().count(), 0
@@ -128,10 +128,10 @@ describe 'CollectionProperty', ->
         @callcount += 1
       callcount: 0
     }
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: true
       default: [1,2,3]
-    }),emitter);
+    }).getInstance(emitter);
     
     res = prop.get()
     assert.equal emitter.callcount, 0
@@ -140,24 +140,24 @@ describe 'CollectionProperty', ->
     assert.equal emitter.callcount, updateEvents.length
     
   it 'can add method to a collection', ->
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: {
         test: -> 'test'
       }
       default: [1,2,3]
-    }),{});
+    }).getInstance({});
     
     res = prop.get()
     assert.instanceOf res, Collection
     assert.equal res.test(), 'test'
     
   it 'can foward method added to a collection', ->
-    prop = new CollectionProperty(new Property('prop',{
+    prop = new Property('prop',{
       collection: {
         test: -> 'test'
       }
       default: [1,2,3]
-    }),{});
+    }).getInstance({});
     
     res = prop.get()
     assert.instanceOf res, Collection
