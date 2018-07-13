@@ -1,7 +1,7 @@
 Invalidator = require('./Invalidator')
-PropertyInstance = require('./PropertyInstance')
+DynamicProperty = require('./DynamicProperty')
 
-class CalculatedProperty extends PropertyInstance
+class CalculatedProperty extends DynamicProperty
   calculatedGet:->
     if @invalidator
       @invalidator.validateUnknowns()

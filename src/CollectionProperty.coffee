@@ -1,7 +1,7 @@
-PropertyInstance = require('./PropertyInstance')
+DynamicProperty = require('./DynamicProperty')
 Collection = require('./Collection')
 
-class CollectionProperty extends PropertyInstance
+class CollectionProperty extends DynamicProperty
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)

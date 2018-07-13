@@ -378,8 +378,6 @@ describe 'Element', ->
             default: 0
           b:
             default: 0
-          c:
-            default: 0
           d:
             calcul: ->
               4
@@ -389,17 +387,16 @@ describe 'Element', ->
 
     obj.a = 1
     obj.b = 2
-    obj.c = 3
-    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2,c:3}, 'after assign'
-
-    obj.invalidateC()
-    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2}, 'after invalidate'
+    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2}, 'after assign'
 
     assert.equal obj.d, 4
     assert.deepEqual obj.getManualDataProperties(), {a:1,b:2}, 'after cacul'
 
     obj.d = 5
     assert.deepEqual obj.getManualDataProperties(), {a:1,b:2,d:5}, 'after assign over caculated value'
+
+    obj.invalidateD()
+    assert.deepEqual obj.getManualDataProperties(), {a:1,b:2}, 'after invalidate'
 
 
     

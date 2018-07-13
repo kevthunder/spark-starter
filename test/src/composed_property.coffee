@@ -192,13 +192,13 @@ describe 'ComposedProperty', ->
   it 'invalidate the result when a member is invalidated', ->
     remote = new EventEmitter()
     new Property('prop1',{
-      default: true
+      get: -> true
     }).bind(remote)
     new Property('prop2',{
-      default: true
+      get: -> true
     }).bind(remote)
     new Property('prop3',{
-      default: false
+      get: -> false
     }).bind(remote)
     prop = new Property('prop',{
       composed: true

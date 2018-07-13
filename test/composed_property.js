@@ -179,13 +179,19 @@
       var prop, remote, res;
       remote = new EventEmitter();
       new Property('prop1', {
-        "default": true
+        get: function() {
+          return true;
+        }
       }).bind(remote);
       new Property('prop2', {
-        "default": true
+        get: function() {
+          return true;
+        }
       }).bind(remote);
       new Property('prop3', {
-        "default": false
+        get: function() {
+          return false;
+        }
       }).bind(remote);
       prop = new Property('prop', {
         composed: true,

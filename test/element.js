@@ -716,9 +716,6 @@
           b: {
             "default": 0
           },
-          c: {
-            "default": 0
-          },
           d: {
             calcul: function() {
               return 4;
@@ -733,28 +730,26 @@
       assert.deepEqual(obj.getManualDataProperties(), {}, 'initial');
       obj.a = 1;
       obj.b = 2;
-      obj.c = 3;
-      assert.deepEqual(obj.getManualDataProperties(), {
-        a: 1,
-        b: 2,
-        c: 3
-      }, 'after assign');
-      obj.invalidateC();
       assert.deepEqual(obj.getManualDataProperties(), {
         a: 1,
         b: 2
-      }, 'after invalidate');
+      }, 'after assign');
       assert.equal(obj.d, 4);
       assert.deepEqual(obj.getManualDataProperties(), {
         a: 1,
         b: 2
       }, 'after cacul');
       obj.d = 5;
-      return assert.deepEqual(obj.getManualDataProperties(), {
+      assert.deepEqual(obj.getManualDataProperties(), {
         a: 1,
         b: 2,
         d: 5
       }, 'after assign over caculated value');
+      obj.invalidateD();
+      return assert.deepEqual(obj.getManualDataProperties(), {
+        a: 1,
+        b: 2
+      }, 'after invalidate');
     });
     it('can mass assign properties with whitelist', function() {
       var TestClass, obj;

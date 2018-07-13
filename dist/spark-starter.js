@@ -21,24 +21,12 @@
 
       PropertyInstance.prototype.init = function() {
         this.value = this.ingest(this["default"]);
-        this.calculated = false;
-        return this.revalidateCallback = (function(_this) {
-          return function() {
-            return _this.get();
-          };
-        })(this);
+        return this.calculated = false;
       };
 
       PropertyInstance.prototype.get = function() {
         this.calculated = true;
         return this.output();
-      };
-
-      PropertyInstance.prototype.callbackGet = function() {
-        var res;
-        res = this.callOptionFunct("get");
-        this.revalidated();
-        return res;
       };
 
       PropertyInstance.prototype.set = function(val) {
@@ -63,29 +51,6 @@
         return this;
       };
 
-      PropertyInstance.prototype.invalidate = function() {
-        if (this.calculated || this.active === false) {
-          this.calculated = false;
-          this._invalidateNotice();
-        }
-        return this;
-      };
-
-      PropertyInstance.prototype._invalidateNotice = function() {
-        if (this.isImmediate()) {
-          this.get();
-          return false;
-        } else {
-          if (typeof this.obj.emitEvent === 'function') {
-            this.obj.emitEvent(this.invalidateEventName);
-          }
-          if (this.getUpdater() != null) {
-            this.getUpdater().bind();
-          }
-          return true;
-        }
-      };
-
       PropertyInstance.prototype.destroy = function() {};
 
       PropertyInstance.prototype.callOptionFunct = function() {
@@ -108,29 +73,7 @@
 
       PropertyInstance.prototype.revalidated = function() {
         this.calculated = true;
-        this.initiated = true;
-        if (this.getUpdater() != null) {
-          return this.getUpdater().unbind();
-        }
-      };
-
-      PropertyInstance.prototype.getUpdater = function() {
-        if (typeof this.updater === 'undefined') {
-          if (this.property.options.updater != null) {
-            this.updater = this.property.options.updater;
-            if (typeof this.updater.getBinder === 'function') {
-              this.updater = this.updater.getBinder();
-            }
-            if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
-              this.updater = null;
-            } else {
-              this.updater.callback = this.revalidateCallback;
-            }
-          } else {
-            this.updater = null;
-          }
-        }
-        return this.updater;
+        return this.initiated = true;
       };
 
       PropertyInstance.prototype.ingest = function(val) {
@@ -172,10 +115,6 @@
         return typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.changeEventName).length > 0;
       };
 
-      PropertyInstance.prototype.isImmediate = function() {
-        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
-      };
-
       PropertyInstance.compose = function(prop) {
         if (prop.instanceType == null) {
           prop.instanceType = (function(superClass) {
@@ -188,9 +127,6 @@
             return _Class;
 
           })(PropertyInstance);
-        }
-        if (typeof prop.options.get === 'function') {
-          prop.instanceType.prototype.get = this.prototype.callbackGet;
         }
         if (typeof prop.options.set === 'function') {
           prop.instanceType.prototype.set = this.prototype.callbackSet;
@@ -670,15 +606,135 @@
   });
 
   (function(definition) {
-    Spark.CalculatedProperty = definition();
-    return Spark.CalculatedProperty.definition = definition;
+    Spark.DynamicProperty = definition();
+    return Spark.DynamicProperty.definition = definition;
   })(function(dependencies) {
-    var CalculatedProperty, Invalidator, PropertyInstance;
+    var DynamicProperty, Invalidator, PropertyInstance;
     if (dependencies == null) {
       dependencies = {};
     }
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
+    DynamicProperty = (function(superClass) {
+      extend(DynamicProperty, superClass);
+
+      function DynamicProperty() {
+        return DynamicProperty.__super__.constructor.apply(this, arguments);
+      }
+
+      DynamicProperty.prototype.init = function() {
+        DynamicProperty.__super__.init.call(this);
+        return this.initRevalidate();
+      };
+
+      DynamicProperty.prototype.initRevalidate = function() {
+        return this.revalidateCallback = (function(_this) {
+          return function() {
+            return _this.get();
+          };
+        })(this);
+      };
+
+      DynamicProperty.prototype.callbackGet = function() {
+        var res;
+        res = this.callOptionFunct("get");
+        this.revalidated();
+        return res;
+      };
+
+      DynamicProperty.prototype.invalidate = function() {
+        if (this.calculated || this.active === false) {
+          this.calculated = false;
+          this._invalidateNotice();
+        }
+        return this;
+      };
+
+      DynamicProperty.prototype.revalidate = function() {
+        DynamicProperty.__super__.revalidate.call(this);
+        return this.revalidateUpdater();
+      };
+
+      DynamicProperty.prototype.revalidateUpdater = function() {
+        if (this.getUpdater() != null) {
+          return this.getUpdater().unbind();
+        }
+      };
+
+      DynamicProperty.prototype._invalidateNotice = function() {
+        if (this.isImmediate()) {
+          this.get();
+          return false;
+        } else {
+          if (typeof this.obj.emitEvent === 'function') {
+            this.obj.emitEvent(this.invalidateEventName);
+          }
+          if (this.getUpdater() != null) {
+            this.getUpdater().bind();
+          }
+          return true;
+        }
+      };
+
+      DynamicProperty.prototype.getUpdater = function() {
+        if (typeof this.updater === 'undefined') {
+          if (this.property.options.updater != null) {
+            this.updater = this.property.options.updater;
+            if (typeof this.updater.getBinder === 'function') {
+              this.updater = this.updater.getBinder();
+            }
+            if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
+              this.updater = null;
+            } else {
+              this.updater.callback = this.revalidateCallback;
+            }
+          } else {
+            this.updater = null;
+          }
+        }
+        return this.updater;
+      };
+
+      DynamicProperty.prototype.isImmediate = function() {
+        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
+      };
+
+      DynamicProperty.compose = function(prop) {
+        if (typeof prop.options.get === 'function' || typeof prop.options.calcul === 'function' || typeof prop.options.active === 'function') {
+          if (prop.instanceType == null) {
+            prop.instanceType = (function(superClass1) {
+              extend(_Class, superClass1);
+
+              function _Class() {
+                return _Class.__super__.constructor.apply(this, arguments);
+              }
+
+              return _Class;
+
+            })(DynamicProperty);
+          }
+        }
+        if (typeof prop.options.get === 'function') {
+          return prop.instanceType.prototype.get = this.prototype.callbackGet;
+        }
+      };
+
+      return DynamicProperty;
+
+    })(PropertyInstance);
+    return DynamicProperty;
+  });
+
+  (function(definition) {
+    Spark.CalculatedProperty = definition();
+    return Spark.CalculatedProperty.definition = definition;
+  })(function(dependencies) {
+    var CalculatedProperty, DynamicProperty, Invalidator;
+    if (dependencies == null) {
+      dependencies = {};
+    }
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     CalculatedProperty = (function(superClass) {
       extend(CalculatedProperty, superClass);
 
@@ -784,7 +840,7 @@
 
       return CalculatedProperty;
 
-    })(PropertyInstance);
+    })(DynamicProperty);
     return CalculatedProperty;
   });
 
@@ -950,11 +1006,11 @@
     Spark.CollectionProperty = definition();
     return Spark.CollectionProperty.definition = definition;
   })(function(dependencies) {
-    var Collection, CollectionProperty, PropertyInstance;
+    var Collection, CollectionProperty, DynamicProperty;
     if (dependencies == null) {
       dependencies = {};
     }
-    PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
+    DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     Collection = dependencies.hasOwnProperty("Collection") ? dependencies.Collection : Spark.Collection;
     CollectionProperty = (function(superClass) {
       extend(CollectionProperty, superClass);
@@ -1035,7 +1091,7 @@
 
       return CollectionProperty;
 
-    })(PropertyInstance);
+    })(DynamicProperty);
     return CollectionProperty;
   });
 
@@ -1209,17 +1265,18 @@
     Spark.Property = definition();
     return Spark.Property.definition = definition;
   })(function(dependencies) {
-    var ActivableProperty, CalculatedProperty, CollectionProperty, ComposedProperty, Property, PropertyInstance;
+    var ActivableProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, Property, PropertyInstance;
     if (dependencies == null) {
       dependencies = {};
     }
     PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
     CollectionProperty = dependencies.hasOwnProperty("CollectionProperty") ? dependencies.CollectionProperty : Spark.CollectionProperty;
     ComposedProperty = dependencies.hasOwnProperty("ComposedProperty") ? dependencies.ComposedProperty : Spark.ComposedProperty;
+    DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
     ActivableProperty = dependencies.hasOwnProperty("ActivableProperty") ? dependencies.ActivableProperty : Spark.ActivableProperty;
     Property = (function() {
-      Property.prototype.composers = [ComposedProperty, CollectionProperty, PropertyInstance, CalculatedProperty, ActivableProperty];
+      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, PropertyInstance, CalculatedProperty, ActivableProperty];
 
       function Property(name1, options1) {
         this.name = name1;

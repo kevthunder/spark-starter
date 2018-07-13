@@ -4,17 +4,10 @@ class PropertyInstance
   init: ->
     @value = @ingest(@default)
     @calculated = false
-    @revalidateCallback = =>
-      @get()
 
   get: ->
     @calculated = true
     @output()
-
-  callbackGet:->
-    res = @callOptionFunct("get")
-    @revalidated()
-    res
 
   set: (val)->
     @setAndCheckChanges(val)
@@ -32,23 +25,6 @@ class PropertyInstance
       @manual = true
       @changed(old)
     this
-  
-  invalidate: ->
-    if @calculated || @active == false
-      @calculated = false
-      @_invalidateNotice()
-    this
-
-  _invalidateNotice: ->
-    if @isImmediate()
-      @get()
-      false
-    else 
-      if typeof @obj.emitEvent == 'function'
-        @obj.emitEvent(@invalidateEventName)
-      if @getUpdater()?
-        @getUpdater().bind()
-      true
 
   destroy: ->
       
@@ -63,23 +39,7 @@ class PropertyInstance
   revalidated: ->
     @calculated = true
     @initiated = true
-    if @getUpdater()?
-      @getUpdater().unbind()
 
-  getUpdater: ->
-    if typeof @updater == 'undefined'
-      if @property.options.updater?
-        @updater = @property.options.updater
-        if typeof @updater.getBinder == 'function'
-          @updater = @updater.getBinder()
-        if typeof @updater.bind != 'function' or typeof @updater.unbind != 'function'
-          @updater = null
-        else
-          @updater.callback = @revalidateCallback
-      else
-        @updater = null
-    @updater
-    
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)
@@ -109,23 +69,10 @@ class PropertyInstance
   hasChangedEvents: ()->
     typeof @obj.getListeners == 'function' and
       @obj.getListeners(@changeEventName).length > 0
-        
-  isImmediate: ->
-    @property.options.immediate != false and
-    (
-      @property.options.immediate == true or
-        if typeof @property.options.immediate == 'function'
-          @callOptionFunct("immediate")
-        else
-          !@getUpdater()? and (@hasChangedEvents() or @hasChangedFunctions())
-    )
 
   @compose = (prop)->
     unless prop.instanceType?
       prop.instanceType = class extends PropertyInstance
-
-    if typeof prop.options.get == 'function'
-      prop.instanceType::get = @::callbackGet
 
     if typeof prop.options.set == 'function'
       prop.instanceType::set = @::callbackSet
