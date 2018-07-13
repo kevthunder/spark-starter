@@ -39,6 +39,6 @@ class CollectionProperty extends PropertyInstance
       typeof @property.options.itemAdded == 'function' || 
       typeof @property.options.itemRemoved == 'function'
 
-  @detect = (prop)->
+  @compose = (prop)->
     if prop.options.collection?
       prop.instanceType = class extends CollectionProperty

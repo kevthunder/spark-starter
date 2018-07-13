@@ -1,9 +1,11 @@
 PropertyInstance = require('./PropertyInstance')
 CollectionProperty = require('./CollectionProperty')
 ComposedProperty = require('./ComposedProperty')
+CalculatedProperty = require('./CalculatedProperty')
+ActivableProperty = require('./ActivableProperty')
 
 class Property
-  @::detectors = [ComposedProperty, CollectionProperty, PropertyInstance]
+  @::composers = [ComposedProperty, CollectionProperty, PropertyInstance, CalculatedProperty, ActivableProperty]
 
   constructor: (@name, @options = {}) ->
     
@@ -62,8 +64,8 @@ class Property
 
   getInstanceType: () ->
     if !@instanceType
-      @detectors.forEach (detector)=>
-        detector.detect(this)
+      @composers.forEach (composer)=>
+        composer.compose(this)
     @instanceType
     
   @fn:

@@ -1,8 +1,8 @@
-PropertyInstance = require('./PropertyInstance')
+CalculatedProperty = require('./CalculatedProperty')
 Invalidator = require('./Invalidator')
 Collection = require('./Collection')
 
-class ComposedProperty extends PropertyInstance
+class ComposedProperty extends CalculatedProperty
   init: ()->
     super()
     @initComposed()
@@ -40,12 +40,13 @@ class ComposedProperty extends PropertyInstance
     @revalidated()
     @value
 
-  @detect = (prop)->
+  @compose = (prop)->
     if prop.options.composed?
       prop.instanceType = class extends ComposedProperty
+      prop.instanceType::get = @::calculatedGet
 
   @bind = (target,prop)->
-    PropertyInstance.bind(target,prop)
+    CalculatedProperty.bind(target,prop)
     Object.defineProperty target, prop.name+'Members', {
       configurable: true
       get: ->

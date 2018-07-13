@@ -9,42 +9,30 @@ class PropertyInstance
     @revalidateCallback = =>
       @get()
 
+  get: ->
+    @calculated = true
+    @output()
+
   callbackGet:->
     res = @callOptionFunct("get")
     @revalidated()
     res
 
-  dynamicGet:->
-    if @invalidator
-      @invalidator.validateUnknowns()
-    if @isActive()
-      if !@calculated
-        old = @value
-        initiated = @initiated
-        @calcul()
-        if @value != old
-          if initiated 
-            @changed(old)
-          else if typeof @obj.emitEvent == 'function'
-            @obj.emitEvent(@updateEventName, [old])
-      if @pendingChanges
-        @changed(@pendingOld)
-      @output()
-    else
-      @initiated = true
-      undefined
-  
   set: (val)->
-    if typeof @property.options.set == 'function'
-      @callOptionFunct("set",val)
-    else
-      val = @ingest(val)
-      @revalidated()
-      if @value != val
-        old = @value
-        @value = val
-        @manual = true
-        @changed(old)
+    @setAndCheckChanges(val)
+    
+  callbackSet: (val)->
+    @callOptionFunct("set",val)
+    this
+
+  setAndCheckChanges: (val)->
+    val = @ingest(val)
+    @revalidated()
+    if @value != val
+      old = @value
+      @value = val
+      @manual = true
+      @changed(old)
     this
   
   invalidate: ->
@@ -71,10 +59,7 @@ class PropertyInstance
         @getUpdater().bind()
       true
 
-
   destroy: ->
-    if @invalidator?
-      @invalidator.unbind()
       
   callOptionFunct: (funct, args...) ->
     if typeof funct == 'string'
@@ -83,40 +68,6 @@ class PropertyInstance
       args.push (args...) => 
         @callOptionFunct funct.overrided, args...
     funct.apply(@obj, args)
-
-  isActive: ->
-    if typeof @property.options.active == "boolean"
-      @property.options.active
-    else if typeof @property.options.active == 'function'
-      invalidator = @activeInvalidator || new Invalidator(this, @obj)
-      invalidator.recycle (invalidator,done)=> 
-        @active = @callOptionFunct("active", invalidator)
-        done()
-        if @active || invalidator.isEmpty()
-          invalidator.unbind()
-          @activeInvalidator = null
-        else
-          @invalidator = invalidator
-          @activeInvalidator = invalidator
-          invalidator.bind()
-      @active
-    else
-      true
-
-  calcul: ->
-    if typeof @property.options.calcul == 'function'
-      unless @invalidator
-        @invalidator = new Invalidator(this, @obj)
-      @invalidator.recycle (invalidator,done)=> 
-        @value = @callOptionFunct("calcul", invalidator)
-        @manual = false
-        done()
-        if invalidator.isEmpty()
-          @invalidator = null
-        else
-          invalidator.bind()
-    @revalidated()
-    @value
 
   revalidated: ->
     @calculated = true
@@ -151,17 +102,10 @@ class PropertyInstance
       @value
       
   changed: (old)->
-    if @isActive()
-      @pendingChanges = false
-      @pendingOld = undefined
-      @callChangedFunctions(old)
-      if typeof @obj.emitEvent == 'function'
-        @obj.emitEvent(@updateEventName, [old])
-        @obj.emitEvent(@changeEventName, [old])
-    else
-      @pendingChanges = true
-      if typeof @pendingOld == 'undefined'
-        @pendingOld = old
+    @callChangedFunctions(old)
+    if typeof @obj.emitEvent == 'function'
+      @obj.emitEvent(@updateEventName, [old])
+      @obj.emitEvent(@changeEventName, [old])
     this
 
   callChangedFunctions: (old)->
@@ -185,14 +129,17 @@ class PropertyInstance
           !@getUpdater()? and (@hasChangedEvents() or @hasChangedFunctions())
     )
 
-  @detect = (prop)->
+  @compose = (prop)->
     unless prop.instanceType?
       prop.instanceType = class extends PropertyInstance
 
     if typeof prop.options.get == 'function'
       prop.instanceType::get = @::callbackGet
+
+    if typeof prop.options.set == 'function'
+      prop.instanceType::set = @::callbackSet
     else
-      prop.instanceType::get = @::dynamicGet
+      prop.instanceType::set = @::setAndCheckChanges
 
     prop.instanceType::default = prop.options.default
     prop.instanceType::initiated = typeof prop.options.default != 'undefined'
