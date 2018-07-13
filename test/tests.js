@@ -9,6 +9,8 @@
 
   require('./property_instance');
 
+  require('./calculated_property');
+
   require('./collection_property');
 
   require('./composed_property');
