@@ -71,13 +71,6 @@
         return this;
       };
 
-      PropertyInstance.prototype.unknown = function() {
-        if (this.calculated || this.active === false) {
-          this._invalidateNotice();
-        }
-        return this;
-      };
-
       PropertyInstance.prototype._invalidateNotice = function() {
         if (this.isImmediate()) {
           this.get();
@@ -596,9 +589,6 @@
 
       ActivableProperty.prototype.activableGet = function() {
         var out;
-        if (this.invalidator) {
-          this.invalidator.validateUnknowns();
-        }
         if (this.isActive()) {
           out = this.activeGet();
           if (this.pendingChanges) {
@@ -748,6 +738,13 @@
         return this.value;
       };
 
+      CalculatedProperty.prototype.unknown = function() {
+        if (this.calculated || this.active === false) {
+          this._invalidateNotice();
+        }
+        return this;
+      };
+
       CalculatedProperty.prototype.destroyWhithoutInvalidator = function() {
         return this.destroy();
       };
@@ -777,7 +774,8 @@
             prop.instanceType.prototype.calcul = this.prototype.invalidatedCalcul;
             prop.instanceType.prototype.destroyWhithoutInvalidator = prop.instanceType.prototype.destroy;
             prop.instanceType.prototype.destroy = this.prototype.destroyInvalidator;
-            return prop.instanceType.prototype.invalidate = this.prototype.invalidateInvalidator;
+            prop.instanceType.prototype.invalidate = this.prototype.invalidateInvalidator;
+            return prop.instanceType.prototype.unknown = this.prototype.unknown;
           } else {
             return prop.instanceType.prototype.calcul = this.prototype.callbackCalcul;
           }

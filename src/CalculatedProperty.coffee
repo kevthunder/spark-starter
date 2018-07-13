@@ -40,6 +40,11 @@ class CalculatedProperty extends PropertyInstance
     @revalidated()
     @value
 
+  unknown: ->
+    if @calculated || @active == false
+      @_invalidateNotice()
+    this
+
   destroyWhithoutInvalidator: ->
     @destroy()
 
@@ -64,6 +69,7 @@ class CalculatedProperty extends PropertyInstance
         prop.instanceType::destroyWhithoutInvalidator = prop.instanceType::destroy
         prop.instanceType::destroy = @::destroyInvalidator
         prop.instanceType::invalidate = @::invalidateInvalidator
+        prop.instanceType::unknown = @::unknown
       else
         prop.instanceType::calcul = @::callbackCalcul
 

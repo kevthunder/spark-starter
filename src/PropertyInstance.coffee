@@ -39,11 +39,6 @@ class PropertyInstance
       @_invalidateNotice()
     this
 
-  unknown: ->
-    if @calculated || @active == false
-      @_invalidateNotice()
-    this
-
   _invalidateNotice: ->
     if @isImmediate()
       @get()

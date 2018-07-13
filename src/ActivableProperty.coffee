@@ -6,8 +6,6 @@ class ActivableProperty extends PropertyInstance
     @get()
 
   activableGet:->
-    if @invalidator
-      @invalidator.validateUnknowns()
     if @isActive()
       out = @activeGet()
       if @pendingChanges
