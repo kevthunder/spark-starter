@@ -86,12 +86,15 @@
           return 3;
         }
       }).getInstance({});
+      assert.notExists(emitter.event);
       assert.equal(prop.value, void 0);
       assert.equal(prop.calculated, false, 'calculated initially false');
       prop.get();
+      assert.exists(emitter.event);
       assert.equal(prop.value, 3);
       assert.equal(prop.calculated, true, 'calculated true after get');
       emitter.emit();
+      assert.notExists(emitter.event);
       assert.equal(prop.value, 3);
       return assert.equal(prop.calculated, false, 'calculated false after invalidation');
     });

@@ -1,5 +1,3 @@
-Invalidator = require('./Invalidator')
-
 class PropertyInstance
   constructor: (@property, @obj) ->
     @init()
@@ -38,9 +36,7 @@ class PropertyInstance
   invalidate: ->
     if @calculated || @active == false
       @calculated = false
-      if @_invalidateNotice()
-        if @invalidator?
-          @invalidator.unbind()
+      @_invalidateNotice()
     this
 
   unknown: ->

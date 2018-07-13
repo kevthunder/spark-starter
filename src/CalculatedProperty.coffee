@@ -48,6 +48,13 @@ class CalculatedProperty extends PropertyInstance
     if @invalidator?
       @invalidator.unbind()
 
+  invalidateInvalidator: ->
+    if @calculated || @active == false
+      @calculated = false
+      if @_invalidateNotice() && @invalidator?
+        @invalidator.unbind()
+    this
+
   @compose = (prop)->
     if typeof prop.options.calcul == 'function'
       prop.instanceType::calculFunct = prop.options.calcul
@@ -56,6 +63,7 @@ class CalculatedProperty extends PropertyInstance
         prop.instanceType::calcul = @::invalidatedCalcul
         prop.instanceType::destroyWhithoutInvalidator = prop.instanceType::destroy
         prop.instanceType::destroy = @::destroyInvalidator
+        prop.instanceType::invalidate = @::invalidateInvalidator
       else
         prop.instanceType::calcul = @::callbackCalcul
 
