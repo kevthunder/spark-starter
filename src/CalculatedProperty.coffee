@@ -9,7 +9,7 @@ class CalculatedProperty extends DynamicProperty
       old = @value
       initiated = @initiated
       @calcul()
-      if @value != old
+      if @checkChanges(@value, old)
         if initiated 
           @changed(old)
         else if typeof @obj.emitEvent == 'function'

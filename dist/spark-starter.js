@@ -42,13 +42,17 @@
         var old;
         val = this.ingest(val);
         this.revalidated();
-        if (this.value !== val) {
+        if (this.checkChanges(val, this.value)) {
           old = this.value;
           this.value = val;
           this.manual = true;
           this.changed(old);
         }
         return this;
+      };
+
+      PropertyInstance.prototype.checkChanges = function(val, old) {
+        return val !== old;
       };
 
       PropertyInstance.prototype.destroy = function() {};
@@ -807,7 +811,7 @@
           old = this.value;
           initiated = this.initiated;
           this.calcul();
-          if (this.value !== old) {
+          if (this.checkChanges(this.value, old)) {
             if (initiated) {
               this.changed(old);
             } else if (typeof this.obj.emitEvent === 'function') {
@@ -922,6 +926,28 @@
 
       Collection.prototype.changed = function() {};
 
+      Collection.prototype.checkChanges = function(old, ordered, compareFunction) {
+        if (ordered == null) {
+          ordered = true;
+        }
+        if (compareFunction == null) {
+          compareFunction = null;
+        }
+        if (compareFunction == null) {
+          compareFunction = function(a, b) {
+            return a === b;
+          };
+        }
+        old = this.copy(old);
+        return this.count() !== old.length || (ordered ? this.some(function(val, i) {
+          return !compareFunction(old.get(i), val);
+        }) : this.some(function(a) {
+          return !old.pluck(function(b) {
+            return compareFunction(a, b);
+          });
+        }));
+      };
+
       Collection.prototype.get = function(i) {
         return this._array[i];
       };
@@ -949,6 +975,20 @@
           old = this.toArray();
           this._array.splice(index, 1);
           return this.changed(old);
+        }
+      };
+
+      Collection.prototype.pluck = function(fn) {
+        var found, index, old;
+        index = this._array.findIndex(fn);
+        if (index > -1) {
+          old = this.toArray();
+          found = this._array[index];
+          this._array.splice(index, 1);
+          this.changed(old);
+          return found;
+        } else {
+          return null;
         }
       };
 
@@ -1023,7 +1063,7 @@
       };
 
       Collection.prototype.equals = function(arr) {
-        return (this.count() === (tyepeof(arr.count === 'function') ? arr.count() : arr.length)) && this.every(function(val, i) {
+        return (this.count() === (typeof arr.count === 'function' ? arr.count() : arr.length)) && this.every(function(val, i) {
           return arr[i] === val;
         });
       };

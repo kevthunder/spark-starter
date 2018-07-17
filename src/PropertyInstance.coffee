@@ -19,12 +19,15 @@ class PropertyInstance
   setAndCheckChanges: (val)->
     val = @ingest(val)
     @revalidated()
-    if @value != val
+    if @checkChanges(val, @value)
       old = @value
       @value = val
       @manual = true
       @changed(old)
     this
+
+  checkChanges: (val,old)->
+    val != old
 
   destroy: ->
       

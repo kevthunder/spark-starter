@@ -57,6 +57,16 @@
       assert.equal(coll.count(), 2, 'new Count');
       return assert.equal(coll.toString(), '1,3');
     });
+    it('can pluck an item', function() {
+      var coll;
+      coll = new Collection([1, 2, 3]);
+      assert.equal(coll.count(), 3, 'old Count');
+      coll.pluck(function(item) {
+        return item === 2;
+      });
+      assert.equal(coll.count(), 2, 'new Count');
+      return assert.equal(coll.toString(), '1,3');
+    });
     it('should trigger changed when seting item', function() {
       var calls, coll;
       calls = 0;
@@ -124,6 +134,27 @@
       assert.equal(coll.count(), 4, 'new Count');
       assert.equal(coll.get(3), 4, 'new val');
       return assert.equal(calls, 1);
+    });
+    it('can detect changes', function() {
+      var coll, compareFunction;
+      coll = new Collection([1, 2, 3]);
+      assert.isFalse(coll.checkChanges([1, 2, 3]));
+      assert.isTrue(coll.checkChanges(["1", "2", "3"]));
+      assert.isTrue(coll.checkChanges([1, 2, 4]));
+      assert.isTrue(coll.checkChanges([1, 2]));
+      assert.isTrue(coll.checkChanges([1, 3, 2]));
+      assert.isFalse(coll.checkChanges([1, 3, 2], false));
+      assert.isTrue(coll.checkChanges(["1", "2", "3"], false));
+      assert.isTrue(coll.checkChanges([1, 2, 4], false));
+      assert.isTrue(coll.checkChanges([1, 2], false));
+      compareFunction = function(a, b) {
+        return a.toString() === b.toString();
+      };
+      assert.isFalse(coll.checkChanges([1, 2, 3], true, compareFunction));
+      assert.isFalse(coll.checkChanges(["1", "2", "3"], true, compareFunction));
+      assert.isFalse(coll.checkChanges(["1", "3", "2"], false, compareFunction));
+      assert.isTrue(coll.checkChanges(["4", "2", "3"], true, compareFunction));
+      return assert.isTrue(coll.checkChanges([1, 3], true, compareFunction));
     });
     it('can tell what items were added compared to another array', function() {
       var newColl, old;

@@ -44,6 +44,15 @@ describe 'Collection', ->
     coll.remove(2)
     assert.equal coll.count(), 2, 'new Count'
     assert.equal coll.toString(), '1,3'
+
+  it 'can pluck an item', ->
+    coll = new Collection([1,2,3])
+    assert.equal coll.count(), 3, 'old Count'
+    coll.pluck (item)->
+      item == 2
+    assert.equal coll.count(), 2, 'new Count'
+    assert.equal coll.toString(), '1,3'
+    
     
   it 'should trigger changed when seting item', ->
     calls = 0
@@ -104,7 +113,28 @@ describe 'Collection', ->
     assert.equal coll.get(3), 4, 'new val'
     assert.equal calls, 1
     
-  
+  it 'can detect changes', ->
+    coll = new Collection([1,2,3])
+
+    assert.isFalse coll.checkChanges([1,2,3])
+    assert.isTrue coll.checkChanges(["1","2","3"])
+    assert.isTrue coll.checkChanges([1,2,4])
+    assert.isTrue coll.checkChanges([1,2])
+    assert.isTrue coll.checkChanges([1,3,2])
+    assert.isFalse coll.checkChanges([1,3,2],false)
+    assert.isTrue coll.checkChanges(["1","2","3"],false)
+    assert.isTrue coll.checkChanges([1,2,4],false)
+    assert.isTrue coll.checkChanges([1,2],false)
+
+    compareFunction = (a,b)->
+      a.toString() == b.toString()
+
+    assert.isFalse coll.checkChanges([1,2,3], true, compareFunction)
+    assert.isFalse coll.checkChanges(["1","2","3"], true, compareFunction)
+    assert.isFalse coll.checkChanges(["1","3","2"], false, compareFunction)
+    assert.isTrue coll.checkChanges(["4","2","3"], true, compareFunction)
+    assert.isTrue coll.checkChanges([1,3], true, compareFunction)
+
   it 'can tell what items were added compared to another array', ->
     old = [1,2,3]
     newColl = new Collection([1,4,2,3,5])

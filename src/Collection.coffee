@@ -11,6 +11,21 @@ class Collection
       @_array = []
   changed: ->
   
+  checkChanges: (old, ordered=true, compareFunction=null)->
+    unless compareFunction?
+      compareFunction = (a,b)-> a == b
+
+    old = @copy(old)
+
+    @count() != old.length or
+      if ordered
+        @some (val, i) ->
+          !compareFunction(old.get(i),val)
+      else
+        @some (a) ->
+          !old.pluck (b)->
+            compareFunction(a,b)
+
   get: (i)->
     @_array[i]
   set: (i, val)->
@@ -28,6 +43,16 @@ class Collection
       old = @toArray()
       @_array.splice(index, 1)
       @changed(old)
+  pluck: (fn) ->
+    index = @_array.findIndex(fn)
+    if index > -1
+      old = @toArray()
+      found = @_array[index]
+      @_array.splice(index, 1)
+      @changed(old)
+      found
+    else
+      null
   toArray: ->
     @_array.slice()
   count: ->
@@ -54,6 +79,8 @@ class Collection
       @changed(old)
       res
   
+
+
   @newSubClass: (fn,arr)->
     if typeof fn == 'object'
       SubClass = class extends this
@@ -69,7 +96,7 @@ class Collection
     coll
   
   equals: (arr) -> 
-    (@count() == if tyepeof arr.count == 'function' then arr.count() else arr.length) and
+    (@count() == if typeof arr.count == 'function' then arr.count() else arr.length) and
       @every (val, i) ->
         arr[i] == val
         
