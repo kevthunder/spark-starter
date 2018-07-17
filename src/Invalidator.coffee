@@ -21,9 +21,11 @@ class Invalidator
       null
 
   invalidate: ->
-    if typeof @property.invalidate == "function"
+    if typeof @property == "function"
+      @property()
+    else if typeof @property.invalidate == "function"
       @property.invalidate()
-    else
+    else if typeof @property == "string"
       functName = 'invalidate' + @property.charAt(0).toUpperCase() + @property.slice(1)
       if typeof @obj[functName] == "function"
         @obj[functName]()
@@ -52,14 +54,23 @@ class Invalidator
       
   getUnknownCallback: (prop, target) ->
     callback = => 
-      unless @unknowns.some( (unknown)-> 
-        unknown.prop == prop && unknown.target == target
-      )
-        @unknowns.push({"prop": prop, "target": target})
-        @unknown()
+      @addUnknown -> 
+          target[prop]
+        , prop, target
     callback.maker = arguments.callee
     callback.uses = Array.from(arguments)
     callback
+
+  addUnknown: (fn,prop,target) ->
+    unless @findUnknown(prop,target)
+      fn.ref = {"prop": prop, "target": target}
+      @unknowns.push(fn)
+      @unknown()
+
+  findUnknown: (prop,target) ->
+    if prop? or target?
+      @unknowns.find (unknown)-> 
+          unknown.ref.prop == prop && unknown.ref.target == target
       
   event: (event, target = @obj) ->
     if @checkEmitter(target)
@@ -83,12 +94,24 @@ class Invalidator
     if !initiated and @checkEmitter(target)
       @event(prop+'Updated', target)
     initiated
+
+  funct: (funct)->
+    invalidator = new Invalidator =>
+      @addUnknown =>
+          res2 = funct(invalidator)
+          if res != res2
+            @invalidate()
+        , invalidator
+    res = funct(invalidator)
+    @invalidationEvents.push(invalidator)
+    res
+
     
   validateUnknowns: (prop, target = @obj) ->
     unknowns = @unknowns
     @unknowns = []
     unknowns.forEach (unknown)->
-      unknown.target[unknown.prop]
+      unknown()
     
   isEmpty: ->
     @invalidationEvents.length == 0
@@ -116,6 +139,9 @@ class Invalidator
 
   checkEmitter: (emitter)->
     EventBind.checkEmitter(emitter,@strict)
+
+  equals: (val) ->
+    val == this
 
   unbind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.unbind()

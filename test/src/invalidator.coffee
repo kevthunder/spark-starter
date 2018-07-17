@@ -9,6 +9,52 @@ describe 'Invalidator', ->
   afterEach ->
     Invalidator.strict = true
 
+  it 'can invalidate a object property', ->
+    calls = 0
+    prop = {
+      invalidate: ->
+        calls++
+    }
+    invalidator = new Invalidator(prop);
+
+    assert.equal calls, 0
+    invalidator.invalidate()
+    assert.equal calls, 1
+
+  it 'can invalidate a function property', ->
+    calls = 0
+    prop = ->
+      calls++
+
+    invalidator = new Invalidator(prop);
+
+    assert.equal calls, 0
+    invalidator.invalidate()
+    assert.equal calls, 1
+
+  it 'should remove old value with invalidate', ->
+    invalidated = {
+      test: 1
+    }
+    invalidator = new Invalidator('test', invalidated);
+    
+    assert.equal invalidated.test, 1
+    invalidator.invalidate()
+    assert.equal invalidated.test, null
+    
+  it 'should call invalidation function with invalidate', ->
+    calls = 0
+    invalidated = {
+      invalidateTest: ->
+        calls += 1
+      test: 1
+    }
+    invalidator = new Invalidator('test', invalidated);
+    
+    assert.equal calls, 0
+    invalidator.invalidate()
+    assert.equal calls, 1
+
   it 'should create a bind with invalidationEvent', ->
     invalidated = {
       test: 1
@@ -128,29 +174,7 @@ describe 'Invalidator', ->
       if invalidator.invalidationEvents[i].event == 'testUpdated'
         assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
     
-  it 'should remove old value with invalidate', ->
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    
-    assert.equal invalidated.test, 1
-    invalidator.invalidate()
-    assert.equal invalidated.test, null
-    
-  it 'should call invalidation function with invalidate', ->
-    calls = 0
-    invalidated = {
-      invalidateTest: ->
-        calls += 1
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    
-    assert.equal calls, 0
-    invalidator.invalidate()
-    assert.equal calls, 1
-    
+
   it 'should add listener on bind', ->
   
     invalidated = {
@@ -336,6 +360,139 @@ describe 'Invalidator', ->
 
     assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
   
+  it 'can be invalidated by a subfunction', ->
+    invalidateCalls = 0
+    fnCalls = 0
+    emiter = new EventEmitter()
+    invalidated = ->
+      invalidateCalls++
+    invalidator = new Invalidator(invalidated);
+
+
+    assert.equal fnCalls, 0
+    res = invalidator.funct (invalidator)->
+      invalidator.event('invalidate', emiter)
+      fnCalls+=1
+      fnCalls
+
+    assert.equal res, 1, 'return'
+    assert.equal fnCalls, 1, 'fnCalls before'
+
+    invalidator.bind()
+
+    assert.equal fnCalls, 1, 'fnCalls before(2)'
+    assert.equal invalidateCalls, 0, 'invalidateCalls before'
+    emiter.emit('invalidate')
+    assert.equal fnCalls, 1, 'fnCalls after'
+    assert.equal invalidateCalls, 1, 'invalidateCalls after'
+
+  it 'can be marked unknown by a subfunction', ->
+    invalidateCalls = 0
+    unknownCalls = 0
+    fnCalls = 0
+    emiter = new EventEmitter()
+    prop =
+      invalidate: ->
+        invalidateCalls++
+      unknown: ->
+        unknownCalls++
+
+    invalidator = new Invalidator(prop);
+
+
+    assert.equal fnCalls, 0
+    res = invalidator.funct (invalidator)->
+      invalidator.event('invalidate', emiter)
+      fnCalls+=1
+      fnCalls
+
+    assert.equal res, 1, 'return'
+    assert.equal fnCalls, 1, 'fnCalls before'
+
+    invalidator.bind()
+
+    assert.equal fnCalls, 1, 'fnCalls before(2)'
+    assert.equal unknownCalls, 0, 'unknownCalls before'
+    emiter.emit('invalidate')
+    assert.equal fnCalls, 1, 'fnCalls after'
+    assert.equal unknownCalls, 1, 'unknownCalls after'
+    assert.equal invalidateCalls, 0, 'invalidateCalls after'
+
+  it 'can be invalidated if subfunction result change', ->
+    invalidateCalls = 0
+    unknownCalls = 0
+    fnCalls = 0
+    emiter = new EventEmitter()
+    prop =
+      invalidate: ->
+        invalidateCalls++
+      unknown: ->
+        unknownCalls++
+
+    invalidator = new Invalidator(prop);
+
+
+    assert.equal fnCalls, 0
+    res = invalidator.funct (invalidator)->
+      invalidator.event('invalidate', emiter)
+      fnCalls+=1
+      fnCalls
+
+    assert.equal res, 1, 'return'
+    assert.equal fnCalls, 1, 'fnCalls before'
+
+    invalidator.bind()
+
+    assert.equal fnCalls, 1, 'fnCalls before(2)'
+    assert.equal unknownCalls, 0, 'unknownCalls before'
+    emiter.emit('invalidate')
+    assert.equal fnCalls, 1, 'fnCalls after'
+    assert.equal unknownCalls, 1, 'unknownCalls after'
+    assert.equal invalidateCalls, 0, 'invalidateCalls after'
+
+    invalidator.validateUnknowns()
+    assert.equal fnCalls, 2, 'fnCalls after'
+    assert.equal unknownCalls, 1, 'unknownCalls after'
+    assert.equal invalidateCalls, 1, 'invalidateCalls after'
+
+  it 'cannot be invalidated if subfunction result does not change', ->
+    invalidateCalls = 0
+    unknownCalls = 0
+    fnCalls = 0
+    emiter = new EventEmitter()
+    prop =
+      invalidate: ->
+        invalidateCalls++
+      unknown: ->
+        unknownCalls++
+
+    invalidator = new Invalidator(prop);
+
+
+    assert.equal fnCalls, 0
+    res = invalidator.funct (invalidator)->
+      invalidator.event('invalidate', emiter)
+      fnCalls+=1
+      1
+
+    assert.equal res, 1, 'return'
+    assert.equal fnCalls, 1, 'fnCalls before'
+
+    invalidator.bind()
+
+    assert.equal fnCalls, 1, 'fnCalls before(2)'
+    assert.equal unknownCalls, 0, 'unknownCalls before'
+    emiter.emit('invalidate')
+    assert.equal fnCalls, 1, 'fnCalls after'
+    assert.equal unknownCalls, 1, 'unknownCalls after'
+    assert.equal invalidateCalls, 0, 'invalidateCalls after'
+
+    invalidator.validateUnknowns()
+    assert.equal fnCalls, 2, 'fnCalls after'
+    assert.equal unknownCalls, 1, 'unknownCalls after'
+    assert.equal invalidateCalls, 0, 'invalidateCalls after'
+
+
   it 'should call unknown when there is a new unknown', ->
     unknownCalls = 0
     class Source extends EventEmitter

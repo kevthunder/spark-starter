@@ -15,6 +15,54 @@
     afterEach(function() {
       return Invalidator.strict = true;
     });
+    it('can invalidate a object property', function() {
+      var calls, invalidator, prop;
+      calls = 0;
+      prop = {
+        invalidate: function() {
+          return calls++;
+        }
+      };
+      invalidator = new Invalidator(prop);
+      assert.equal(calls, 0);
+      invalidator.invalidate();
+      return assert.equal(calls, 1);
+    });
+    it('can invalidate a function property', function() {
+      var calls, invalidator, prop;
+      calls = 0;
+      prop = function() {
+        return calls++;
+      };
+      invalidator = new Invalidator(prop);
+      assert.equal(calls, 0);
+      invalidator.invalidate();
+      return assert.equal(calls, 1);
+    });
+    it('should remove old value with invalidate', function() {
+      var invalidated, invalidator;
+      invalidated = {
+        test: 1
+      };
+      invalidator = new Invalidator('test', invalidated);
+      assert.equal(invalidated.test, 1);
+      invalidator.invalidate();
+      return assert.equal(invalidated.test, null);
+    });
+    it('should call invalidation function with invalidate', function() {
+      var calls, invalidated, invalidator;
+      calls = 0;
+      invalidated = {
+        invalidateTest: function() {
+          return calls += 1;
+        },
+        test: 1
+      };
+      invalidator = new Invalidator('test', invalidated);
+      assert.equal(calls, 0);
+      invalidator.invalidate();
+      return assert.equal(calls, 1);
+    });
     it('should create a bind with invalidationEvent', function() {
       var emitter, invalidated, invalidator;
       invalidated = {
@@ -142,30 +190,6 @@
         }
       }
       return results;
-    });
-    it('should remove old value with invalidate', function() {
-      var invalidated, invalidator;
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      assert.equal(invalidated.test, 1);
-      invalidator.invalidate();
-      return assert.equal(invalidated.test, null);
-    });
-    it('should call invalidation function with invalidate', function() {
-      var calls, invalidated, invalidator;
-      calls = 0;
-      invalidated = {
-        invalidateTest: function() {
-          return calls += 1;
-        },
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      assert.equal(calls, 0);
-      invalidator.invalidate();
-      return assert.equal(calls, 1);
     });
     it('should add listener on bind', function() {
       var calls, emitter, invalidated, invalidator, res;
@@ -365,6 +389,131 @@
       assert.equal(invalidator.unknowns.length, 0, "unknowns after call prop");
       source.emit('testInvalidated');
       return assert.equal(invalidator.unknowns.length, 1, "unknowns after invalidation");
+    });
+    it('can be invalidated by a subfunction', function() {
+      var emiter, fnCalls, invalidateCalls, invalidated, invalidator, res;
+      invalidateCalls = 0;
+      fnCalls = 0;
+      emiter = new EventEmitter();
+      invalidated = function() {
+        return invalidateCalls++;
+      };
+      invalidator = new Invalidator(invalidated);
+      assert.equal(fnCalls, 0);
+      res = invalidator.funct(function(invalidator) {
+        invalidator.event('invalidate', emiter);
+        fnCalls += 1;
+        return fnCalls;
+      });
+      assert.equal(res, 1, 'return');
+      assert.equal(fnCalls, 1, 'fnCalls before');
+      invalidator.bind();
+      assert.equal(fnCalls, 1, 'fnCalls before(2)');
+      assert.equal(invalidateCalls, 0, 'invalidateCalls before');
+      emiter.emit('invalidate');
+      assert.equal(fnCalls, 1, 'fnCalls after');
+      return assert.equal(invalidateCalls, 1, 'invalidateCalls after');
+    });
+    it('can be marked unknown by a subfunction', function() {
+      var emiter, fnCalls, invalidateCalls, invalidator, prop, res, unknownCalls;
+      invalidateCalls = 0;
+      unknownCalls = 0;
+      fnCalls = 0;
+      emiter = new EventEmitter();
+      prop = {
+        invalidate: function() {
+          return invalidateCalls++;
+        },
+        unknown: function() {
+          return unknownCalls++;
+        }
+      };
+      invalidator = new Invalidator(prop);
+      assert.equal(fnCalls, 0);
+      res = invalidator.funct(function(invalidator) {
+        invalidator.event('invalidate', emiter);
+        fnCalls += 1;
+        return fnCalls;
+      });
+      assert.equal(res, 1, 'return');
+      assert.equal(fnCalls, 1, 'fnCalls before');
+      invalidator.bind();
+      assert.equal(fnCalls, 1, 'fnCalls before(2)');
+      assert.equal(unknownCalls, 0, 'unknownCalls before');
+      emiter.emit('invalidate');
+      assert.equal(fnCalls, 1, 'fnCalls after');
+      assert.equal(unknownCalls, 1, 'unknownCalls after');
+      return assert.equal(invalidateCalls, 0, 'invalidateCalls after');
+    });
+    it('can be invalidated if subfunction result change', function() {
+      var emiter, fnCalls, invalidateCalls, invalidator, prop, res, unknownCalls;
+      invalidateCalls = 0;
+      unknownCalls = 0;
+      fnCalls = 0;
+      emiter = new EventEmitter();
+      prop = {
+        invalidate: function() {
+          return invalidateCalls++;
+        },
+        unknown: function() {
+          return unknownCalls++;
+        }
+      };
+      invalidator = new Invalidator(prop);
+      assert.equal(fnCalls, 0);
+      res = invalidator.funct(function(invalidator) {
+        invalidator.event('invalidate', emiter);
+        fnCalls += 1;
+        return fnCalls;
+      });
+      assert.equal(res, 1, 'return');
+      assert.equal(fnCalls, 1, 'fnCalls before');
+      invalidator.bind();
+      assert.equal(fnCalls, 1, 'fnCalls before(2)');
+      assert.equal(unknownCalls, 0, 'unknownCalls before');
+      emiter.emit('invalidate');
+      assert.equal(fnCalls, 1, 'fnCalls after');
+      assert.equal(unknownCalls, 1, 'unknownCalls after');
+      assert.equal(invalidateCalls, 0, 'invalidateCalls after');
+      invalidator.validateUnknowns();
+      assert.equal(fnCalls, 2, 'fnCalls after');
+      assert.equal(unknownCalls, 1, 'unknownCalls after');
+      return assert.equal(invalidateCalls, 1, 'invalidateCalls after');
+    });
+    it('cannot be invalidated if subfunction result does not change', function() {
+      var emiter, fnCalls, invalidateCalls, invalidator, prop, res, unknownCalls;
+      invalidateCalls = 0;
+      unknownCalls = 0;
+      fnCalls = 0;
+      emiter = new EventEmitter();
+      prop = {
+        invalidate: function() {
+          return invalidateCalls++;
+        },
+        unknown: function() {
+          return unknownCalls++;
+        }
+      };
+      invalidator = new Invalidator(prop);
+      assert.equal(fnCalls, 0);
+      res = invalidator.funct(function(invalidator) {
+        invalidator.event('invalidate', emiter);
+        fnCalls += 1;
+        return 1;
+      });
+      assert.equal(res, 1, 'return');
+      assert.equal(fnCalls, 1, 'fnCalls before');
+      invalidator.bind();
+      assert.equal(fnCalls, 1, 'fnCalls before(2)');
+      assert.equal(unknownCalls, 0, 'unknownCalls before');
+      emiter.emit('invalidate');
+      assert.equal(fnCalls, 1, 'fnCalls after');
+      assert.equal(unknownCalls, 1, 'unknownCalls after');
+      assert.equal(invalidateCalls, 0, 'invalidateCalls after');
+      invalidator.validateUnknowns();
+      assert.equal(fnCalls, 2, 'fnCalls after');
+      assert.equal(unknownCalls, 1, 'unknownCalls after');
+      return assert.equal(invalidateCalls, 0, 'invalidateCalls after');
     });
     it('should call unknown when there is a new unknown', function() {
       var Source, invalidated, invalidator, res, source, unknownCalls;
