@@ -32,6 +32,28 @@ describe 'Invalidator', ->
     invalidator.invalidate()
     assert.equal calls, 1
 
+  it 'can invalidate through a callback', ->
+    calls = 0
+
+    invalidator = new Invalidator();
+    invalidator.callback = ->
+      calls++
+
+    assert.equal calls, 0
+    invalidator.invalidate()
+    assert.equal calls, 1
+
+  it 'tolerate having nothing to invalidate', ->
+    invalidator = new Invalidator();
+
+    assert.isFalse invalidator.invalidated
+    invalidator.invalidate()
+    assert.isTrue invalidator.invalidated
+
+    invalidator.bind()
+    assert.isFalse invalidator.invalidated
+
+
   it 'should remove old value with invalidate', ->
     invalidated = {
       test: 1

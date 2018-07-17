@@ -39,6 +39,26 @@
       invalidator.invalidate();
       return assert.equal(calls, 1);
     });
+    it('can invalidate through a callback', function() {
+      var calls, invalidator;
+      calls = 0;
+      invalidator = new Invalidator();
+      invalidator.callback = function() {
+        return calls++;
+      };
+      assert.equal(calls, 0);
+      invalidator.invalidate();
+      return assert.equal(calls, 1);
+    });
+    it('tolerate having nothing to invalidate', function() {
+      var invalidator;
+      invalidator = new Invalidator();
+      assert.isFalse(invalidator.invalidated);
+      invalidator.invalidate();
+      assert.isTrue(invalidator.invalidated);
+      invalidator.bind();
+      return assert.isFalse(invalidator.invalidated);
+    });
     it('should remove old value with invalidate', function() {
       var invalidated, invalidator;
       invalidated = {

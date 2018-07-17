@@ -14,8 +14,10 @@
         callback = function() {
           return null;
         };
-        callback.maker = arguments.callee;
-        callback.uses = Array.from(arguments);
+        callback.ref = {
+          maker: arguments.callee,
+          val: val
+        };
         return callback;
       };
       calls = 0;

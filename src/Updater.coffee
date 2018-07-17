@@ -39,6 +39,8 @@ class Updater
     @next = []
   
 class Updater.Binder extends Binder
+  constructor: (@target, @callback) ->
+    @ref = {target:@target, callback:@callback}
   doBind: ->
     @target.addCallback(@callback)
   doUnbind: ->

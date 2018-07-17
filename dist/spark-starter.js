@@ -13,9 +13,9 @@
   })(function() {
     var PropertyInstance;
     PropertyInstance = (function() {
-      function PropertyInstance(property1, obj1) {
+      function PropertyInstance(property1, obj3) {
         this.property = property1;
-        this.obj = obj1;
+        this.obj = obj3;
         this.init();
       }
 
@@ -186,11 +186,7 @@
   })(function() {
     var Binder;
     Binder = (function() {
-      function Binder(target1, callback1) {
-        this.target = target1;
-        this.callback = callback1;
-        this.binded = false;
-      }
+      function Binder() {}
 
       Binder.prototype.bind = function() {
         if (!this.binded && (this.callback != null) && (this.target != null)) {
@@ -215,13 +211,23 @@
       };
 
       Binder.prototype.equals = function(binder) {
-        return binder.constructor === this.constructor && binder.target === this.target && this.compareCallback(binder.callback);
+        return this.constructor.compareRefered(binder, this);
       };
 
-      Binder.prototype.compareCallback = function(callback) {
-        return callback === this.callback || ((callback.maker != null) && callback.maker === this.callback.maker && callback.uses.length === this.callback.uses.length && this.callback.uses.every(function(arg, i) {
-          return arg === callback.uses[i];
-        }));
+      Binder.compareRefered = function(obj1, obj2) {
+        return obj1 === obj2 || ((obj1 != null) && (obj2 != null) && obj1.constructor === obj2.constructor && this.compareRef(obj1.ref, obj2.ref));
+      };
+
+      Binder.compareRef = function(ref1, ref2) {
+        return (ref1 != null) && (ref2 != null) && (ref1 === ref2 || (Array.isArray(ref1) && Array.isArray(ref1) && ref1.every((function(_this) {
+          return function(val, i) {
+            return _this.compareRefered(ref1[i], ref2[i]);
+          };
+        })(this))) || (typeof ref1 === "object" && typeof ref2 === "object" && Object.keys(ref1).join() === Object.keys(ref2).join() && Object.keys(ref1).every((function(_this) {
+          return function(key) {
+            return _this.compareRefered(ref1[key], ref2[key]);
+          };
+        })(this))));
       };
 
       return Binder;
@@ -242,9 +248,15 @@
     EventBind = (function(superClass) {
       extend(EventBind, superClass);
 
-      function EventBind(event1, target, callback) {
+      function EventBind(event1, target1, callback1) {
         this.event = event1;
-        EventBind.__super__.constructor.call(this, target, callback);
+        this.target = target1;
+        this.callback = callback1;
+        this.ref = {
+          event: this.event,
+          target: this.target,
+          callback: this.callback
+        };
       }
 
       EventBind.prototype.doBind = function() {
@@ -302,10 +314,11 @@
     Spark.Invalidator = definition();
     return Spark.Invalidator.definition = definition;
   })(function(dependencies) {
-    var EventBind, Invalidator, pluck;
+    var Binder, EventBind, Invalidator, pluck;
     if (dependencies == null) {
       dependencies = {};
     }
+    Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
     EventBind = dependencies.hasOwnProperty("EventBind") ? dependencies.EventBind : Spark.EventBind;
     pluck = function(arr, fn) {
       var found, index;
@@ -318,16 +331,19 @@
         return null;
       }
     };
-    Invalidator = (function() {
+    Invalidator = (function(superClass) {
+      extend(Invalidator, superClass);
+
       Invalidator.strict = true;
 
-      function Invalidator(property1, obj1) {
+      function Invalidator(property1, obj3) {
         this.property = property1;
-        this.obj = obj1 != null ? obj1 : null;
+        this.obj = obj3 != null ? obj3 : null;
         this.invalidationEvents = [];
         this.recycled = [];
         this.unknowns = [];
         this.strict = this.constructor.strict;
+        this.invalidated = false;
         this.invalidateCallback = (function(_this) {
           return function() {
             _this.invalidate();
@@ -338,9 +354,12 @@
 
       Invalidator.prototype.invalidate = function() {
         var functName;
+        this.invalidated = true;
         if (typeof this.property === "function") {
           return this.property();
-        } else if (typeof this.property.invalidate === "function") {
+        } else if (typeof this.callback === "function") {
+          return this.callback();
+        } else if ((this.property != null) && typeof this.property.invalidate === "function") {
           return this.property.invalidate();
         } else if (typeof this.property === "string") {
           functName = 'invalidate' + this.property.charAt(0).toUpperCase() + this.property.slice(1);
@@ -386,8 +405,11 @@
             }, prop, target);
           };
         })(this);
-        callback.maker = arguments.callee;
-        callback.uses = Array.from(arguments);
+        callback.ref = {
+          maker: arguments.callee,
+          prop: prop,
+          target: target
+        };
         return callback;
       };
 
@@ -489,6 +511,7 @@
       };
 
       Invalidator.prototype.bind = function() {
+        this.invalidated = false;
         return this.invalidationEvents.forEach(function(eventBind) {
           return eventBind.bind();
         });
@@ -523,10 +546,6 @@
         return EventBind.checkEmitter(emitter, this.strict);
       };
 
-      Invalidator.prototype.equals = function(val) {
-        return val === this;
-      };
-
       Invalidator.prototype.unbind = function() {
         return this.invalidationEvents.forEach(function(eventBind) {
           return eventBind.unbind();
@@ -535,7 +554,7 @@
 
       return Invalidator;
 
-    })();
+    })(Binder);
     return Invalidator;
   });
 
@@ -949,26 +968,26 @@
 
       Collection.readFunctions.forEach(function(funct) {
         return Collection.prototype[funct] = function() {
-          var arg, ref1;
+          var arg, ref3;
           arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return (ref1 = this._array)[funct].apply(ref1, arg);
+          return (ref3 = this._array)[funct].apply(ref3, arg);
         };
       });
 
       Collection.readListFunctions.forEach(function(funct) {
         return Collection.prototype[funct] = function() {
-          var arg, ref1;
+          var arg, ref3;
           arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return this.copy((ref1 = this._array)[funct].apply(ref1, arg));
+          return this.copy((ref3 = this._array)[funct].apply(ref3, arg));
         };
       });
 
       Collection.writefunctions.forEach(function(funct) {
         return Collection.prototype[funct] = function() {
-          var arg, old, ref1, res;
+          var arg, old, ref3, res;
           arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
           old = this.toArray();
-          res = (ref1 = this._array)[funct].apply(ref1, arg);
+          res = (ref3 = this._array)[funct].apply(ref3, arg);
           this.changed(old);
           return res;
         };
@@ -1361,13 +1380,13 @@
       };
 
       Property.prototype.override = function(parent) {
-        var key, ref1, results, value;
+        var key, ref3, results, value;
         if (this.options.parent == null) {
           this.options.parent = parent.options;
-          ref1 = parent.options;
+          ref3 = parent.options;
           results = [];
-          for (key in ref1) {
-            value = ref1[key];
+          for (key in ref3) {
+            value = ref3[key];
             if (typeof this.options[key] === 'function' && typeof value === 'function') {
               results.push(this.options[key].overrided = value);
             } else if (typeof this.options[key] === 'undefined') {
@@ -1381,12 +1400,12 @@
       };
 
       Property.prototype.checkFunctions = function(target) {
-        var funct, name, ref1, results;
+        var funct, name, ref3, results;
         this.checkAfterAddListener(target);
-        ref1 = Property.fn;
+        ref3 = Property.fn;
         results = [];
-        for (name in ref1) {
-          funct = ref1[name];
+        for (name in ref3) {
+          funct = ref3[name];
           if (typeof target[name] === 'undefined') {
             results.push(target[name] = funct);
           } else {
@@ -1575,7 +1594,7 @@
       };
 
       Element.extend = function(obj) {
-        var key, ref1, value;
+        var key, ref3, value;
         for (key in obj) {
           value = obj[key];
           if (indexOf.call(Element.elementKeywords, key) < 0) {
@@ -1585,8 +1604,8 @@
         if (obj.prototype != null) {
           this.include(obj.prototype);
         }
-        if ((ref1 = obj.extended) != null) {
-          ref1.apply(this);
+        if ((ref3 = obj.extended) != null) {
+          ref3.apply(this);
         }
         return this;
       };
@@ -1615,21 +1634,21 @@
       };
 
       Element.include = function(obj) {
-        var j, k, key, len, len1, property, ref1, ref2, ref3;
-        ref1 = this.getIncludableProperties(obj);
-        for (j = 0, len = ref1.length; j < len; j++) {
-          key = ref1[j];
+        var j, k, key, len, len1, property, ref3, ref4, ref5;
+        ref3 = this.getIncludableProperties(obj);
+        for (j = 0, len = ref3.length; j < len; j++) {
+          key = ref3[j];
           this.prototype[key] = obj[key];
         }
         if (obj._properties != null) {
-          ref2 = obj._properties;
-          for (k = 0, len1 = ref2.length; k < len1; k++) {
-            property = ref2[k];
+          ref4 = obj._properties;
+          for (k = 0, len1 = ref4.length; k < len1; k++) {
+            property = ref4[k];
             this.property(property.name, Object.assign({}, property.options));
           }
         }
-        if ((ref3 = obj.included) != null) {
-          ref3.apply(this);
+        if ((ref5 = obj.included) != null) {
+          ref5.apply(this);
         }
         return this;
       };
@@ -1729,8 +1748,13 @@
     Updater.Binder = (function(superClass) {
       extend(Binder, superClass);
 
-      function Binder() {
-        return Binder.__super__.constructor.apply(this, arguments);
+      function Binder(target1, callback1) {
+        this.target = target1;
+        this.callback = callback1;
+        this.ref = {
+          target: this.target,
+          callback: this.callback
+        };
       }
 
       Binder.prototype.doBind = function() {

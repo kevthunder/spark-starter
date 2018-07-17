@@ -1,6 +1,4 @@
 class Binder
-  constructor: (@target, @callback) ->
-    @binded = false
   bind: ->
     if !@binded and @callback? and @target?
       @doBind()
@@ -15,15 +13,26 @@ class Binder
     throw new Error('Not implemented')
     
   equals: (binder) -> 
-    binder.constructor == @constructor and
-    binder.target      == @target      and
-    @compareCallback binder.callback
+    @constructor.compareRefered(binder, this)
 
-  compareCallback : (callback) ->
-    callback  == @callback or (
-      callback.maker? and
-      callback.maker == @callback.maker and
-      callback.uses.length == @callback.uses.length and
-      @callback.uses.every (arg,i)->
-        arg == callback.uses[i]
+  @compareRefered = (obj1, obj2)->
+    obj1 == obj2 || (
+      obj1? and obj2? and
+      obj1.constructor == obj2.constructor and
+      @compareRef(obj1.ref, obj2.ref)
     )
+
+  @compareRef = (ref1,ref2)->
+    ref1? and ref2? and (
+      ref1 == ref2 or (
+        Array.isArray(ref1) and Array.isArray(ref1) and
+        ref1.every (val,i)=>
+          @compareRefered(ref1[i], ref2[i])
+      ) or (
+        typeof ref1 == "object" and typeof ref2 == "object" and
+        Object.keys(ref1).join() == Object.keys(ref2).join() and 
+        Object.keys(ref1).every (key)=>
+          @compareRefered(ref1[key], ref2[key])
+      )
+    )
+

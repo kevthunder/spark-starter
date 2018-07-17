@@ -7,8 +7,10 @@ describe 'EventBind', ->
     testEvent = 'test'
     maker = (val)->
         callback = -> null
-        callback.maker = arguments.callee
-        callback.uses = Array.from(arguments)
+        callback.ref = {
+          maker: arguments.callee
+          val: val
+        }
         callback
     
     calls = 0

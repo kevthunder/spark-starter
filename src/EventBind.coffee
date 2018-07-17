@@ -1,8 +1,8 @@
 Binder = require('./Binder')
 
 class EventBind extends Binder
-  constructor: (@event, target, callback) ->
-    super(target, callback)
+  constructor: (@event, @target, @callback) ->
+    @ref = {event:@event, target:@target, callback:@callback}
   doBind: ->
     if typeof @target.addEventListener == 'function'
       @target.addEventListener(@event, @callback)

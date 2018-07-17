@@ -1,3 +1,4 @@
+Binder = require('./Binder')
 EventBind = require('./EventBind')
 
 pluck = (arr,fn) ->
@@ -9,21 +10,25 @@ pluck = (arr,fn) ->
   else
     null
 
-class Invalidator
+class Invalidator extends Binder
   @strict = true
   constructor: (@property, @obj = null) ->
     @invalidationEvents = []
     @recycled = []
     @unknowns = []
     @strict = @constructor.strict
+    @invalidated = false
     @invalidateCallback = => 
       @invalidate()
       null
 
   invalidate: ->
+    @invalidated = true
     if typeof @property == "function"
       @property()
-    else if typeof @property.invalidate == "function"
+    else if typeof @callback == "function"
+      @callback()
+    else if @property? and typeof @property.invalidate == "function"
       @property.invalidate()
     else if typeof @property == "string"
       functName = 'invalidate' + @property.charAt(0).toUpperCase() + @property.slice(1)
@@ -57,8 +62,11 @@ class Invalidator
       @addUnknown -> 
           target[prop]
         , prop, target
-    callback.maker = arguments.callee
-    callback.uses = Array.from(arguments)
+    callback.ref = {
+      maker: arguments.callee
+      prop: prop
+      target: target
+    }
     callback
 
   addUnknown: (fn,prop,target) ->
@@ -106,7 +114,6 @@ class Invalidator
     @invalidationEvents.push(invalidator)
     res
 
-    
   validateUnknowns: (prop, target = @obj) ->
     unknowns = @unknowns
     @unknowns = []
@@ -117,6 +124,7 @@ class Invalidator
     @invalidationEvents.length == 0
     
   bind: ->
+    @invalidated = false
     @invalidationEvents.forEach (eventBind)-> eventBind.bind()
     
   recycle: (callback)-> 
@@ -139,9 +147,6 @@ class Invalidator
 
   checkEmitter: (emitter)->
     EventBind.checkEmitter(emitter,@strict)
-
-  equals: (val) ->
-    val == this
 
   unbind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.unbind()
