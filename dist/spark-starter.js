@@ -912,26 +912,26 @@
 
       Collection.readFunctions.forEach(function(funct) {
         return Collection.prototype[funct] = function() {
-          var arg, ref;
+          var arg, ref1;
           arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return (ref = this._array)[funct].apply(ref, arg);
+          return (ref1 = this._array)[funct].apply(ref1, arg);
         };
       });
 
       Collection.readListFunctions.forEach(function(funct) {
         return Collection.prototype[funct] = function() {
-          var arg, ref;
+          var arg, ref1;
           arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return this.copy((ref = this._array)[funct].apply(ref, arg));
+          return this.copy((ref1 = this._array)[funct].apply(ref1, arg));
         };
       });
 
       Collection.writefunctions.forEach(function(funct) {
         return Collection.prototype[funct] = function() {
-          var arg, old, ref, res;
+          var arg, old, ref1, res;
           arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
           old = this.toArray();
-          res = (ref = this._array)[funct].apply(ref, arg);
+          res = (ref1 = this._array)[funct].apply(ref1, arg);
           this.changed(old);
           return res;
         };
@@ -1223,9 +1223,29 @@
           };
           fn.ref = {
             name: name,
-            obj: obj
+            obj: obj,
+            val: val
           };
           return this.push(fn);
+        }
+      };
+
+      Members.prototype.setValueRef = function(val, name, obj) {
+        var fn, i, ref;
+        i = this.findRefIndex(name, obj);
+        if (i === -1) {
+          return this.addValueRef(val, name, obj);
+        } else if (this.get(i).ref.val !== val) {
+          ref = {
+            name: name,
+            obj: obj,
+            val: val
+          };
+          fn = function(invalidator) {
+            return val;
+          };
+          fn.ref = ref;
+          return this.set(i, fn);
         }
       };
 
@@ -1304,13 +1324,13 @@
       };
 
       Property.prototype.override = function(parent) {
-        var key, ref, results, value;
+        var key, ref1, results, value;
         if (this.options.parent == null) {
           this.options.parent = parent.options;
-          ref = parent.options;
+          ref1 = parent.options;
           results = [];
-          for (key in ref) {
-            value = ref[key];
+          for (key in ref1) {
+            value = ref1[key];
             if (typeof this.options[key] === 'function' && typeof value === 'function') {
               results.push(this.options[key].overrided = value);
             } else if (typeof this.options[key] === 'undefined') {
@@ -1324,12 +1344,12 @@
       };
 
       Property.prototype.checkFunctions = function(target) {
-        var funct, name, ref, results;
+        var funct, name, ref1, results;
         this.checkAfterAddListener(target);
-        ref = Property.fn;
+        ref1 = Property.fn;
         results = [];
-        for (name in ref) {
-          funct = ref[name];
+        for (name in ref1) {
+          funct = ref1[name];
           if (typeof target[name] === 'undefined') {
             results.push(target[name] = funct);
           } else {
@@ -1518,7 +1538,7 @@
       };
 
       Element.extend = function(obj) {
-        var key, ref, value;
+        var key, ref1, value;
         for (key in obj) {
           value = obj[key];
           if (indexOf.call(Element.elementKeywords, key) < 0) {
@@ -1528,8 +1548,8 @@
         if (obj.prototype != null) {
           this.include(obj.prototype);
         }
-        if ((ref = obj.extended) != null) {
-          ref.apply(this);
+        if ((ref1 = obj.extended) != null) {
+          ref1.apply(this);
         }
         return this;
       };
@@ -1558,21 +1578,21 @@
       };
 
       Element.include = function(obj) {
-        var j, k, key, len, len1, property, ref, ref1, ref2;
-        ref = this.getIncludableProperties(obj);
-        for (j = 0, len = ref.length; j < len; j++) {
-          key = ref[j];
+        var j, k, key, len, len1, property, ref1, ref2, ref3;
+        ref1 = this.getIncludableProperties(obj);
+        for (j = 0, len = ref1.length; j < len; j++) {
+          key = ref1[j];
           this.prototype[key] = obj[key];
         }
         if (obj._properties != null) {
-          ref1 = obj._properties;
-          for (k = 0, len1 = ref1.length; k < len1; k++) {
-            property = ref1[k];
+          ref2 = obj._properties;
+          for (k = 0, len1 = ref2.length; k < len1; k++) {
+            property = ref2[k];
             this.property(property.name, Object.assign({}, property.options));
           }
         }
-        if ((ref2 = obj.included) != null) {
-          ref2.apply(this);
+        if ((ref3 = obj.included) != null) {
+          ref3.apply(this);
         }
         return this;
       };

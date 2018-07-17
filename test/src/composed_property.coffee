@@ -50,6 +50,18 @@ describe 'ComposedProperty', ->
     res = prop.get()
     assert.isTrue res
 
+  it 'returns a value composed of many values using a user function', ->
+    prop = new Property('prop',{
+      composed: (a,b)->
+        a + b
+      members: [1,2,3]
+      default: 0
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, 6
+
+
   it 'returns a value composed of many functions', ->
     fnTrue = ->
       true
@@ -100,6 +112,56 @@ describe 'ComposedProperty', ->
 
     res = prop.get()
     assert.isTrue res, 'removed 2 false values'
+
+  it 'can override the same value', ->
+    prop = new Property('prop',{
+      composed: (a,b)->
+        a + b
+      default: 0
+    }).getInstance({});
+
+    prop.members.setValueRef(2,'prop1')
+    prop.members.setValueRef(2,'prop2')
+
+    res = prop.get()
+    assert.equal res, 4
+
+    prop.members.setValueRef(3,'prop2')
+
+    res = prop.get()
+    assert.equal res, 5
+
+  it 'trigger change only if the overriding value is different', ->
+    calls = 0
+    prop = new Property('prop',{
+      composed: (a,b)->
+        a + b
+      default: 0
+      change: ->
+        calls++
+    }).getInstance({});
+
+    prop.members.setValueRef(2,'prop1')
+    prop.members.setValueRef(2,'prop2')
+
+    assert.equal calls, 0
+
+    res = prop.get()
+    assert.equal res, 4
+    assert.equal calls, 1
+
+    prop.members.setValueRef(2,'prop2')
+
+    res = prop.get()
+    assert.equal res, 4
+    assert.equal calls, 1
+    
+    prop.members.setValueRef(3,'prop2')
+
+    res = prop.get()
+    assert.equal res, 5
+    assert.equal calls, 2
+
 
   it 'returns a value composed of many ref functions', ->
     prop = new Property('prop',{

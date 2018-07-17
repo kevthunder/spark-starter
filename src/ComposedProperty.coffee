@@ -77,8 +77,23 @@ class ComposedProperty.Members extends Collection
       fn.ref = {
         name: name
         obj: obj
+        val: val
       }
       @push(fn)
+  setValueRef: (val,name,obj)->
+    i = @findRefIndex(name,obj)
+    if i == -1
+      @addValueRef(val,name,obj)
+    else if @get(i).ref.val != val
+      ref = {
+        name: name
+        obj: obj
+        val: val
+      }
+      fn = (invalidator)->
+        val
+      fn.ref = ref
+      @set(i,fn)
   addFunctionRef: (fn,name,obj)->
     if @findRefIndex(name,obj) == -1
       fn.ref = {
