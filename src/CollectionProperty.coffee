@@ -14,12 +14,17 @@ class CollectionProperty extends DynamicProperty
     else
       [val]
 
+  checkChangedItems: (val,old)->
+      if typeof @collectionOptions.compare == 'function'
+        compareFunction = @collectionOptions.compare
+      (new Collection(val)).checkChanges(old, @collectionOptions.ordered, compareFunction)
+
   output: ->
     value = @value
     if typeof @property.options.output == 'function'
       value = @callOptionFunct("output", @value)
     prop = this
-    col = Collection.newSubClass(@property.options.collection, value)
+    col = Collection.newSubClass(@collectionOptions, value)
     col.changed = (old)-> prop.changed(old)
     col
 
@@ -39,6 +44,21 @@ class CollectionProperty extends DynamicProperty
       typeof @property.options.itemAdded == 'function' || 
       typeof @property.options.itemRemoved == 'function'
 
+  @defaultCollectionOptions = {
+    compare: false
+    ordered: true
+  }
+
   @compose = (prop)->
     if prop.options.collection?
       prop.instanceType = class extends CollectionProperty
+
+      prop.instanceType::collectionOptions = Object.assign {}, 
+        @defaultCollectionOptions, 
+        if typeof prop.options.collection == 'object'
+          prop.options.collection
+        else
+          {}
+
+      if prop.options.collection.compare?
+        prop.instanceType::checkChanges = @::checkChangedItems

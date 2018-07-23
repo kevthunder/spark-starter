@@ -15,7 +15,7 @@ class Collection
     unless compareFunction?
       compareFunction = (a,b)-> a == b
 
-    old = @copy(old)
+    old = @copy(old.slice())
 
     @count() != old.length or
       if ordered

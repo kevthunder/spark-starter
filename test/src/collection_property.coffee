@@ -67,6 +67,131 @@ describe 'CollectionProperty', ->
     assert.equal res.toString(), '1,2,3,4'
     assert.equal callcount, 1
 
+  it 'can check items before calling change function', ->
+    callcount = 0
+    prop = new Property('prop',{
+      collection: 
+        compare: true
+      default: [1,2,3]
+      change: (old)->
+        callcount+=1
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,2,3])
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,3,2])
+    res = prop.get()
+    assert.equal res.toString(), '1,3,2'
+    assert.equal callcount, 1
+
+    prop.set([1,3,2])
+    res = prop.get()
+    assert.equal res.toString(), '1,3,2'
+    assert.equal callcount, 1
+
+    prop.set([1,3,2,4])
+    res = prop.get()
+    assert.equal res.toString(), '1,3,2,4'
+    assert.equal callcount, 2
+
+  it 'can check items before calling change function while unordered', ->
+    callcount = 0
+    prop = new Property('prop',{
+      collection: 
+        compare: true
+        ordered: false
+      default: [1,2,3]
+      change: (old)->
+        callcount+=1
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,2,3])
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,3,2])
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,3,2])
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,3,2,4])
+    res = prop.get()
+    assert.equal res.toString(), '1,3,2,4'
+    assert.equal callcount, 1
+
+  it 'can check items with user function before calling change function', ->
+    callcount = 0
+    prop = new Property('prop',{
+      collection: 
+        compare: (a,b) -> 
+          a.toString() == b.toString()
+      default: [1,2,3]
+      change: (old)->
+        callcount+=1
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,"2",3])
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    prop.set([1,3,2])
+    res = prop.get()
+    assert.equal res.toString(), '1,3,2'
+    assert.equal callcount, 1
+
+
+  it 'can check caculated items before calling change function', ->
+    callcount = 0
+    val = [1,2,3]
+    prop = new Property('prop',{
+      collection: 
+        compare: true
+      calcul: ->
+        val
+      change: (old)->
+        callcount+=1
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    val = [1,2,3]
+    prop.invalidate()
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3'
+    assert.equal callcount, 0
+
+    val = [1,2,3,4]
+    prop.invalidate()
+    res = prop.get()
+    assert.equal res.toString(), '1,2,3,4'
+    assert.equal callcount, 1
+
+
+
   it 'should call itemAdded function when something is added', ->
     callcount = 0
     prop = new Property('prop',{

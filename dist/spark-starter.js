@@ -938,7 +938,7 @@
             return a === b;
           };
         }
-        old = this.copy(old);
+        old = this.copy(old.slice());
         return this.count() !== old.length || (ordered ? this.some(function(val, i) {
           return !compareFunction(old.get(i), val);
         }) : this.some(function(a) {
@@ -1130,6 +1130,14 @@
         }
       };
 
+      CollectionProperty.prototype.checkChangedItems = function(val, old) {
+        var compareFunction;
+        if (typeof this.collectionOptions.compare === 'function') {
+          compareFunction = this.collectionOptions.compare;
+        }
+        return (new Collection(val)).checkChanges(old, this.collectionOptions.ordered, compareFunction);
+      };
+
       CollectionProperty.prototype.output = function() {
         var col, prop, value;
         value = this.value;
@@ -1137,7 +1145,7 @@
           value = this.callOptionFunct("output", this.value);
         }
         prop = this;
-        col = Collection.newSubClass(this.property.options.collection, value);
+        col = Collection.newSubClass(this.collectionOptions, value);
         col.changed = function(old) {
           return prop.changed(old);
         };
@@ -1170,9 +1178,14 @@
         return CollectionProperty.__super__.hasChangedFunctions.call(this) || typeof this.property.options.itemAdded === 'function' || typeof this.property.options.itemRemoved === 'function';
       };
 
+      CollectionProperty.defaultCollectionOptions = {
+        compare: false,
+        ordered: true
+      };
+
       CollectionProperty.compose = function(prop) {
         if (prop.options.collection != null) {
-          return prop.instanceType = (function(superClass1) {
+          prop.instanceType = (function(superClass1) {
             extend(_Class, superClass1);
 
             function _Class() {
@@ -1182,6 +1195,10 @@
             return _Class;
 
           })(CollectionProperty);
+          prop.instanceType.prototype.collectionOptions = Object.assign({}, this.defaultCollectionOptions, typeof prop.options.collection === 'object' ? prop.options.collection : {});
+          if (prop.options.collection.compare != null) {
+            return prop.instanceType.prototype.checkChanges = this.prototype.checkChangedItems;
+          }
         }
       };
 

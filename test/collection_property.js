@@ -75,6 +75,126 @@
       assert.equal(res.toString(), '1,2,3,4');
       return assert.equal(callcount, 1);
     });
+    it('can check items before calling change function', function() {
+      var callcount, prop, res;
+      callcount = 0;
+      prop = new Property('prop', {
+        collection: {
+          compare: true
+        },
+        "default": [1, 2, 3],
+        change: function(old) {
+          return callcount += 1;
+        }
+      }).getInstance({});
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 2, 3]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 3, 2]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,3,2');
+      assert.equal(callcount, 1);
+      prop.set([1, 3, 2]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,3,2');
+      assert.equal(callcount, 1);
+      prop.set([1, 3, 2, 4]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,3,2,4');
+      return assert.equal(callcount, 2);
+    });
+    it('can check items before calling change function while unordered', function() {
+      var callcount, prop, res;
+      callcount = 0;
+      prop = new Property('prop', {
+        collection: {
+          compare: true,
+          ordered: false
+        },
+        "default": [1, 2, 3],
+        change: function(old) {
+          return callcount += 1;
+        }
+      }).getInstance({});
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 2, 3]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 3, 2]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 3, 2]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 3, 2, 4]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,3,2,4');
+      return assert.equal(callcount, 1);
+    });
+    it('can check items with user function before calling change function', function() {
+      var callcount, prop, res;
+      callcount = 0;
+      prop = new Property('prop', {
+        collection: {
+          compare: function(a, b) {
+            return a.toString() === b.toString();
+          }
+        },
+        "default": [1, 2, 3],
+        change: function(old) {
+          return callcount += 1;
+        }
+      }).getInstance({});
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, "2", 3]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      prop.set([1, 3, 2]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,3,2');
+      return assert.equal(callcount, 1);
+    });
+    it('can check caculated items before calling change function', function() {
+      var callcount, prop, res, val;
+      callcount = 0;
+      val = [1, 2, 3];
+      prop = new Property('prop', {
+        collection: {
+          compare: true
+        },
+        calcul: function() {
+          return val;
+        },
+        change: function(old) {
+          return callcount += 1;
+        }
+      }).getInstance({});
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      val = [1, 2, 3];
+      prop.invalidate();
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3');
+      assert.equal(callcount, 0);
+      val = [1, 2, 3, 4];
+      prop.invalidate();
+      res = prop.get();
+      assert.equal(res.toString(), '1,2,3,4');
+      return assert.equal(callcount, 1);
+    });
     it('should call itemAdded function when something is added', function() {
       var callcount, prop, res;
       callcount = 0;
