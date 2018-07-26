@@ -105,6 +105,19 @@
       res = prop.get();
       return assert.isTrue(res, 'removed 2 false values');
     });
+    it('can get a ref value', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: function(a, b) {
+          return a + b;
+        },
+        members: []
+      }).getInstance({});
+      prop.members.addValueRef(2, 'prop1');
+      prop.members.addValueRef(3, 'prop2');
+      res = prop.members.getValueRef('prop1');
+      return assert.equal(res, 2);
+    });
     it('can override the same value', function() {
       var prop, res;
       prop = new Property('prop', {

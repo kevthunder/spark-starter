@@ -94,6 +94,8 @@ class ComposedProperty.Members extends Collection
         val
       fn.ref = ref
       @set(i,fn)
+  getValueRef: (name,obj)->
+    @findByRef(name,obj).ref.val
   addFunctionRef: (fn,name,obj)->
     if @findRefIndex(name,obj) == -1
       fn.ref = {
@@ -101,6 +103,8 @@ class ComposedProperty.Members extends Collection
         obj: obj
       }
       @push(fn)
+  findByRef: (name,obj)->
+    @_array[@findRefIndex(name,obj)]
   findRefIndex: (name,obj)->
     @_array.findIndex (member)->
       member.ref? && member.ref.obj == obj && member.ref.name == name

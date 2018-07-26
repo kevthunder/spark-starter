@@ -1362,6 +1362,10 @@
         }
       };
 
+      Members.prototype.getValueRef = function(name, obj) {
+        return this.findByRef(name, obj).ref.val;
+      };
+
       Members.prototype.addFunctionRef = function(fn, name, obj) {
         if (this.findRefIndex(name, obj) === -1) {
           fn.ref = {
@@ -1370,6 +1374,10 @@
           };
           return this.push(fn);
         }
+      };
+
+      Members.prototype.findByRef = function(name, obj) {
+        return this._array[this.findRefIndex(name, obj)];
       };
 
       Members.prototype.findRefIndex = function(name, obj) {

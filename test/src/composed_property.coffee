@@ -113,6 +113,21 @@ describe 'ComposedProperty', ->
     res = prop.get()
     assert.isTrue res, 'removed 2 false values'
 
+
+  it 'can get a ref value', ->
+    prop = new Property('prop',{
+      composed: (a,b)->
+        a + b
+      members: []
+    }).getInstance({});
+
+    prop.members.addValueRef(2,'prop1')
+    prop.members.addValueRef(3,'prop2')
+
+    res = prop.members.getValueRef('prop1')
+    assert.equal res, 2
+    
+
   it 'can override the same value', ->
     prop = new Property('prop',{
       composed: (a,b)->
