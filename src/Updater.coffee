@@ -40,6 +40,7 @@ class Updater
   
 class Updater.Binder extends Binder
   constructor: (@target, @callback) ->
+    super()
     @ref = {target:@target, callback:@callback}
   doBind: ->
     @target.addCallback(@callback)

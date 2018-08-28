@@ -13,7 +13,7 @@
     it('should define a property', function() {
       var obj, prop;
       prop = new Property('foo', {
-        "default": 'hello'
+        default: 'hello'
       });
       obj = {};
       prop.bind(obj);
@@ -24,7 +24,7 @@
     it('should do nothing when binding twice', function() {
       var obj, prop;
       prop = new Property('foo', {
-        "default": 'hello'
+        default: 'hello'
       });
       obj = {};
       prop.bind(obj);
@@ -37,7 +37,7 @@
     it('should get property', function() {
       var obj, prop;
       prop = new Property('prop', {
-        "default": 7
+        default: 7
       });
       obj = {};
       prop.bind(obj);
@@ -58,7 +58,7 @@
       var obj, prop;
       prop = new Property('prop', {
         set: false,
-        "default": 7
+        default: 7
       });
       obj = {};
       prop.bind(obj);
@@ -121,10 +121,10 @@
       calculCalls = 0;
       changeCalls = 0;
       (new Property('foo', {
-        "default": null
+        default: null
       })).bind(emitter);
       (new Property('bar', {
-        "default": 'bar?'
+        default: 'bar?'
       })).bind(emitter);
       (new Property('foobar', {
         active: function(invalidator) {
@@ -171,7 +171,7 @@
       emitter = new EventEmitter();
       changeCalls = 0;
       (new Property('foo', {
-        "default": null
+        default: null
       })).bind(emitter);
       (new Property('bar', {
         active: function(invalidator) {
@@ -231,3 +231,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/property.js.map

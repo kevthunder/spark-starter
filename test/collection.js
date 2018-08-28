@@ -203,3 +203,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/collection.js.map

@@ -41,7 +41,7 @@
       prop = new Property('prop', {
         composed: true,
         members: [false, false],
-        "default": false
+        default: false
       }).getInstance({});
       res = prop.get();
       assert.isFalse(res);
@@ -56,7 +56,7 @@
           return a + b;
         },
         members: [1, 2, 3],
-        "default": 0
+        default: 0
       }).getInstance({});
       res = prop.get();
       return assert.equal(res, 6);
@@ -124,7 +124,7 @@
         composed: function(a, b) {
           return a + b;
         },
-        "default": 0
+        default: 0
       }).getInstance({});
       prop.members.setValueRef(2, 'prop1');
       prop.members.setValueRef(2, 'prop2');
@@ -141,7 +141,7 @@
         composed: function(a, b) {
           return a + b;
         },
-        "default": 0,
+        default: 0,
         change: function() {
           return calls++;
         }
@@ -199,13 +199,13 @@
         removeListener: function(evt, listener) {}
       };
       new Property('prop1', {
-        "default": true
+        default: true
       }).bind(remote);
       new Property('prop2', {
-        "default": true
+        default: true
       }).bind(remote);
       new Property('prop3', {
-        "default": false
+        default: false
       }).bind(remote);
       prop = new Property('prop', {
         composed: true,
@@ -277,3 +277,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/composed_property.js.map

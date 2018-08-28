@@ -1,9 +1,6 @@
 (function() {
   var Spark,
-    slice = [].slice,
-    extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    hasProp = {}.hasOwnProperty,
-    indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    indexOf = [].indexOf;
 
   Spark = typeof module !== "undefined" && module !== null ? module.exports = {} : (this.Spark == null ? this.Spark = {} : void 0, this.Spark);
 
@@ -12,33 +9,33 @@
     return Spark.PropertyInstance.definition = definition;
   })(function() {
     var PropertyInstance;
-    PropertyInstance = (function() {
-      function PropertyInstance(property1, obj3) {
+    PropertyInstance = class PropertyInstance {
+      constructor(property1, obj3) {
         this.property = property1;
         this.obj = obj3;
         this.init();
       }
 
-      PropertyInstance.prototype.init = function() {
-        this.value = this.ingest(this["default"]);
+      init() {
+        this.value = this.ingest(this.default);
         return this.calculated = false;
-      };
+      }
 
-      PropertyInstance.prototype.get = function() {
+      get() {
         this.calculated = true;
         return this.output();
-      };
+      }
 
-      PropertyInstance.prototype.set = function(val) {
+      set(val) {
         return this.setAndCheckChanges(val);
-      };
+      }
 
-      PropertyInstance.prototype.callbackSet = function(val) {
+      callbackSet(val) {
         this.callOptionFunct("set", val);
         return this;
-      };
+      }
 
-      PropertyInstance.prototype.setAndCheckChanges = function(val) {
+      setAndCheckChanges(val) {
         var old;
         val = this.ingest(val);
         this.revalidated();
@@ -49,106 +46,91 @@
           this.changed(old);
         }
         return this;
-      };
+      }
 
-      PropertyInstance.prototype.checkChanges = function(val, old) {
+      checkChanges(val, old) {
         return val !== old;
-      };
+      }
 
-      PropertyInstance.prototype.destroy = function() {};
+      destroy() {}
 
-      PropertyInstance.prototype.callOptionFunct = function() {
-        var args, funct;
-        funct = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+      callOptionFunct(funct, ...args) {
         if (typeof funct === 'string') {
           funct = this.property.options[funct];
         }
         if (typeof funct.overrided === 'function') {
-          args.push((function(_this) {
-            return function() {
-              var args;
-              args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-              return _this.callOptionFunct.apply(_this, [funct.overrided].concat(slice.call(args)));
-            };
-          })(this));
+          args.push((...args) => {
+            return this.callOptionFunct(funct.overrided, ...args);
+          });
         }
         return funct.apply(this.obj, args);
-      };
+      }
 
-      PropertyInstance.prototype.revalidated = function() {
+      revalidated() {
         this.calculated = true;
         return this.initiated = true;
-      };
+      }
 
-      PropertyInstance.prototype.ingest = function(val) {
+      ingest(val) {
         if (typeof this.property.options.ingest === 'function') {
           return val = this.callOptionFunct("ingest", val);
         } else {
           return val;
         }
-      };
+      }
 
-      PropertyInstance.prototype.output = function() {
+      output() {
         if (typeof this.property.options.output === 'function') {
           return this.callOptionFunct("output", this.value);
         } else {
           return this.value;
         }
-      };
+      }
 
-      PropertyInstance.prototype.changed = function(old) {
+      changed(old) {
         this.callChangedFunctions(old);
         if (typeof this.obj.emitEvent === 'function') {
           this.obj.emitEvent(this.updateEventName, [old]);
           this.obj.emitEvent(this.changeEventName, [old]);
         }
         return this;
-      };
+      }
 
-      PropertyInstance.prototype.callChangedFunctions = function(old) {
+      callChangedFunctions(old) {
         if (typeof this.property.options.change === 'function') {
           return this.callOptionFunct("change", old);
         }
-      };
+      }
 
-      PropertyInstance.prototype.hasChangedFunctions = function() {
+      hasChangedFunctions() {
         return typeof this.property.options.change === 'function';
-      };
+      }
 
-      PropertyInstance.prototype.hasChangedEvents = function() {
+      hasChangedEvents() {
         return typeof this.obj.getListeners === 'function' && this.obj.getListeners(this.changeEventName).length > 0;
-      };
+      }
 
-      PropertyInstance.compose = function(prop) {
+      static compose(prop) {
         if (prop.instanceType == null) {
-          prop.instanceType = (function(superClass) {
-            extend(_Class, superClass);
-
-            function _Class() {
-              return _Class.__super__.constructor.apply(this, arguments);
-            }
-
-            return _Class;
-
-          })(PropertyInstance);
+          prop.instanceType = class extends PropertyInstance {};
         }
         if (typeof prop.options.set === 'function') {
           prop.instanceType.prototype.set = this.prototype.callbackSet;
         } else {
           prop.instanceType.prototype.set = this.prototype.setAndCheckChanges;
         }
-        prop.instanceType.prototype["default"] = prop.options["default"];
-        prop.instanceType.prototype.initiated = typeof prop.options["default"] !== 'undefined';
+        prop.instanceType.prototype.default = prop.options.default;
+        prop.instanceType.prototype.initiated = typeof prop.options.default !== 'undefined';
         return this.setEventNames(prop);
-      };
+      }
 
-      PropertyInstance.setEventNames = function(prop) {
+      static setEventNames(prop) {
         prop.instanceType.prototype.changeEventName = prop.options.changeEventName || prop.name + 'Changed';
         prop.instanceType.prototype.updateEventName = prop.options.updateEventName || prop.name + 'Updated';
         return prop.instanceType.prototype.invalidateEventName = prop.options.invalidateEventName || prop.name + 'Invalidated';
-      };
+      }
 
-      PropertyInstance.bind = function(target, prop) {
+      static bind(target, prop) {
         var maj, opt;
         maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1);
         opt = {
@@ -176,11 +158,9 @@
           prop.getInstance(this).invalidate();
           return this;
         };
-      };
+      }
 
-      return PropertyInstance;
-
-    })();
+    };
     return PropertyInstance;
   });
 
@@ -189,70 +169,58 @@
     return Spark.Binder.definition = definition;
   })(function() {
     var Binder;
-    Binder = (function() {
-      function Binder() {}
-
-      Binder.prototype.bind = function() {
+    Binder = class Binder {
+      bind() {
         if (!this.binded && (this.callback != null) && (this.target != null)) {
           this.doBind();
         }
         return this.binded = true;
-      };
+      }
 
-      Binder.prototype.doBind = function() {
+      doBind() {
         throw new Error('Not implemented');
-      };
+      }
 
-      Binder.prototype.unbind = function() {
+      unbind() {
         if (this.binded && (this.callback != null) && (this.target != null)) {
           this.doUnbind();
         }
         return this.binded = false;
-      };
+      }
 
-      Binder.prototype.doUnbind = function() {
+      doUnbind() {
         throw new Error('Not implemented');
-      };
+      }
 
-      Binder.prototype.equals = function(binder) {
+      equals(binder) {
         return this.constructor.compareRefered(binder, this);
-      };
+      }
 
-      Binder.compareRefered = function(obj1, obj2) {
+      static compareRefered(obj1, obj2) {
         return obj1 === obj2 || ((obj1 != null) && (obj2 != null) && obj1.constructor === obj2.constructor && this.compareRef(obj1.ref, obj2.ref));
-      };
+      }
 
-      Binder.compareRef = function(ref1, ref2) {
-        return (ref1 != null) && (ref2 != null) && (ref1 === ref2 || (Array.isArray(ref1) && Array.isArray(ref1) && ref1.every((function(_this) {
-          return function(val, i) {
-            return _this.compareRefered(ref1[i], ref2[i]);
-          };
-        })(this))) || (typeof ref1 === "object" && typeof ref2 === "object" && Object.keys(ref1).join() === Object.keys(ref2).join() && Object.keys(ref1).every((function(_this) {
-          return function(key) {
-            return _this.compareRefered(ref1[key], ref2[key]);
-          };
-        })(this))));
-      };
+      static compareRef(ref1, ref2) {
+        return (ref1 != null) && (ref2 != null) && (ref1 === ref2 || (Array.isArray(ref1) && Array.isArray(ref1) && ref1.every((val, i) => {
+          return this.compareRefered(ref1[i], ref2[i]);
+        })) || (typeof ref1 === "object" && typeof ref2 === "object" && Object.keys(ref1).join() === Object.keys(ref2).join() && Object.keys(ref1).every((key) => {
+          return this.compareRefered(ref1[key], ref2[key]);
+        })));
+      }
 
-      return Binder;
-
-    })();
+    };
     return Binder;
   });
 
   (function(definition) {
     Spark.EventBind = definition();
     return Spark.EventBind.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var Binder, EventBind;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
-    EventBind = (function(superClass) {
-      extend(EventBind, superClass);
-
-      function EventBind(event1, target1, callback1) {
+    EventBind = class EventBind extends Binder {
+      constructor(event1, target1, callback1) {
+        super();
         this.event = event1;
         this.target = target1;
         this.callback = callback1;
@@ -263,7 +231,7 @@
         };
       }
 
-      EventBind.prototype.doBind = function() {
+      doBind() {
         if (typeof this.target.addEventListener === 'function') {
           return this.target.addEventListener(this.event, this.callback);
         } else if (typeof this.target.addListener === 'function') {
@@ -273,9 +241,9 @@
         } else {
           throw new Error('No function to add event listeners was found');
         }
-      };
+      }
 
-      EventBind.prototype.doUnbind = function() {
+      doUnbind() {
         if (typeof this.target.removeEventListener === 'function') {
           return this.target.removeEventListener(this.event, this.callback);
         } else if (typeof this.target.removeListener === 'function') {
@@ -285,20 +253,17 @@
         } else {
           throw new Error('No function to remove event listeners was found');
         }
-      };
+      }
 
-      EventBind.prototype.equals = function(eventBind) {
-        return EventBind.__super__.equals.call(this, eventBind) && eventBind.event === this.event;
-      };
+      equals(eventBind) {
+        return super.equals(eventBind) && eventBind.event === this.event;
+      }
 
-      EventBind.prototype.match = function(event, target) {
+      match(event, target) {
         return event === this.event && target === this.target;
-      };
+      }
 
-      EventBind.checkEmitter = function(emitter, fatal) {
-        if (fatal == null) {
-          fatal = true;
-        }
+      static checkEmitter(emitter, fatal = true) {
         if (typeof emitter.addEventListener === 'function' || typeof emitter.addListener === 'function' || typeof emitter.on === 'function') {
           return true;
         } else if (fatal) {
@@ -306,22 +271,17 @@
         } else {
           return false;
         }
-      };
+      }
 
-      return EventBind;
-
-    })(Binder);
+    };
     return EventBind;
   });
 
   (function(definition) {
     Spark.Invalidator = definition();
     return Spark.Invalidator.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var Binder, EventBind, Invalidator, pluck;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
     EventBind = dependencies.hasOwnProperty("EventBind") ? dependencies.EventBind : Spark.EventBind;
     pluck = function(arr, fn) {
@@ -335,255 +295,224 @@
         return null;
       }
     };
-    Invalidator = (function(superClass) {
-      extend(Invalidator, superClass);
-
-      Invalidator.strict = true;
-
-      function Invalidator(property1, obj3) {
-        this.property = property1;
-        this.obj = obj3 != null ? obj3 : null;
-        this.invalidationEvents = [];
-        this.recycled = [];
-        this.unknowns = [];
-        this.strict = this.constructor.strict;
-        this.invalidated = false;
-        this.invalidateCallback = (function(_this) {
-          return function() {
-            _this.invalidate();
+    Invalidator = (function() {
+      class Invalidator extends Binder {
+        constructor(property1, obj3 = null) {
+          super();
+          this.property = property1;
+          this.obj = obj3;
+          this.invalidationEvents = [];
+          this.recycled = [];
+          this.unknowns = [];
+          this.strict = this.constructor.strict;
+          this.invalidated = false;
+          this.invalidateCallback = () => {
+            this.invalidate();
             return null;
           };
-        })(this);
-      }
+        }
 
-      Invalidator.prototype.invalidate = function() {
-        var functName;
-        this.invalidated = true;
-        if (typeof this.property === "function") {
-          return this.property();
-        } else if (typeof this.callback === "function") {
-          return this.callback();
-        } else if ((this.property != null) && typeof this.property.invalidate === "function") {
-          return this.property.invalidate();
-        } else if (typeof this.property === "string") {
-          functName = 'invalidate' + this.property.charAt(0).toUpperCase() + this.property.slice(1);
-          if (typeof this.obj[functName] === "function") {
-            return this.obj[functName]();
-          } else {
-            return this.obj[this.property] = null;
+        invalidate() {
+          var functName;
+          this.invalidated = true;
+          if (typeof this.property === "function") {
+            return this.property();
+          } else if (typeof this.callback === "function") {
+            return this.callback();
+          } else if ((this.property != null) && typeof this.property.invalidate === "function") {
+            return this.property.invalidate();
+          } else if (typeof this.property === "string") {
+            functName = 'invalidate' + this.property.charAt(0).toUpperCase() + this.property.slice(1);
+            if (typeof this.obj[functName] === "function") {
+              return this.obj[functName]();
+            } else {
+              return this.obj[this.property] = null;
+            }
           }
         }
-      };
 
-      Invalidator.prototype.unknown = function() {
-        if (typeof this.property.unknown === "function") {
-          return this.property.unknown();
-        } else {
-          return this.invalidate();
+        unknown() {
+          if (typeof this.property.unknown === "function") {
+            return this.property.unknown();
+          } else {
+            return this.invalidate();
+          }
         }
-      };
 
-      Invalidator.prototype.addEventBind = function(event, target, callback) {
-        return this.addBinder(new EventBind(event, target, callback));
-      };
-
-      Invalidator.prototype.addBinder = function(binder) {
-        if (binder.callback == null) {
-          binder.callback = this.invalidateCallback;
+        addEventBind(event, target, callback) {
+          return this.addBinder(new EventBind(event, target, callback));
         }
-        if (!this.invalidationEvents.some(function(eventBind) {
-          return eventBind.equals(binder);
-        })) {
-          return this.invalidationEvents.push(pluck(this.recycled, function(eventBind) {
+
+        addBinder(binder) {
+          if (binder.callback == null) {
+            binder.callback = this.invalidateCallback;
+          }
+          if (!this.invalidationEvents.some(function(eventBind) {
             return eventBind.equals(binder);
-          }) || binder);
+          })) {
+            return this.invalidationEvents.push(pluck(this.recycled, function(eventBind) {
+              return eventBind.equals(binder);
+            }) || binder);
+          }
         }
-      };
 
-      Invalidator.prototype.getUnknownCallback = function(prop, target) {
-        var callback;
-        callback = (function(_this) {
-          return function() {
-            return _this.addUnknown(function() {
+        getUnknownCallback(prop, target) {
+          var callback;
+          callback = () => {
+            return this.addUnknown(function() {
               return target[prop];
             }, prop, target);
           };
-        })(this);
-        callback.ref = {
-          maker: arguments.callee,
-          prop: prop,
-          target: target
-        };
-        return callback;
-      };
-
-      Invalidator.prototype.addUnknown = function(fn, prop, target) {
-        if (!this.findUnknown(prop, target)) {
-          fn.ref = {
-            "prop": prop,
-            "target": target
+          callback.ref = {
+            prop: prop,
+            target: target
           };
-          this.unknowns.push(fn);
-          return this.unknown();
+          return callback;
         }
-      };
 
-      Invalidator.prototype.findUnknown = function(prop, target) {
-        if ((prop != null) || (target != null)) {
-          return this.unknowns.find(function(unknown) {
-            return unknown.ref.prop === prop && unknown.ref.target === target;
-          });
+        addUnknown(fn, prop, target) {
+          if (!this.findUnknown(prop, target)) {
+            fn.ref = {
+              "prop": prop,
+              "target": target
+            };
+            this.unknowns.push(fn);
+            return this.unknown();
+          }
         }
-      };
 
-      Invalidator.prototype.event = function(event, target) {
-        if (target == null) {
-          target = this.obj;
+        findUnknown(prop, target) {
+          if ((prop != null) || (target != null)) {
+            return this.unknowns.find(function(unknown) {
+              return unknown.ref.prop === prop && unknown.ref.target === target;
+            });
+          }
         }
-        if (this.checkEmitter(target)) {
-          return this.addEventBind(event, target);
-        }
-      };
 
-      Invalidator.prototype.value = function(val, event, target) {
-        if (target == null) {
-          target = this.obj;
+        event(event, target = this.obj) {
+          if (this.checkEmitter(target)) {
+            return this.addEventBind(event, target);
+          }
         }
-        this.event(event, target);
-        return val;
-      };
 
-      Invalidator.prototype.prop = function(prop, target) {
-        if (target == null) {
-          target = this.obj;
+        value(val, event, target = this.obj) {
+          this.event(event, target);
+          return val;
         }
-        if (typeof prop !== 'string') {
-          throw new Error('Property name must be a string');
-        }
-        if (this.checkEmitter(target)) {
-          this.addEventBind(prop + 'Invalidated', target, this.getUnknownCallback(prop, target));
-          return this.value(target[prop], prop + 'Updated', target);
-        } else {
-          return target[prop];
-        }
-      };
 
-      Invalidator.prototype.propInitiated = function(prop, target) {
-        var initiated;
-        if (target == null) {
-          target = this.obj;
+        prop(prop, target = this.obj) {
+          if (typeof prop !== 'string') {
+            throw new Error('Property name must be a string');
+          }
+          if (this.checkEmitter(target)) {
+            this.addEventBind(prop + 'Invalidated', target, this.getUnknownCallback(prop, target));
+            return this.value(target[prop], prop + 'Updated', target);
+          } else {
+            return target[prop];
+          }
         }
-        initiated = target.getPropertyInstance(prop).initiated;
-        if (!initiated && this.checkEmitter(target)) {
-          this.event(prop + 'Updated', target);
-        }
-        return initiated;
-      };
 
-      Invalidator.prototype.funct = function(funct) {
-        var invalidator, res;
-        invalidator = new Invalidator((function(_this) {
-          return function() {
-            return _this.addUnknown(function() {
+        propInitiated(prop, target = this.obj) {
+          var initiated;
+          initiated = target.getPropertyInstance(prop).initiated;
+          if (!initiated && this.checkEmitter(target)) {
+            this.event(prop + 'Updated', target);
+          }
+          return initiated;
+        }
+
+        funct(funct) {
+          var invalidator, res;
+          invalidator = new Invalidator(() => {
+            return this.addUnknown(() => {
               var res2;
               res2 = funct(invalidator);
               if (res !== res2) {
-                return _this.invalidate();
+                return this.invalidate();
               }
             }, invalidator);
-          };
-        })(this));
-        res = funct(invalidator);
-        this.invalidationEvents.push(invalidator);
-        return res;
-      };
-
-      Invalidator.prototype.validateUnknowns = function(prop, target) {
-        var unknowns;
-        if (target == null) {
-          target = this.obj;
+          });
+          res = funct(invalidator);
+          this.invalidationEvents.push(invalidator);
+          return res;
         }
-        unknowns = this.unknowns;
-        this.unknowns = [];
-        return unknowns.forEach(function(unknown) {
-          return unknown();
-        });
-      };
 
-      Invalidator.prototype.isEmpty = function() {
-        return this.invalidationEvents.length === 0;
-      };
+        validateUnknowns(prop, target = this.obj) {
+          var unknowns;
+          unknowns = this.unknowns;
+          this.unknowns = [];
+          return unknowns.forEach(function(unknown) {
+            return unknown();
+          });
+        }
 
-      Invalidator.prototype.bind = function() {
-        this.invalidated = false;
-        return this.invalidationEvents.forEach(function(eventBind) {
-          return eventBind.bind();
-        });
-      };
+        isEmpty() {
+          return this.invalidationEvents.length === 0;
+        }
 
-      Invalidator.prototype.recycle = function(callback) {
-        var done, res;
-        this.recycled = this.invalidationEvents;
-        this.invalidationEvents = [];
-        done = (function(_this) {
-          return function() {
-            _this.recycled.forEach(function(eventBind) {
+        bind() {
+          this.invalidated = false;
+          return this.invalidationEvents.forEach(function(eventBind) {
+            return eventBind.bind();
+          });
+        }
+
+        recycle(callback) {
+          var done, res;
+          this.recycled = this.invalidationEvents;
+          this.invalidationEvents = [];
+          done = () => {
+            this.recycled.forEach(function(eventBind) {
               return eventBind.unbind();
             });
-            return _this.recycled = [];
+            return this.recycled = [];
           };
-        })(this);
-        if (typeof callback === "function") {
-          if (callback.length > 1) {
-            return callback(this, done);
+          if (typeof callback === "function") {
+            if (callback.length > 1) {
+              return callback(this, done);
+            } else {
+              res = callback(this);
+              done();
+              return res;
+            }
           } else {
-            res = callback(this);
-            done();
-            return res;
+            return done;
           }
-        } else {
-          return done;
         }
+
+        checkEmitter(emitter) {
+          return EventBind.checkEmitter(emitter, this.strict);
+        }
+
+        unbind() {
+          return this.invalidationEvents.forEach(function(eventBind) {
+            return eventBind.unbind();
+          });
+        }
+
       };
 
-      Invalidator.prototype.checkEmitter = function(emitter) {
-        return EventBind.checkEmitter(emitter, this.strict);
-      };
-
-      Invalidator.prototype.unbind = function() {
-        return this.invalidationEvents.forEach(function(eventBind) {
-          return eventBind.unbind();
-        });
-      };
+      Invalidator.strict = true;
 
       return Invalidator;
 
-    })(Binder);
+    }).call(this);
     return Invalidator;
   });
 
   (function(definition) {
     Spark.ActivableProperty = definition();
     return Spark.ActivableProperty.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var ActivableProperty, Invalidator, PropertyInstance;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
-    ActivableProperty = (function(superClass) {
-      extend(ActivableProperty, superClass);
-
-      function ActivableProperty() {
-        return ActivableProperty.__super__.constructor.apply(this, arguments);
+    ActivableProperty = class ActivableProperty extends PropertyInstance {
+      activableGet() {
+        return this.get();
       }
 
-      ActivableProperty.prototype.activableGet = function() {
-        return this.get();
-      };
-
-      ActivableProperty.prototype.activableGet = function() {
+      activableGet() {
         var out;
         if (this.isActive()) {
           out = this.activeGet();
@@ -595,41 +524,39 @@
           this.initiated = true;
           return void 0;
         }
-      };
+      }
 
-      ActivableProperty.prototype.isActive = function() {
+      isActive() {
         return true;
-      };
+      }
 
-      ActivableProperty.prototype.manualActive = function() {
+      manualActive() {
         return this.active;
-      };
+      }
 
-      ActivableProperty.prototype.callbackActive = function() {
+      callbackActive() {
         var invalidator;
         invalidator = this.activeInvalidator || new Invalidator(this, this.obj);
-        invalidator.recycle((function(_this) {
-          return function(invalidator, done) {
-            _this.active = _this.callOptionFunct(_this.activeFunct, invalidator);
-            done();
-            if (_this.active || invalidator.isEmpty()) {
-              invalidator.unbind();
-              return _this.activeInvalidator = null;
-            } else {
-              _this.invalidator = invalidator;
-              _this.activeInvalidator = invalidator;
-              return invalidator.bind();
-            }
-          };
-        })(this));
+        invalidator.recycle((invalidator, done) => {
+          this.active = this.callOptionFunct(this.activeFunct, invalidator);
+          done();
+          if (this.active || invalidator.isEmpty()) {
+            invalidator.unbind();
+            return this.activeInvalidator = null;
+          } else {
+            this.invalidator = invalidator;
+            this.activeInvalidator = invalidator;
+            return invalidator.bind();
+          }
+        });
         return this.active;
-      };
+      }
 
-      ActivableProperty.prototype.activeChanged = function(old) {
+      activeChanged(old) {
         return this.changed(old);
-      };
+      }
 
-      ActivableProperty.prototype.activableChanged = function(old) {
+      activableChanged(old) {
         if (this.isActive()) {
           this.pendingChanges = false;
           this.pendingOld = void 0;
@@ -641,9 +568,9 @@
           }
         }
         return this;
-      };
+      }
 
-      ActivableProperty.compose = function(prop) {
+      static compose(prop) {
         if (typeof prop.options.active !== "undefined") {
           prop.instanceType.prototype.activeGet = prop.instanceType.prototype.get;
           prop.instanceType.prototype.get = this.prototype.activableGet;
@@ -657,71 +584,58 @@
             return prop.instanceType.prototype.isActive = this.prototype.callbackActive;
           }
         }
-      };
+      }
 
-      return ActivableProperty;
-
-    })(PropertyInstance);
+    };
     return ActivableProperty;
   });
 
   (function(definition) {
     Spark.DynamicProperty = definition();
     return Spark.DynamicProperty.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var DynamicProperty, Invalidator, PropertyInstance;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
-    DynamicProperty = (function(superClass) {
-      extend(DynamicProperty, superClass);
-
-      function DynamicProperty() {
-        return DynamicProperty.__super__.constructor.apply(this, arguments);
+    DynamicProperty = class DynamicProperty extends PropertyInstance {
+      init() {
+        super.init();
+        return this.initRevalidate();
       }
 
-      DynamicProperty.prototype.init = function() {
-        DynamicProperty.__super__.init.call(this);
-        return this.initRevalidate();
-      };
+      initRevalidate() {
+        return this.revalidateCallback = () => {
+          return this.get();
+        };
+      }
 
-      DynamicProperty.prototype.initRevalidate = function() {
-        return this.revalidateCallback = (function(_this) {
-          return function() {
-            return _this.get();
-          };
-        })(this);
-      };
-
-      DynamicProperty.prototype.callbackGet = function() {
+      callbackGet() {
         var res;
         res = this.callOptionFunct("get");
         this.revalidated();
         return res;
-      };
+      }
 
-      DynamicProperty.prototype.invalidate = function() {
+      invalidate() {
         if (this.calculated || this.active === false) {
           this.calculated = false;
           this._invalidateNotice();
         }
         return this;
-      };
+      }
 
-      DynamicProperty.prototype.revalidate = function() {
-        DynamicProperty.__super__.revalidate.call(this);
+      revalidate() {
+        super.revalidate();
         return this.revalidateUpdater();
-      };
+      }
 
-      DynamicProperty.prototype.revalidateUpdater = function() {
+      revalidateUpdater() {
         if (this.getUpdater() != null) {
           return this.getUpdater().unbind();
         }
-      };
+      }
 
-      DynamicProperty.prototype._invalidateNotice = function() {
+      _invalidateNotice() {
         if (this.isImmediate()) {
           this.get();
           return false;
@@ -734,9 +648,9 @@
           }
           return true;
         }
-      };
+      }
 
-      DynamicProperty.prototype.getUpdater = function() {
+      getUpdater() {
         if (typeof this.updater === 'undefined') {
           if (this.property.options.updater != null) {
             this.updater = this.property.options.updater;
@@ -753,56 +667,38 @@
           }
         }
         return this.updater;
-      };
+      }
 
-      DynamicProperty.prototype.isImmediate = function() {
+      isImmediate() {
         return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
-      };
+      }
 
-      DynamicProperty.compose = function(prop) {
+      static compose(prop) {
         if (typeof prop.options.get === 'function' || typeof prop.options.calcul === 'function' || typeof prop.options.active === 'function') {
           if (prop.instanceType == null) {
-            prop.instanceType = (function(superClass1) {
-              extend(_Class, superClass1);
-
-              function _Class() {
-                return _Class.__super__.constructor.apply(this, arguments);
-              }
-
-              return _Class;
-
-            })(DynamicProperty);
+            prop.instanceType = class extends DynamicProperty {};
           }
         }
+        
+        // if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty
         if (typeof prop.options.get === 'function') {
           return prop.instanceType.prototype.get = this.prototype.callbackGet;
         }
-      };
+      }
 
-      return DynamicProperty;
-
-    })(PropertyInstance);
+    };
     return DynamicProperty;
   });
 
   (function(definition) {
     Spark.CalculatedProperty = definition();
     return Spark.CalculatedProperty.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var CalculatedProperty, DynamicProperty, Invalidator;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
-    CalculatedProperty = (function(superClass) {
-      extend(CalculatedProperty, superClass);
-
-      function CalculatedProperty() {
-        return CalculatedProperty.__super__.constructor.apply(this, arguments);
-      }
-
-      CalculatedProperty.prototype.calculatedGet = function() {
+    CalculatedProperty = class CalculatedProperty extends DynamicProperty {
+      calculatedGet() {
         var initiated, old;
         if (this.invalidator) {
           this.invalidator.validateUnknowns();
@@ -820,59 +716,57 @@
           }
         }
         return this.output();
-      };
+      }
 
-      CalculatedProperty.prototype.calcul = function() {
+      calcul() {
         this.revalidated();
         return this.value;
-      };
+      }
 
-      CalculatedProperty.prototype.callbackCalcul = function() {
+      callbackCalcul() {
         this.value = this.callOptionFunct(this.calculFunct);
         this.manual = false;
         this.revalidated();
         return this.value;
-      };
+      }
 
-      CalculatedProperty.prototype.invalidatedCalcul = function() {
+      invalidatedCalcul() {
         if (!this.invalidator) {
           this.invalidator = new Invalidator(this, this.obj);
         }
-        this.invalidator.recycle((function(_this) {
-          return function(invalidator, done) {
-            _this.value = _this.callOptionFunct(_this.calculFunct, invalidator);
-            _this.manual = false;
-            done();
-            if (invalidator.isEmpty()) {
-              return _this.invalidator = null;
-            } else {
-              return invalidator.bind();
-            }
-          };
-        })(this));
+        this.invalidator.recycle((invalidator, done) => {
+          this.value = this.callOptionFunct(this.calculFunct, invalidator);
+          this.manual = false;
+          done();
+          if (invalidator.isEmpty()) {
+            return this.invalidator = null;
+          } else {
+            return invalidator.bind();
+          }
+        });
         this.revalidated();
         return this.value;
-      };
+      }
 
-      CalculatedProperty.prototype.unknown = function() {
+      unknown() {
         if (this.calculated || this.active === false) {
           this._invalidateNotice();
         }
         return this;
-      };
+      }
 
-      CalculatedProperty.prototype.destroyWhithoutInvalidator = function() {
+      destroyWhithoutInvalidator() {
         return this.destroy();
-      };
+      }
 
-      CalculatedProperty.prototype.destroyInvalidator = function() {
+      destroyInvalidator() {
         this.destroyWhithoutInvalidator();
         if (this.invalidator != null) {
           return this.invalidator.unbind();
         }
-      };
+      }
 
-      CalculatedProperty.prototype.invalidateInvalidator = function() {
+      invalidateInvalidator() {
         if (this.calculated || this.active === false) {
           this.calculated = false;
           if (this._invalidateNotice() && (this.invalidator != null)) {
@@ -880,9 +774,9 @@
           }
         }
         return this;
-      };
+      }
 
-      CalculatedProperty.compose = function(prop) {
+      static compose(prop) {
         if (typeof prop.options.calcul === 'function') {
           prop.instanceType.prototype.calculFunct = prop.options.calcul;
           prop.instanceType.prototype.get = this.prototype.calculatedGet;
@@ -896,11 +790,9 @@
             return prop.instanceType.prototype.calcul = this.prototype.callbackCalcul;
           }
         }
-      };
+      }
 
-      return CalculatedProperty;
-
-    })(DynamicProperty);
+    };
     return CalculatedProperty;
   });
 
@@ -910,94 +802,129 @@
   })(function() {
     var Collection;
     Collection = (function() {
-      function Collection(arr) {
-        if (arr != null) {
-          if (typeof arr.toArray === 'function') {
-            this._array = arr.toArray();
-          } else if (Array.isArray(arr)) {
-            this._array = arr;
+      class Collection {
+        constructor(arr) {
+          if (arr != null) {
+            if (typeof arr.toArray === 'function') {
+              this._array = arr.toArray();
+            } else if (Array.isArray(arr)) {
+              this._array = arr;
+            } else {
+              this._array = [arr];
+            }
           } else {
-            this._array = [arr];
+            this._array = [];
           }
-        } else {
-          this._array = [];
         }
-      }
 
-      Collection.prototype.changed = function() {};
+        changed() {}
 
-      Collection.prototype.checkChanges = function(old, ordered, compareFunction) {
-        if (ordered == null) {
-          ordered = true;
+        checkChanges(old, ordered = true, compareFunction = null) {
+          if (compareFunction == null) {
+            compareFunction = function(a, b) {
+              return a === b;
+            };
+          }
+          old = this.copy(old.slice());
+          return this.count() !== old.length || (ordered ? this.some(function(val, i) {
+            return !compareFunction(old.get(i), val);
+          }) : this.some(function(a) {
+            return !old.pluck(function(b) {
+              return compareFunction(a, b);
+            });
+          }));
         }
-        if (compareFunction == null) {
-          compareFunction = null;
+
+        get(i) {
+          return this._array[i];
         }
-        if (compareFunction == null) {
-          compareFunction = function(a, b) {
-            return a === b;
-          };
+
+        set(i, val) {
+          var old;
+          if (this._array[i] !== val) {
+            old = this.toArray();
+            this._array[i] = val;
+            this.changed(old);
+          }
+          return val;
         }
-        old = this.copy(old.slice());
-        return this.count() !== old.length || (ordered ? this.some(function(val, i) {
-          return !compareFunction(old.get(i), val);
-        }) : this.some(function(a) {
-          return !old.pluck(function(b) {
-            return compareFunction(a, b);
+
+        add(val) {
+          if (!this._array.includes(val)) {
+            return this.push(val);
+          }
+        }
+
+        remove(val) {
+          var index, old;
+          index = this._array.indexOf(val);
+          if (index !== -1) {
+            old = this.toArray();
+            this._array.splice(index, 1);
+            return this.changed(old);
+          }
+        }
+
+        pluck(fn) {
+          var found, index, old;
+          index = this._array.findIndex(fn);
+          if (index > -1) {
+            old = this.toArray();
+            found = this._array[index];
+            this._array.splice(index, 1);
+            this.changed(old);
+            return found;
+          } else {
+            return null;
+          }
+        }
+
+        toArray() {
+          return this._array.slice();
+        }
+
+        count() {
+          return this._array.length;
+        }
+
+        static newSubClass(fn, arr) {
+          var SubClass;
+          if (typeof fn === 'object') {
+            SubClass = class extends this {};
+            Object.assign(SubClass.prototype, fn);
+            return new SubClass(arr);
+          } else {
+            return new this(arr);
+          }
+        }
+
+        copy(arr) {
+          var coll;
+          if (arr == null) {
+            arr = this.toArray();
+          }
+          coll = new this.constructor(arr);
+          return coll;
+        }
+
+        equals(arr) {
+          return (this.count() === (typeof arr.count === 'function' ? arr.count() : arr.length)) && this.every(function(val, i) {
+            return arr[i] === val;
           });
-        }));
-      };
-
-      Collection.prototype.get = function(i) {
-        return this._array[i];
-      };
-
-      Collection.prototype.set = function(i, val) {
-        var old;
-        if (this._array[i] !== val) {
-          old = this.toArray();
-          this._array[i] = val;
-          this.changed(old);
         }
-        return val;
-      };
 
-      Collection.prototype.add = function(val) {
-        if (!this._array.includes(val)) {
-          return this.push(val);
+        getAddedFrom(arr) {
+          return this._array.filter(function(item) {
+            return !arr.includes(item);
+          });
         }
-      };
 
-      Collection.prototype.remove = function(val) {
-        var index, old;
-        index = this._array.indexOf(val);
-        if (index !== -1) {
-          old = this.toArray();
-          this._array.splice(index, 1);
-          return this.changed(old);
+        getRemovedFrom(arr) {
+          return arr.filter((item) => {
+            return !this.includes(item);
+          });
         }
-      };
 
-      Collection.prototype.pluck = function(fn) {
-        var found, index, old;
-        index = this._array.findIndex(fn);
-        if (index > -1) {
-          old = this.toArray();
-          found = this._array[index];
-          this._array.splice(index, 1);
-          this.changed(old);
-          return found;
-        } else {
-          return null;
-        }
-      };
-
-      Collection.prototype.toArray = function() {
-        return this._array.slice();
-      };
-
-      Collection.prototype.count = function() {
-        return this._array.length;
       };
 
       Collection.readFunctions = ['every', 'find', 'findIndex', 'forEach', 'includes', 'indexOf', 'join', 'lastIndexOf', 'map', 'reduce', 'reduceRight', 'some', 'toString'];
@@ -1007,84 +934,30 @@
       Collection.writefunctions = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'];
 
       Collection.readFunctions.forEach(function(funct) {
-        return Collection.prototype[funct] = function() {
-          var arg, ref3;
-          arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return (ref3 = this._array)[funct].apply(ref3, arg);
+        return Collection.prototype[funct] = function(...arg) {
+          return this._array[funct](...arg);
         };
       });
 
       Collection.readListFunctions.forEach(function(funct) {
-        return Collection.prototype[funct] = function() {
-          var arg, ref3;
-          arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return this.copy((ref3 = this._array)[funct].apply(ref3, arg));
+        return Collection.prototype[funct] = function(...arg) {
+          return this.copy(this._array[funct](...arg));
         };
       });
 
       Collection.writefunctions.forEach(function(funct) {
-        return Collection.prototype[funct] = function() {
-          var arg, old, ref3, res;
-          arg = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+        return Collection.prototype[funct] = function(...arg) {
+          var old, res;
           old = this.toArray();
-          res = (ref3 = this._array)[funct].apply(ref3, arg);
+          res = this._array[funct](...arg);
           this.changed(old);
           return res;
         };
       });
 
-      Collection.newSubClass = function(fn, arr) {
-        var SubClass;
-        if (typeof fn === 'object') {
-          SubClass = (function(superClass) {
-            extend(_Class, superClass);
-
-            function _Class() {
-              return _Class.__super__.constructor.apply(this, arguments);
-            }
-
-            return _Class;
-
-          })(this);
-          Object.assign(SubClass.prototype, fn);
-          return new SubClass(arr);
-        } else {
-          return new this(arr);
-        }
-      };
-
-      Collection.prototype.copy = function(arr) {
-        var coll;
-        if (arr == null) {
-          arr = this.toArray();
-        }
-        coll = new this.constructor(arr);
-        return coll;
-      };
-
-      Collection.prototype.equals = function(arr) {
-        return (this.count() === (typeof arr.count === 'function' ? arr.count() : arr.length)) && this.every(function(val, i) {
-          return arr[i] === val;
-        });
-      };
-
-      Collection.prototype.getAddedFrom = function(arr) {
-        return this._array.filter(function(item) {
-          return !arr.includes(item);
-        });
-      };
-
-      Collection.prototype.getRemovedFrom = function(arr) {
-        return arr.filter((function(_this) {
-          return function(item) {
-            return !_this.includes(item);
-          };
-        })(this));
-      };
-
       return Collection;
 
-    })();
+    }).call(this);
     Object.defineProperty(Collection.prototype, 'length', {
       get: function() {
         return this.count();
@@ -1101,81 +974,81 @@
   (function(definition) {
     Spark.CollectionProperty = definition();
     return Spark.CollectionProperty.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var Collection, CollectionProperty, DynamicProperty;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     Collection = dependencies.hasOwnProperty("Collection") ? dependencies.Collection : Spark.Collection;
-    CollectionProperty = (function(superClass) {
-      extend(CollectionProperty, superClass);
-
-      function CollectionProperty() {
-        return CollectionProperty.__super__.constructor.apply(this, arguments);
-      }
-
-      CollectionProperty.prototype.ingest = function(val) {
-        if (typeof this.property.options.ingest === 'function') {
-          val = this.callOptionFunct("ingest", val);
+    CollectionProperty = (function() {
+      class CollectionProperty extends DynamicProperty {
+        ingest(val) {
+          if (typeof this.property.options.ingest === 'function') {
+            val = this.callOptionFunct("ingest", val);
+          }
+          if (val == null) {
+            return [];
+          } else if (typeof val.toArray === 'function') {
+            return val.toArray();
+          } else if (Array.isArray(val)) {
+            return val.slice();
+          } else {
+            return [val];
+          }
         }
-        if (val == null) {
-          return [];
-        } else if (typeof val.toArray === 'function') {
-          return val.toArray();
-        } else if (Array.isArray(val)) {
-          return val.slice();
-        } else {
-          return [val];
-        }
-      };
 
-      CollectionProperty.prototype.checkChangedItems = function(val, old) {
-        var compareFunction;
-        if (typeof this.collectionOptions.compare === 'function') {
-          compareFunction = this.collectionOptions.compare;
+        checkChangedItems(val, old) {
+          var compareFunction;
+          if (typeof this.collectionOptions.compare === 'function') {
+            compareFunction = this.collectionOptions.compare;
+          }
+          return (new Collection(val)).checkChanges(old, this.collectionOptions.ordered, compareFunction);
         }
-        return (new Collection(val)).checkChanges(old, this.collectionOptions.ordered, compareFunction);
-      };
 
-      CollectionProperty.prototype.output = function() {
-        var col, prop, value;
-        value = this.value;
-        if (typeof this.property.options.output === 'function') {
-          value = this.callOptionFunct("output", this.value);
+        output() {
+          var col, prop, value;
+          value = this.value;
+          if (typeof this.property.options.output === 'function') {
+            value = this.callOptionFunct("output", this.value);
+          }
+          prop = this;
+          col = Collection.newSubClass(this.collectionOptions, value);
+          col.changed = function(old) {
+            return prop.changed(old);
+          };
+          return col;
         }
-        prop = this;
-        col = Collection.newSubClass(this.collectionOptions, value);
-        col.changed = function(old) {
-          return prop.changed(old);
-        };
-        return col;
-      };
 
-      CollectionProperty.prototype.callChangedFunctions = function(old) {
-        if (typeof this.property.options.itemAdded === 'function') {
-          this.value.forEach((function(_this) {
-            return function(item, i) {
+        callChangedFunctions(old) {
+          if (typeof this.property.options.itemAdded === 'function') {
+            this.value.forEach((item, i) => {
               if (!old.includes(item)) {
-                return _this.callOptionFunct("itemAdded", item, i);
+                return this.callOptionFunct("itemAdded", item, i);
               }
-            };
-          })(this));
-        }
-        if (typeof this.property.options.itemRemoved === 'function') {
-          old.forEach((function(_this) {
-            return function(item, i) {
-              if (!_this.value.includes(item)) {
-                return _this.callOptionFunct("itemRemoved", item, i);
+            });
+          }
+          if (typeof this.property.options.itemRemoved === 'function') {
+            old.forEach((item, i) => {
+              if (!this.value.includes(item)) {
+                return this.callOptionFunct("itemRemoved", item, i);
               }
-            };
-          })(this));
+            });
+          }
+          return super.callChangedFunctions(old);
         }
-        return CollectionProperty.__super__.callChangedFunctions.call(this, old);
-      };
 
-      CollectionProperty.prototype.hasChangedFunctions = function() {
-        return CollectionProperty.__super__.hasChangedFunctions.call(this) || typeof this.property.options.itemAdded === 'function' || typeof this.property.options.itemRemoved === 'function';
+        hasChangedFunctions() {
+          return super.hasChangedFunctions() || typeof this.property.options.itemAdded === 'function' || typeof this.property.options.itemRemoved === 'function';
+        }
+
+        static compose(prop) {
+          if (prop.options.collection != null) {
+            prop.instanceType = class extends CollectionProperty {};
+            prop.instanceType.prototype.collectionOptions = Object.assign({}, this.defaultCollectionOptions, typeof prop.options.collection === 'object' ? prop.options.collection : {});
+            if (prop.options.collection.compare != null) {
+              return prop.instanceType.prototype.checkChanges = this.prototype.checkChangedItems;
+            }
+          }
+        }
+
       };
 
       CollectionProperty.defaultCollectionOptions = {
@@ -1183,116 +1056,78 @@
         ordered: true
       };
 
-      CollectionProperty.compose = function(prop) {
-        if (prop.options.collection != null) {
-          prop.instanceType = (function(superClass1) {
-            extend(_Class, superClass1);
-
-            function _Class() {
-              return _Class.__super__.constructor.apply(this, arguments);
-            }
-
-            return _Class;
-
-          })(CollectionProperty);
-          prop.instanceType.prototype.collectionOptions = Object.assign({}, this.defaultCollectionOptions, typeof prop.options.collection === 'object' ? prop.options.collection : {});
-          if (prop.options.collection.compare != null) {
-            return prop.instanceType.prototype.checkChanges = this.prototype.checkChangedItems;
-          }
-        }
-      };
-
       return CollectionProperty;
 
-    })(DynamicProperty);
+    }).call(this);
     return CollectionProperty;
   });
 
   (function(definition) {
     Spark.ComposedProperty = definition();
     return Spark.ComposedProperty.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var CalculatedProperty, Collection, ComposedProperty, Invalidator;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     Collection = dependencies.hasOwnProperty("Collection") ? dependencies.Collection : Spark.Collection;
-    ComposedProperty = (function(superClass) {
-      extend(ComposedProperty, superClass);
-
-      function ComposedProperty() {
-        return ComposedProperty.__super__.constructor.apply(this, arguments);
-      }
-
-      ComposedProperty.prototype.init = function() {
-        ComposedProperty.__super__.init.call(this);
-        return this.initComposed();
-      };
-
-      ComposedProperty.prototype.initComposed = function() {
-        if (this.property.options.hasOwnProperty('default')) {
-          this["default"] = this.property.options["default"];
-        } else {
-          this["default"] = this.value = true;
+    ComposedProperty = (function() {
+      class ComposedProperty extends CalculatedProperty {
+        init() {
+          super.init();
+          return this.initComposed();
         }
-        this.members = new ComposedProperty.Members(this.property.options.members);
-        this.members.changed = (function(_this) {
-          return function(old) {
-            return _this.invalidate();
+
+        initComposed() {
+          if (this.property.options.hasOwnProperty('default')) {
+            this.default = this.property.options.default;
+          } else {
+            this.default = this.value = true;
+          }
+          this.members = new ComposedProperty.Members(this.property.options.members);
+          this.members.changed = (old) => {
+            return this.invalidate();
           };
-        })(this);
-        return this.join = typeof this.property.options.composed === 'function' ? this.property.options.composed : this.property.options["default"] === false ? ComposedProperty.joinFunctions.or : ComposedProperty.joinFunctions.and;
-      };
-
-      ComposedProperty.prototype.calcul = function() {
-        if (!this.invalidator) {
-          this.invalidator = new Invalidator(this, this.obj);
+          return this.join = typeof this.property.options.composed === 'function' ? this.property.options.composed : this.property.options.default === false ? ComposedProperty.joinFunctions.or : ComposedProperty.joinFunctions.and;
         }
-        this.invalidator.recycle((function(_this) {
-          return function(invalidator, done) {
-            _this.value = _this.members.reduce(function(prev, member) {
+
+        calcul() {
+          if (!this.invalidator) {
+            this.invalidator = new Invalidator(this, this.obj);
+          }
+          this.invalidator.recycle((invalidator, done) => {
+            this.value = this.members.reduce((prev, member) => {
               var val;
-              val = typeof member === 'function' ? member(_this.invalidator) : member;
-              return _this.join(prev, val);
-            }, _this["default"]);
+              val = typeof member === 'function' ? member(this.invalidator) : member;
+              return this.join(prev, val);
+            }, this.default);
             done();
             if (invalidator.isEmpty()) {
-              return _this.invalidator = null;
+              return this.invalidator = null;
             } else {
               return invalidator.bind();
             }
-          };
-        })(this));
-        this.revalidated();
-        return this.value;
-      };
-
-      ComposedProperty.compose = function(prop) {
-        if (prop.options.composed != null) {
-          prop.instanceType = (function(superClass1) {
-            extend(_Class, superClass1);
-
-            function _Class() {
-              return _Class.__super__.constructor.apply(this, arguments);
-            }
-
-            return _Class;
-
-          })(ComposedProperty);
-          return prop.instanceType.prototype.get = this.prototype.calculatedGet;
+          });
+          this.revalidated();
+          return this.value;
         }
-      };
 
-      ComposedProperty.bind = function(target, prop) {
-        CalculatedProperty.bind(target, prop);
-        return Object.defineProperty(target, prop.name + 'Members', {
-          configurable: true,
-          get: function() {
-            return prop.getInstance(this).members;
+        static compose(prop) {
+          if (prop.options.composed != null) {
+            prop.instanceType = class extends ComposedProperty {};
+            return prop.instanceType.prototype.get = this.prototype.calculatedGet;
           }
-        });
+        }
+
+        static bind(target, prop) {
+          CalculatedProperty.bind(target, prop);
+          return Object.defineProperty(target, prop.name + 'Members', {
+            configurable: true,
+            get: function() {
+              return prop.getInstance(this).members;
+            }
+          });
+        }
+
       };
 
       ComposedProperty.joinFunctions = {
@@ -1306,15 +1141,9 @@
 
       return ComposedProperty;
 
-    })(CalculatedProperty);
-    ComposedProperty.Members = (function(superClass) {
-      extend(Members, superClass);
-
-      function Members() {
-        return Members.__super__.constructor.apply(this, arguments);
-      }
-
-      Members.prototype.addPropertyRef = function(name, obj) {
+    }).call(this);
+    ComposedProperty.Members = class Members extends Collection {
+      addPropertyRef(name, obj) {
         var fn;
         if (this.findRefIndex(name, obj) === -1) {
           fn = function(invalidator) {
@@ -1326,9 +1155,9 @@
           };
           return this.push(fn);
         }
-      };
+      }
 
-      Members.prototype.addValueRef = function(val, name, obj) {
+      addValueRef(val, name, obj) {
         var fn;
         if (this.findRefIndex(name, obj) === -1) {
           fn = function(invalidator) {
@@ -1341,9 +1170,9 @@
           };
           return this.push(fn);
         }
-      };
+      }
 
-      Members.prototype.setValueRef = function(val, name, obj) {
+      setValueRef(val, name, obj) {
         var fn, i, ref;
         i = this.findRefIndex(name, obj);
         if (i === -1) {
@@ -1360,13 +1189,13 @@
           fn.ref = ref;
           return this.set(i, fn);
         }
-      };
+      }
 
-      Members.prototype.getValueRef = function(name, obj) {
+      getValueRef(name, obj) {
         return this.findByRef(name, obj).ref.val;
-      };
+      }
 
-      Members.prototype.addFunctionRef = function(fn, name, obj) {
+      addFunctionRef(fn, name, obj) {
         if (this.findRefIndex(name, obj) === -1) {
           fn.ref = {
             name: name,
@@ -1374,19 +1203,19 @@
           };
           return this.push(fn);
         }
-      };
+      }
 
-      Members.prototype.findByRef = function(name, obj) {
+      findByRef(name, obj) {
         return this._array[this.findRefIndex(name, obj)];
-      };
+      }
 
-      Members.prototype.findRefIndex = function(name, obj) {
+      findRefIndex(name, obj) {
         return this._array.findIndex(function(member) {
           return (member.ref != null) && member.ref.obj === obj && member.ref.name === name;
         });
-      };
+      }
 
-      Members.prototype.removeRef = function(name, obj) {
+      removeRef(name, obj) {
         var index, old;
         index = this.findRefIndex(name, obj);
         if (index !== -1) {
@@ -1394,22 +1223,17 @@
           this._array.splice(index, 1);
           return this.changed(old);
         }
-      };
+      }
 
-      return Members;
-
-    })(Collection);
+    };
     return ComposedProperty;
   });
 
   (function(definition) {
     Spark.Property = definition();
     return Spark.Property.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var ActivableProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, Property, PropertyInstance;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
     CollectionProperty = dependencies.hasOwnProperty("CollectionProperty") ? dependencies.CollectionProperty : Spark.CollectionProperty;
     ComposedProperty = dependencies.hasOwnProperty("ComposedProperty") ? dependencies.ComposedProperty : Spark.ComposedProperty;
@@ -1417,110 +1241,111 @@
     CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
     ActivableProperty = dependencies.hasOwnProperty("ActivableProperty") ? dependencies.ActivableProperty : Spark.ActivableProperty;
     Property = (function() {
-      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, PropertyInstance, CalculatedProperty, ActivableProperty];
-
-      function Property(name1, options1) {
-        this.name = name1;
-        this.options = options1 != null ? options1 : {};
-      }
-
-      Property.prototype.bind = function(target) {
-        var parent, prop;
-        prop = this;
-        if (!(typeof target.getProperty === 'function' && target.getProperty(this.name) === this)) {
-          if (typeof target.getProperty === 'function' && ((parent = target.getProperty(this.name)) != null)) {
-            this.override(parent);
-          }
-          this.getInstanceType().bind(target, prop);
-          target._properties = (target._properties || []).concat([prop]);
-          if (parent != null) {
-            target._properties = target._properties.filter(function(existing) {
-              return existing !== parent;
-            });
-          }
-          this.checkFunctions(target);
-          this.checkAfterAddListener(target);
+      class Property {
+        constructor(name1, options1 = {}) {
+          this.name = name1;
+          this.options = options1;
         }
-        return prop;
-      };
 
-      Property.prototype.override = function(parent) {
-        var key, ref3, results, value;
-        if (this.options.parent == null) {
-          this.options.parent = parent.options;
-          ref3 = parent.options;
+        bind(target) {
+          var parent, prop;
+          prop = this;
+          if (!(typeof target.getProperty === 'function' && target.getProperty(this.name) === this)) {
+            if (typeof target.getProperty === 'function' && ((parent = target.getProperty(this.name)) != null)) {
+              this.override(parent);
+            }
+            this.getInstanceType().bind(target, prop);
+            target._properties = (target._properties || []).concat([prop]);
+            if (parent != null) {
+              target._properties = target._properties.filter(function(existing) {
+                return existing !== parent;
+              });
+            }
+            this.checkFunctions(target);
+            this.checkAfterAddListener(target);
+          }
+          return prop;
+        }
+
+        override(parent) {
+          var key, ref3, results, value;
+          if (this.options.parent == null) {
+            this.options.parent = parent.options;
+            ref3 = parent.options;
+            results = [];
+            for (key in ref3) {
+              value = ref3[key];
+              if (typeof this.options[key] === 'function' && typeof value === 'function') {
+                results.push(this.options[key].overrided = value);
+              } else if (typeof this.options[key] === 'undefined') {
+                results.push(this.options[key] = value);
+              } else {
+                results.push(void 0);
+              }
+            }
+            return results;
+          }
+        }
+
+        checkFunctions(target) {
+          var funct, name, ref3, results;
+          this.checkAfterAddListener(target);
+          ref3 = Property.fn;
           results = [];
-          for (key in ref3) {
-            value = ref3[key];
-            if (typeof this.options[key] === 'function' && typeof value === 'function') {
-              results.push(this.options[key].overrided = value);
-            } else if (typeof this.options[key] === 'undefined') {
-              results.push(this.options[key] = value);
+          for (name in ref3) {
+            funct = ref3[name];
+            if (typeof target[name] === 'undefined') {
+              results.push(target[name] = funct);
             } else {
               results.push(void 0);
             }
           }
           return results;
         }
-      };
 
-      Property.prototype.checkFunctions = function(target) {
-        var funct, name, ref3, results;
-        this.checkAfterAddListener(target);
-        ref3 = Property.fn;
-        results = [];
-        for (name in ref3) {
-          funct = ref3[name];
-          if (typeof target[name] === 'undefined') {
-            results.push(target[name] = funct);
-          } else {
-            results.push(void 0);
+        checkAfterAddListener(target) {
+          var overrided;
+          if (typeof target.addListener === 'function' && typeof target.afterAddListener === 'undefined' && typeof target.addListener.overrided === 'undefined') {
+            target.afterAddListener = Property.optionalFn.afterAddListener;
+            overrided = target.addListener;
+            target.addListener = function(evt, listener) {
+              this.addListener.overrided.call(this, evt, listener);
+              return this.afterAddListener(evt);
+            };
+            return target.addListener.overrided = overrided;
           }
         }
-        return results;
-      };
 
-      Property.prototype.checkAfterAddListener = function(target) {
-        var overrided;
-        if (typeof target.addListener === 'function' && typeof target.afterAddListener === 'undefined' && typeof target.addListener.overrided === 'undefined') {
-          target.afterAddListener = Property.optionalFn.afterAddListener;
-          overrided = target.addListener;
-          target.addListener = function(evt, listener) {
-            this.addListener.overrided.call(this, evt, listener);
-            return this.afterAddListener(evt);
-          };
-          return target.addListener.overrided = overrided;
+        getInstanceVarName() {
+          return this.options.instanceVarName || '_' + this.name;
         }
-      };
 
-      Property.prototype.getInstanceVarName = function() {
-        return this.options.instanceVarName || '_' + this.name;
-      };
-
-      Property.prototype.isInstantiated = function(obj) {
-        return obj[this.getInstanceVarName()] != null;
-      };
-
-      Property.prototype.getInstance = function(obj) {
-        var Type, varName;
-        varName = this.getInstanceVarName();
-        if (!this.isInstantiated(obj)) {
-          Type = this.getInstanceType();
-          obj[varName] = new Type(this, obj);
+        isInstantiated(obj) {
+          return obj[this.getInstanceVarName()] != null;
         }
-        return obj[varName];
+
+        getInstance(obj) {
+          var Type, varName;
+          varName = this.getInstanceVarName();
+          if (!this.isInstantiated(obj)) {
+            Type = this.getInstanceType();
+            obj[varName] = new Type(this, obj);
+          }
+          return obj[varName];
+        }
+
+        getInstanceType() {
+          if (!this.instanceType) {
+            this.composers.forEach((composer) => {
+              return composer.compose(this);
+            });
+          }
+          return this.instanceType;
+        }
+
       };
 
-      Property.prototype.getInstanceType = function() {
-        if (!this.instanceType) {
-          this.composers.forEach((function(_this) {
-            return function(composer) {
-              return composer.compose(_this);
-            };
-          })(this));
-        }
-        return this.instanceType;
-      };
+      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, PropertyInstance, CalculatedProperty, ActivableProperty];
 
       Property.fn = {
         getProperty: function(name) {
@@ -1539,42 +1364,31 @@
           return this._properties.slice();
         },
         getPropertyInstances: function() {
-          return this._properties.map((function(_this) {
-            return function(prop) {
-              return prop.getInstance(_this);
-            };
-          })(this));
+          return this._properties.map((prop) => {
+            return prop.getInstance(this);
+          });
         },
         getInstantiatedProperties: function() {
-          return this._properties.filter((function(_this) {
-            return function(prop) {
-              return prop.isInstantiated(_this);
-            };
-          })(this)).map((function(_this) {
-            return function(prop) {
-              return prop.getInstance(_this);
-            };
-          })(this));
+          return this._properties.filter((prop) => {
+            return prop.isInstantiated(this);
+          }).map((prop) => {
+            return prop.getInstance(this);
+          });
         },
         getManualDataProperties: function() {
-          return this._properties.reduce((function(_this) {
-            return function(res, prop) {
-              var instance;
-              if (prop.isInstantiated(_this)) {
-                instance = prop.getInstance(_this);
-                if (instance.calculated && instance.manual) {
-                  res[prop.name] = instance.value;
-                }
+          return this._properties.reduce((res, prop) => {
+            var instance;
+            if (prop.isInstantiated(this)) {
+              instance = prop.getInstance(this);
+              if (instance.calculated && instance.manual) {
+                res[prop.name] = instance.value;
               }
-              return res;
-            };
-          })(this), {});
+            }
+            return res;
+          }, {});
         },
-        setProperties: function(data, options) {
+        setProperties: function(data, options = {}) {
           var key, prop, val;
-          if (options == null) {
-            options = {};
-          }
           for (key in data) {
             val = data[key];
             if (((options.whitelist == null) || options.whitelist.indexOf(key) !== -1) && ((options.blacklist == null) || options.blacklist.indexOf(key) === -1)) {
@@ -1587,11 +1401,9 @@
           return this;
         },
         destroyProperties: function() {
-          this.getInstantiatedProperties().forEach((function(_this) {
-            return function(prop) {
-              return prop.destroy();
-            };
-          })(this));
+          this.getInstantiatedProperties().forEach((prop) => {
+            return prop.destroy();
+          });
           this._properties = [];
           return true;
         }
@@ -1599,162 +1411,163 @@
 
       Property.optionalFn = {
         afterAddListener: function(event) {
-          return this._properties.forEach((function(_this) {
-            return function(prop) {
-              if (prop.getInstanceType().prototype.changeEventName === event) {
-                return prop.getInstance(_this).get();
-              }
-            };
-          })(this));
+          return this._properties.forEach((prop) => {
+            if (prop.getInstanceType().prototype.changeEventName === event) {
+              return prop.getInstance(this).get();
+            }
+          });
         }
       };
 
       return Property;
 
-    })();
+    }).call(this);
     return Property;
   });
 
   (function(definition) {
     Spark.Element = definition();
     return Spark.Element.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var Element, Property;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Property = dependencies.hasOwnProperty("Property") ? dependencies.Property : Spark.Property;
     Element = (function() {
-      function Element() {}
+      class Element {
+        tap(name) {
+          var args;
+          args = Array.prototype.slice.call(arguments);
+          if (typeof name === 'function') {
+            name.apply(this, args.slice(1));
+          } else {
+            this[name].apply(this, args.slice(1));
+          }
+          return this;
+        }
+
+        callback(name) {
+          if (this._callbacks == null) {
+            this._callbacks = {};
+          }
+          if (this._callbacks[name] != null) {
+            return this._callbacks[name];
+          } else {
+            return this._callbacks[name] = (...args) => {
+              this[name].apply(this, args);
+              return null;
+            };
+          }
+        }
+
+        static extend(obj) {
+          var j, key, len, ref3, ref4;
+          ref3 = this.getExtendableProperties(obj);
+          for (j = 0, len = ref3.length; j < len; j++) {
+            key = ref3[j];
+            this[key] = obj[key];
+          }
+          if (obj.prototype != null) {
+            this.include(obj.prototype);
+          }
+          if ((ref4 = obj.extended) != null) {
+            ref4.apply(this);
+          }
+          return this;
+        }
+
+        static getExtendableProperties(obj) {
+          var exclude, props;
+          exclude = Element.elementKeywords;
+          props = [];
+          while (true) {
+            props = props.concat(Object.getOwnPropertyNames(obj).filter((key) => {
+              return !this.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0 && (key !== "length" && key !== "prototype" && key !== "name");
+            }));
+            if (!((obj = Object.getPrototypeOf(obj)) && obj !== Object && obj !== Element)) {
+              break;
+            }
+          }
+          return props;
+        }
+
+        static getIncludableProperties(obj) {
+          var exclude, props;
+          exclude = Element.elementKeywords;
+          if (obj._properties != null) {
+            exclude = exclude.concat(obj._properties.map(function(prop) {
+              return prop.name;
+            }));
+            exclude.push("_properties");
+          }
+          props = [];
+          while (true) {
+            props = props.concat(Object.getOwnPropertyNames(obj).filter((key) => {
+              return !this.prototype.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0 && indexOf.call(props, key) < 0;
+            }));
+            if (!((obj = Object.getPrototypeOf(obj)) && obj !== Object && obj !== Element.prototype)) {
+              break;
+            }
+          }
+          return props;
+        }
+
+        static include(obj) {
+          var j, k, key, len, len1, property, ref3, ref4, ref5;
+          ref3 = this.getIncludableProperties(obj);
+          for (j = 0, len = ref3.length; j < len; j++) {
+            key = ref3[j];
+            this.prototype[key] = obj[key];
+          }
+          if (obj._properties != null) {
+            ref4 = obj._properties;
+            for (k = 0, len1 = ref4.length; k < len1; k++) {
+              property = ref4[k];
+              this.property(property.name, Object.assign({}, property.options));
+            }
+          }
+          if ((ref5 = obj.included) != null) {
+            ref5.apply(this);
+          }
+          return this;
+        }
+
+        static property(prop, desc) {
+          return (new Property(prop, desc)).bind(this.prototype);
+        }
+
+        static properties(properties) {
+          var desc, prop, results;
+          results = [];
+          for (prop in properties) {
+            desc = properties[prop];
+            results.push(this.property(prop, desc));
+          }
+          return results;
+        }
+
+      };
 
       Element.elementKeywords = ['extended', 'included', '__super__', 'constructor'];
 
-      Element.prototype.tap = function(name) {
-        var args;
-        args = Array.prototype.slice.call(arguments);
-        if (typeof name === 'function') {
-          name.apply(this, args.slice(1));
-        } else {
-          this[name].apply(this, args.slice(1));
-        }
-        return this;
-      };
-
-      Element.prototype.callback = function(name) {
-        if (this._callbacks == null) {
-          this._callbacks = {};
-        }
-        if (this._callbacks[name] != null) {
-          return this._callbacks[name];
-        } else {
-          return this._callbacks[name] = (function(_this) {
-            return function() {
-              var args;
-              args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-              _this[name].apply(_this, args);
-              return null;
-            };
-          })(this);
-        }
-      };
-
-      Element.extend = function(obj) {
-        var key, ref3, value;
-        for (key in obj) {
-          value = obj[key];
-          if (indexOf.call(Element.elementKeywords, key) < 0) {
-            this[key] = value;
-          }
-        }
-        if (obj.prototype != null) {
-          this.include(obj.prototype);
-        }
-        if ((ref3 = obj.extended) != null) {
-          ref3.apply(this);
-        }
-        return this;
-      };
-
-      Element.getIncludableProperties = function(obj) {
-        var exclude, props;
-        exclude = Element.elementKeywords;
-        if (obj._properties != null) {
-          exclude = exclude.concat(obj._properties.map(function(prop) {
-            return prop.name;
-          }));
-          exclude.push("_properties");
-        }
-        props = [];
-        while (true) {
-          props = props.concat(Object.getOwnPropertyNames(obj).filter((function(_this) {
-            return function(key) {
-              return !_this.prototype.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0 && indexOf.call(props, key) < 0;
-            };
-          })(this)));
-          if (!((obj = Object.getPrototypeOf(obj)) && obj !== Object && obj !== Element.prototype)) {
-            break;
-          }
-        }
-        return props;
-      };
-
-      Element.include = function(obj) {
-        var j, k, key, len, len1, property, ref3, ref4, ref5;
-        ref3 = this.getIncludableProperties(obj);
-        for (j = 0, len = ref3.length; j < len; j++) {
-          key = ref3[j];
-          this.prototype[key] = obj[key];
-        }
-        if (obj._properties != null) {
-          ref4 = obj._properties;
-          for (k = 0, len1 = ref4.length; k < len1; k++) {
-            property = ref4[k];
-            this.property(property.name, Object.assign({}, property.options));
-          }
-        }
-        if ((ref5 = obj.included) != null) {
-          ref5.apply(this);
-        }
-        return this;
-      };
-
-      Element.property = function(prop, desc) {
-        return (new Property(prop, desc)).bind(this.prototype);
-      };
-
-      Element.properties = function(properties) {
-        var desc, prop, results;
-        results = [];
-        for (prop in properties) {
-          desc = properties[prop];
-          results.push(this.property(prop, desc));
-        }
-        return results;
-      };
-
       return Element;
 
-    })();
+    }).call(this);
     return Element;
   });
 
   (function(definition) {
     Spark.Updater = definition();
     return Spark.Updater.definition = definition;
-  })(function(dependencies) {
+  })(function(dependencies = {}) {
     var Binder, Updater;
-    if (dependencies == null) {
-      dependencies = {};
-    }
     Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
-    Updater = (function() {
-      function Updater() {
+    Updater = class Updater {
+      constructor() {
         this.callbacks = [];
         this.next = [];
         this.updating = false;
       }
 
-      Updater.prototype.update = function() {
+      update() {
         var callback;
         this.updating = true;
         this.next = this.callbacks.slice();
@@ -1765,18 +1578,18 @@
         this.callbacks = this.next;
         this.updating = false;
         return this;
-      };
+      }
 
-      Updater.prototype.addCallback = function(callback) {
+      addCallback(callback) {
         if (!this.callbacks.includes(callback)) {
           this.callbacks.push(callback);
         }
         if (this.updating && !this.next.includes(callback)) {
           return this.next.push(callback);
         }
-      };
+      }
 
-      Updater.prototype.nextTick = function(callback) {
+      nextTick(callback) {
         if (this.updating) {
           if (!this.next.includes(callback)) {
             return this.next.push(callback);
@@ -1784,9 +1597,9 @@
         } else {
           return this.addCallback(callback);
         }
-      };
+      }
 
-      Updater.prototype.removeCallback = function(callback) {
+      removeCallback(callback) {
         var index;
         index = this.callbacks.indexOf(callback);
         if (index !== -1) {
@@ -1796,43 +1609,43 @@
         if (index !== -1) {
           return this.next.splice(index, 1);
         }
-      };
-
-      Updater.prototype.getBinder = function() {
-        return new Updater.Binder(this);
-      };
-
-      Updater.prototype.destroy = function() {
-        this.callbacks = [];
-        return this.next = [];
-      };
-
-      return Updater;
-
-    })();
-    Updater.Binder = (function(superClass) {
-      extend(Binder, superClass);
-
-      function Binder(target1, callback1) {
-        this.target = target1;
-        this.callback = callback1;
-        this.ref = {
-          target: this.target,
-          callback: this.callback
-        };
       }
 
-      Binder.prototype.doBind = function() {
-        return this.target.addCallback(this.callback);
-      };
+      getBinder() {
+        return new Updater.Binder(this);
+      }
 
-      Binder.prototype.doUnbind = function() {
-        return this.target.removeCallback(this.callback);
+      destroy() {
+        this.callbacks = [];
+        return this.next = [];
+      }
+
+    };
+    Updater.Binder = (function(superClass) {
+      class Binder extends superClass {
+        constructor(target1, callback1) {
+          super();
+          this.target = target1;
+          this.callback = callback1;
+          this.ref = {
+            target: this.target,
+            callback: this.callback
+          };
+        }
+
+        doBind() {
+          return this.target.addCallback(this.callback);
+        }
+
+        doUnbind() {
+          return this.target.removeCallback(this.callback);
+        }
+
       };
 
       return Binder;
 
-    })(Binder);
+    }).call(this, Binder);
     return Updater;
   });
 

@@ -22,12 +22,25 @@ class Element
         null
 
   @extend: (obj) ->
-    for key, value of obj when key not in Element.elementKeywords
-      @[key] = value
+    for key in @getExtendableProperties( obj )
+      @[key] = obj[key]
     if obj.prototype?
       @include obj.prototype
     obj.extended?.apply(@)
     this
+
+
+  @getExtendableProperties: (obj) ->
+    exclude = Element.elementKeywords
+    props = []
+    loop
+      props = props.concat(
+        Object.getOwnPropertyNames(obj).filter (key)=>
+          !@.hasOwnProperty(key) and key.substr(0,2) != "__" and key not in exclude and key not in ["length", "prototype", "name"]
+      )
+      unless (obj = Object.getPrototypeOf(obj)) and obj != Object and obj != Element
+        break
+    props
   
   @getIncludableProperties: (obj) ->
     exclude = Element.elementKeywords

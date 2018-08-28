@@ -95,6 +95,7 @@ describe 'Element', ->
   it 'can extend a third class with merged properties', ->
     class BaseClass extends Element
       constructor: () ->
+        super()
         @bar = 'bye'
       @properties
         foo: 
@@ -104,6 +105,7 @@ describe 'Element', ->
 
     class Test1Class extends Element
       constructor: () ->
+        super()
         @bar = 'see you'
       @extend BaseClass
       @properties
@@ -135,6 +137,7 @@ describe 'Element', ->
     
     class TestClass extends Element
         constructor: () ->
+          super()
           @callcount = 0
         @properties
           prop: 
@@ -153,6 +156,7 @@ describe 'Element', ->
   it 'allow access to old and new value in change function', ->
     class TestClass extends Element
         constructor: () ->
+          super()
         @properties
           prop:
             default: 7
@@ -166,6 +170,7 @@ describe 'Element', ->
   it 'should calcul a prop only once and on demand', ->
     class TestClass extends Element
         constructor: () ->
+          super()
           @callcount = 0
         @properties
           prop: 
@@ -182,6 +187,7 @@ describe 'Element', ->
   it 'give access to an invalidator in the calcul option of a property', ->
     class TestClass extends Element
         constructor: () ->
+          super()
           @callcount = 0
         @properties
           prop: 
@@ -199,6 +205,7 @@ describe 'Element', ->
     lastValue = 0
     class TestClass extends Element
         constructor: () ->
+          super()
           @callcount = 0
         @properties
           prop: 
@@ -225,6 +232,7 @@ describe 'Element', ->
     lastValue = 0
     class TestClass extends Element
         constructor: () ->
+          super()
           @callcount = 0
           @eventCount = 0
         @properties
@@ -254,6 +262,7 @@ describe 'Element', ->
   it 'should not emit change event when a property is invalidated and is not changed', ->
     class TestClass extends Element
         constructor: () ->
+          super()
           @callcount = 0
         @properties
           prop: 
@@ -288,6 +297,7 @@ describe 'Element', ->
     }
     class TestClass extends Element
         constructor: () ->
+          super()
           @changedCount = 0
           @updatedCount = 0
           @added = 0
@@ -335,7 +345,6 @@ describe 'Element', ->
       test: 4
     }
     class TestClass extends Element
-        constructor: () ->
         @properties
           prop: 
             calcul: (invalidated)->
@@ -348,7 +357,6 @@ describe 'Element', ->
     
   it 'can mass assign properties', ->
     class TestClass extends Element
-        constructor: () ->
         @properties
           a:
             default: 0
@@ -372,7 +380,6 @@ describe 'Element', ->
 
   it 'can get all manually setted properties', ->
     class TestClass extends Element
-        constructor: () ->
         @properties
           a:
             default: 0
@@ -402,7 +409,6 @@ describe 'Element', ->
     
   it 'can mass assign properties with whitelist', ->
     class TestClass extends Element
-        constructor: () ->
         @properties
           a:
             default: 0
@@ -425,7 +431,6 @@ describe 'Element', ->
     
   it 'can mass assign properties with blacklist', ->
     class TestClass extends Element
-        constructor: () ->
         @properties
           a:
             default: 0
@@ -486,6 +491,7 @@ describe 'Element', ->
   it 'keeps old options when overriding a property', ->
     class TestClass extends Element
       constructor: () ->
+        super()
         @callcount = 0
       @properties
         prop: 
@@ -507,6 +513,7 @@ describe 'Element', ->
   it 'allows to call an overrided function of a property', ->
     class TestClass extends Element
       constructor: () ->
+        super()
         @callcount1 = 0
         @callcount2 = 0
       @properties
@@ -545,6 +552,7 @@ describe 'Element', ->
     class TestClass extends Element
       @include EventEmitter.prototype
       constructor: (@source) ->
+        super()
         @calculCount = 0
       @properties
         source: {}
@@ -590,6 +598,7 @@ describe 'Element', ->
     class TestClass extends Element
       @include EventEmitter.prototype
       constructor: (@source) ->
+        super()
         @calculCount = 0
       @properties
         source: {}

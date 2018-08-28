@@ -62,18 +62,18 @@ class Collection
   @readListFunctions = ['concat','filter','slice']
   @writefunctions = ['pop','push','reverse','shift','sort','splice','unshift']
   
-  @readFunctions.forEach (funct)=>
-    @prototype[funct] = 
+  @readFunctions.forEach (funct)->
+    Collection.prototype[funct] = 
       (arg...)->
         @_array[funct](arg...)
         
-  @readListFunctions.forEach (funct)=>
-    @prototype[funct] = 
+  @readListFunctions.forEach (funct)->
+    Collection.prototype[funct] = 
       (arg...)->
         @copy(@_array[funct](arg...))
         
-  @writefunctions.forEach (funct)=>
-    @prototype[funct] = (arg...)->
+  @writefunctions.forEach (funct)->
+    Collection.prototype[funct] = (arg...)->
       old = @toArray()
       res = @_array[funct](arg...)
       @changed(old)

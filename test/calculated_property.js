@@ -102,20 +102,16 @@
       var Emitter, binded, prop, val;
       val = 3;
       binded = false;
-      Emitter = (function() {
-        function Emitter() {}
-
-        Emitter.prototype.addListener = function(evt, listener) {
+      Emitter = class Emitter {
+        addListener(evt, listener) {
           return binded = true;
-        };
+        }
 
-        Emitter.prototype.removeListener = function(evt, listener) {
+        removeListener(evt, listener) {
           return binded = false;
-        };
+        }
 
-        return Emitter;
-
-      })();
+      };
       prop = new Property('prop', {
         calcul: function(invalidated) {
           invalidated.event('testChanged', new Emitter());
@@ -388,3 +384,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/calculated_property.js.map

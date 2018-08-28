@@ -13,6 +13,7 @@ pluck = (arr,fn) ->
 class Invalidator extends Binder
   @strict = true
   constructor: (@property, @obj = null) ->
+    super()
     @invalidationEvents = []
     @recycled = []
     @unknowns = []
@@ -63,7 +64,6 @@ class Invalidator extends Binder
           target[prop]
         , prop, target
     callback.ref = {
-      maker: arguments.callee
       prop: prop
       target: target
     }

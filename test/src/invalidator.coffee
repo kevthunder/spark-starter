@@ -363,6 +363,7 @@ describe 'Invalidator', ->
   it 'should store unknown values', ->
     class Source extends EventEmitter
       constructor: () ->
+        super()
         @test = 2
     invalidated = {
       test: 1
@@ -519,6 +520,7 @@ describe 'Invalidator', ->
     unknownCalls = 0
     class Source extends EventEmitter
       constructor: () ->
+        super()
         @test = 2
     invalidated = {
       test: 1
@@ -546,6 +548,7 @@ describe 'Invalidator', ->
   it 'can validate unknowns', ->
     class Source extends EventEmitter
       constructor: () ->
+        super()
         @getCalls = 0
         Object.defineProperty this, 'test', {
           get: ->

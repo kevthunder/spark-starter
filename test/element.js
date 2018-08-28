@@ -1,7 +1,5 @@
 (function() {
-  var Element, EventEmitter, Property, assert,
-    extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    hasProp = {}.hasOwnProperty;
+  var Element, EventEmitter, Property, assert;
 
   assert = require('chai').assert;
 
@@ -17,30 +15,13 @@
     updateEvents = ['propChanged', 'propUpdated'];
     it('can get includable attributes', function() {
       var TestClass, TestClass2;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
-
-        TestClass.prototype.foo = function() {
+      TestClass = class TestClass extends Element {
+        foo() {
           return 'hello';
-        };
-
-        return TestClass;
-
-      })(Element);
-      TestClass2 = (function(superClass) {
-        extend(TestClass2, superClass);
-
-        function TestClass2() {
-          return TestClass2.__super__.constructor.apply(this, arguments);
         }
 
-        return TestClass2;
-
-      })(Element);
+      };
+      TestClass2 = class TestClass2 extends Element {};
       return assert.deepEqual(TestClass2.getIncludableProperties(TestClass.prototype), ['foo']);
     });
     it('can include functions from an object', function() {
@@ -48,139 +29,94 @@
       toInclude = {
         foo: 'hello'
       };
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.include(toInclude);
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       return assert.equal(obj.foo, 'hello');
     });
     it('can extend a third class', function() {
       var BaseClass, TestClass, obj;
-      BaseClass = (function(superClass) {
-        extend(BaseClass, superClass);
-
-        function BaseClass() {
-          return BaseClass.__super__.constructor.apply(this, arguments);
-        }
-
-        BaseClass.prototype.foo = function() {
+      BaseClass = class BaseClass extends Element {
+        foo() {
           return 'hello';
-        };
-
-        BaseClass.bar = function() {
-          return 'hey';
-        };
-
-        return BaseClass;
-
-      })(Element);
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
         }
+
+        static bar() {
+          return 'hey';
+        }
+
+      };
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.extend(BaseClass);
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       assert.equal(TestClass.bar(), 'hey');
       obj = new TestClass();
       return assert.equal(obj.foo(), 'hello');
     });
     it('can extend a nested class', function() {
       var BaseClass, SupClass, TestClass, obj;
-      BaseClass = (function(superClass) {
-        extend(BaseClass, superClass);
-
-        function BaseClass() {
-          return BaseClass.__super__.constructor.apply(this, arguments);
-        }
-
-        BaseClass.prototype.foo = function() {
+      BaseClass = class BaseClass extends Element {
+        foo() {
           return 'hello';
-        };
+        }
 
-        BaseClass.bar = function() {
+        static bar() {
           return 'hey';
-        };
-
-        return BaseClass;
-
-      })(Element);
-      SupClass = (function(superClass) {
-        extend(SupClass, superClass);
-
-        function SupClass() {
-          return SupClass.__super__.constructor.apply(this, arguments);
         }
 
-        return SupClass;
-
-      })(BaseClass);
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
+      };
+      SupClass = class SupClass extends BaseClass {};
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.extend(SupClass);
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       assert.equal(TestClass.bar(), 'hey');
       obj = new TestClass();
       return assert.equal(obj.foo(), 'hello');
     });
     it('can extend a third class with properties', function() {
       var BaseClass, TestClass, obj;
-      BaseClass = (function(superClass) {
-        extend(BaseClass, superClass);
-
-        function BaseClass() {
-          return BaseClass.__super__.constructor.apply(this, arguments);
-        }
+      BaseClass = (function() {
+        class BaseClass extends Element {};
 
         BaseClass.properties({
           foo: {
-            "default": 'hello'
+            default: 'hello'
           }
         });
 
         return BaseClass;
 
-      })(Element);
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
+      }).call(this);
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.extend(BaseClass);
 
         TestClass.properties({
           bar: {
-            "default": 'hey'
+            default: 'hey'
           }
         });
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.foo, 'hello');
       assert.equal(obj.bar, 'hey');
@@ -189,50 +125,33 @@
     });
     it('can extend a nested class with properties', function() {
       var BaseClass, SupClass, TestClass, obj;
-      BaseClass = (function(superClass) {
-        extend(BaseClass, superClass);
-
-        function BaseClass() {
-          return BaseClass.__super__.constructor.apply(this, arguments);
-        }
+      BaseClass = (function() {
+        class BaseClass extends Element {};
 
         BaseClass.properties({
           foo: {
-            "default": 'hello'
+            default: 'hello'
           }
         });
 
         return BaseClass;
 
-      })(Element);
-      SupClass = (function(superClass) {
-        extend(SupClass, superClass);
-
-        function SupClass() {
-          return SupClass.__super__.constructor.apply(this, arguments);
-        }
-
-        return SupClass;
-
-      })(BaseClass);
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
+      }).call(this);
+      SupClass = class SupClass extends BaseClass {};
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.extend(SupClass);
 
         TestClass.properties({
           bar: {
-            "default": 'hey'
+            default: 'hey'
           }
         });
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.foo, 'hello');
       assert.equal(obj.bar, 'hey');
@@ -241,31 +160,35 @@
     });
     it('can extend a third class with merged properties', function() {
       var BaseClass, Test1Class, Test2Class, Test3Class;
-      BaseClass = (function(superClass) {
-        extend(BaseClass, superClass);
+      BaseClass = (function() {
+        class BaseClass extends Element {
+          constructor() {
+            super();
+            this.bar = 'bye';
+          }
 
-        function BaseClass() {
-          this.bar = 'bye';
-        }
+        };
 
         BaseClass.properties({
           foo: {
-            "default": 'hello'
+            default: 'hello'
           },
           bar: {
-            "default": 'adios'
+            default: 'adios'
           }
         });
 
         return BaseClass;
 
-      })(Element);
-      Test1Class = (function(superClass) {
-        extend(Test1Class, superClass);
+      }).call(this);
+      Test1Class = (function() {
+        class Test1Class extends Element {
+          constructor() {
+            super();
+            this.bar = 'see you';
+          }
 
-        function Test1Class() {
-          this.bar = 'see you';
-        }
+        };
 
         Test1Class.extend(BaseClass);
 
@@ -279,37 +202,29 @@
 
         return Test1Class;
 
-      })(Element);
-      Test2Class = (function(superClass) {
-        extend(Test2Class, superClass);
-
-        function Test2Class() {
-          return Test2Class.__super__.constructor.apply(this, arguments);
-        }
+      }).call(this);
+      Test2Class = (function() {
+        class Test2Class extends Element {};
 
         Test2Class.extend(BaseClass);
 
         Test2Class.properties({
           foo: {
-            "default": 'hi'
+            default: 'hi'
           }
         });
 
         return Test2Class;
 
-      })(Element);
-      Test3Class = (function(superClass) {
-        extend(Test3Class, superClass);
-
-        function Test3Class() {
-          return Test3Class.__super__.constructor.apply(this, arguments);
-        }
+      }).call(this);
+      Test3Class = (function() {
+        class Test3Class extends Test1Class {};
 
         Test3Class.extend(BaseClass);
 
         return Test3Class;
 
-      })(Test1Class);
+      }).call(this);
       assert.equal((new BaseClass()).foo, 'hello');
       assert.equal((new Test1Class()).foo, 'hey');
       assert.equal((new Test2Class()).foo, 'hi');
@@ -321,28 +236,30 @@
     });
     it('should emit event when value change', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-        }
+          emitEvent(event, params) {
+            assert.include(updateEvents, event);
+            assert.equal(params[0], 1);
+            return this.callcount += 1;
+          }
+
+        };
 
         TestClass.properties({
           prop: {
-            "default": 1
+            default: 1
           }
         });
 
-        TestClass.prototype.emitEvent = function(event, params) {
-          assert.include(updateEvents, event);
-          assert.equal(params[0], 1);
-          return this.callcount += 1;
-        };
-
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.callcount, 0);
       obj.prop = 7;
@@ -351,20 +268,23 @@
     });
     it('allow access to old and new value in change function', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+          }
 
-        function TestClass() {}
+        };
 
         TestClass.properties({
           prop: {
-            "default": 7
+            default: 7
           }
         });
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       obj.propChanged = function(old) {
         assert.equal(this._prop, 11);
@@ -374,12 +294,14 @@
     });
     it('should calcul a prop only once and on demand', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-        }
+        };
 
         TestClass.properties({
           prop: {
@@ -391,7 +313,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.callcount, 0);
       obj.getProp();
@@ -401,12 +323,14 @@
     });
     it('give access to an invalidator in the calcul option of a property', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-        }
+        };
 
         TestClass.properties({
           prop: {
@@ -421,7 +345,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       obj.getProp();
       return assert.equal(obj.callcount, 1);
@@ -429,12 +353,29 @@
     it('should emit changed event when a property is invalidated and is changed', function() {
       var TestClass, lastValue, obj;
       lastValue = 0;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-        }
+          getListeners(event) {
+            if (event === 'propChanged') {
+              return [{}];
+            } else {
+              return [];
+            }
+          }
+
+          emitEvent(event, params) {
+            if (event === 'propChanged') {
+              assert.equal(params[0], lastValue - 1);
+              return this.callcount += 1;
+            }
+          }
+
+        };
 
         TestClass.properties({
           prop: {
@@ -444,24 +385,9 @@
           }
         });
 
-        TestClass.prototype.getListeners = function(event) {
-          if (event === 'propChanged') {
-            return [{}];
-          } else {
-            return [];
-          }
-        };
-
-        TestClass.prototype.emitEvent = function(event, params) {
-          if (event === 'propChanged') {
-            assert.equal(params[0], lastValue - 1);
-            return this.callcount += 1;
-          }
-        };
-
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.callcount, 0);
       obj.getProp();
@@ -472,13 +398,29 @@
     it('should not calcul when a property is invalidated with update event', function() {
       var TestClass, lastValue, obj;
       lastValue = 0;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+            this.eventCount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-          this.eventCount = 0;
-        }
+          getListeners(event) {
+            if (event === 'propUpdated') {
+              return [{}];
+            } else {
+              return [];
+            }
+          }
+
+          emitEvent(event, params) {
+            if (event === 'propInvalidated') {
+              return this.eventCount += 1;
+            }
+          }
+
+        };
 
         TestClass.properties({
           prop: {
@@ -488,23 +430,9 @@
           }
         });
 
-        TestClass.prototype.getListeners = function(event) {
-          if (event === 'propUpdated') {
-            return [{}];
-          } else {
-            return [];
-          }
-        };
-
-        TestClass.prototype.emitEvent = function(event, params) {
-          if (event === 'propInvalidated') {
-            return this.eventCount += 1;
-          }
-        };
-
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.callcount, 0);
       assert.equal(obj.eventCount, 0);
@@ -517,12 +445,25 @@
     });
     it('should not emit change event when a property is invalidated and is not changed', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-        }
+          getListeners() {
+            return [{}];
+          }
+
+          emitEvent(event, params) {
+            if (event === 'propChanged') {
+              assert.equal(params[0], lastValue - 1);
+              return this.callcount += 1;
+            }
+          }
+
+        };
 
         TestClass.properties({
           prop: {
@@ -532,20 +473,9 @@
           }
         });
 
-        TestClass.prototype.getListeners = function() {
-          return [{}];
-        };
-
-        TestClass.prototype.emitEvent = function(event, params) {
-          if (event === 'propChanged') {
-            assert.equal(params[0], lastValue - 1);
-            return this.callcount += 1;
-          }
-        };
-
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.callcount, 0);
       obj.getProp();
@@ -571,22 +501,34 @@
           }
         }
       };
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.changedCount = 0;
+            this.updatedCount = 0;
+            this.added = 0;
+            this.calculed = 0;
+          }
 
-        function TestClass() {
-          this.changedCount = 0;
-          this.updatedCount = 0;
-          this.added = 0;
-          this.calculed = 0;
-        }
+          getListeners() {
+            return [{}];
+          }
 
-        TestClass.prototype.getListeners = function() {
-          return [{}];
-        };
+          addListener(evt, listener) {
+            return this.added += 1;
+          }
 
-        TestClass.prototype.addListener = function(evt, listener) {
-          return this.added += 1;
+          emitEvent(event, params) {
+            if (event === 'propChanged') {
+              assert.equal(params[0], lastValue - 1);
+              this.changedCount += 1;
+            }
+            if (event === 'propUpdated') {
+              return this.updatedCount += 1;
+            }
+          }
+
         };
 
         TestClass.properties({
@@ -599,19 +541,9 @@
           }
         });
 
-        TestClass.prototype.emitEvent = function(event, params) {
-          if (event === 'propChanged') {
-            assert.equal(params[0], lastValue - 1);
-            this.changedCount += 1;
-          }
-          if (event === 'propUpdated') {
-            return this.updatedCount += 1;
-          }
-        };
-
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.added, 0);
       assert.equal(obj.calculed, 0);
@@ -640,10 +572,8 @@
         },
         test: 4
       };
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.properties({
           prop: {
@@ -655,7 +585,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       obj.getProp();
       res = obj.destroyProperties();
@@ -663,29 +593,27 @@
     });
     it('can mass assign properties', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.properties({
           a: {
-            "default": 0
+            default: 0
           },
           b: {
-            "default": 0
+            default: 0
           },
           c: {
-            "default": 0
+            default: 0
           },
           d: {
-            "default": 0
+            default: 0
           }
         });
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.a, 0);
       assert.equal(obj.b, 0);
@@ -704,17 +632,15 @@
     });
     it('can get all manually setted properties', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.properties({
           a: {
-            "default": 0
+            default: 0
           },
           b: {
-            "default": 0
+            default: 0
           },
           d: {
             calcul: function() {
@@ -725,7 +651,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.deepEqual(obj.getManualDataProperties(), {}, 'initial');
       obj.a = 1;
@@ -753,29 +679,27 @@
     });
     it('can mass assign properties with whitelist', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.properties({
           a: {
-            "default": 0
+            default: 0
           },
           b: {
-            "default": 0
+            default: 0
           },
           c: {
-            "default": 0
+            default: 0
           },
           d: {
-            "default": 0
+            default: 0
           }
         });
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.a, 0);
       assert.equal(obj.b, 0);
@@ -795,29 +719,27 @@
     });
     it('can mass assign properties with blacklist', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {}
+      TestClass = (function() {
+        class TestClass extends Element {};
 
         TestClass.properties({
           a: {
-            "default": 0
+            default: 0
           },
           b: {
-            "default": 0
+            default: 0
           },
           c: {
-            "default": 0
+            default: 0
           },
           d: {
-            "default": 0
+            default: 0
           }
         });
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       obj = new TestClass();
       assert.equal(obj.a, 0);
       assert.equal(obj.b, 0);
@@ -837,16 +759,7 @@
     });
     it('return self when calling tap', function() {
       var TestClass, obj, res;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
-
-        return TestClass;
-
-      })(Element);
+      TestClass = class TestClass extends Element {};
       obj = new TestClass();
       res = obj.tap(function() {
         return this.test = 1;
@@ -856,20 +769,12 @@
     });
     it('return the same function when calling "callback" twice', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
+      TestClass = class TestClass extends Element {
+        doSomething() {
+          return this.test = 1;
         }
 
-        TestClass.prototype.doSomething = function() {
-          return this.test = 1;
-        };
-
-        return TestClass;
-
-      })(Element);
+      };
       obj = new TestClass();
       assert.equal(obj.callback('doSomething'), obj.callback('doSomething'));
       obj.callback('doSomething')();
@@ -878,25 +783,17 @@
     it('can forward argument with callback', function() {
       var TestClass, calls, obj;
       calls = 0;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
-
-        TestClass.prototype.doSomething = function(arg1, arg2, arg3) {
+      TestClass = class TestClass extends Element {
+        doSomething(arg1, arg2, arg3) {
           assert.equal(arg1, 3);
           assert.equal(arg2, 'test');
           assert.deepEqual(arg3, {
             hi: 5
           });
           return calls += 1;
-        };
+        }
 
-        return TestClass;
-
-      })(Element);
+      };
       obj = new TestClass();
       obj.callback('doSomething')(3, 'test', {
         hi: 5
@@ -905,12 +802,14 @@
     });
     it('keeps old options when overriding a property', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount = 0;
+          }
 
-        function TestClass() {
-          this.callcount = 0;
-        }
+        };
 
         TestClass.properties({
           prop: {
@@ -922,10 +821,10 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       TestClass.properties({
         prop: {
-          "default": 10
+          default: 10
         }
       });
       obj = new TestClass();
@@ -937,13 +836,15 @@
     });
     it('allows to call an overrided function of a property', function() {
       var TestClass, obj;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor() {
+            super();
+            this.callcount1 = 0;
+            this.callcount2 = 0;
+          }
 
-        function TestClass() {
-          this.callcount1 = 0;
-          this.callcount2 = 0;
-        }
+        };
 
         TestClass.properties({
           prop: {
@@ -955,7 +856,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       TestClass.properties({
         prop: {
           change: function(old, overrided) {
@@ -974,21 +875,12 @@
     });
     it('return new Property when calling getProperty after an override', function() {
       var TestClass, newProp, obj, oldProp;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
-
-        function TestClass() {
-          return TestClass.__super__.constructor.apply(this, arguments);
-        }
-
-        return TestClass;
-
-      })(Element);
+      TestClass = class TestClass extends Element {};
       oldProp = TestClass.property("prop", {
-        "default": 1
+        default: 1
       });
       newProp = TestClass.property("prop", {
-        "default": 2
+        default: 2
       });
       obj = new TestClass();
       return assert.equal(obj.getProperty("prop"), newProp);
@@ -996,15 +888,17 @@
     it('should propagate invalidation', function() {
       var TestClass, lvl1, lvl2, lvl3, res, val;
       val = 1;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor(source) {
+            super();
+            this.source = source;
+            this.calculCount = 0;
+          }
+
+        };
 
         TestClass.include(EventEmitter.prototype);
-
-        function TestClass(source) {
-          this.source = source;
-          this.calculCount = 0;
-        }
 
         TestClass.properties({
           source: {},
@@ -1022,7 +916,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       lvl1 = new TestClass();
       lvl2 = new TestClass(lvl1);
       lvl3 = new TestClass(lvl2);
@@ -1048,15 +942,17 @@
     return it('should not recalculate if no change while propagating', function() {
       var TestClass, lvl1, lvl2, lvl3, res, val;
       val = 1;
-      TestClass = (function(superClass) {
-        extend(TestClass, superClass);
+      TestClass = (function() {
+        class TestClass extends Element {
+          constructor(source) {
+            super();
+            this.source = source;
+            this.calculCount = 0;
+          }
+
+        };
 
         TestClass.include(EventEmitter.prototype);
-
-        function TestClass(source) {
-          this.source = source;
-          this.calculCount = 0;
-        }
 
         TestClass.properties({
           source: {},
@@ -1074,7 +970,7 @@
 
         return TestClass;
 
-      })(Element);
+      }).call(this);
       lvl1 = new TestClass();
       lvl2 = new TestClass(lvl1);
       lvl3 = new TestClass(lvl2);
@@ -1099,3 +995,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/element.js.map

@@ -30,7 +30,7 @@
       var prop, res;
       prop = new Property('prop', {
         collection: true,
-        "default": [1, 2, 3]
+        default: [1, 2, 3]
       });
       prop = prop.getInstance({});
       res = prop.get();
@@ -40,7 +40,7 @@
     it('should not return collection when collection config is undefined', function() {
       var prop, res;
       prop = new Property('prop', {
-        "default": 1
+        default: 1
       });
       prop = prop.getInstance({});
       res = prop.get();
@@ -61,7 +61,7 @@
       callcount = 0;
       prop = new Property('prop', {
         collection: true,
-        "default": [1, 2, 3],
+        default: [1, 2, 3],
         change: function(old) {
           assert.isArray(old);
           return callcount += 1;
@@ -82,7 +82,7 @@
         collection: {
           compare: true
         },
-        "default": [1, 2, 3],
+        default: [1, 2, 3],
         change: function(old) {
           return callcount += 1;
         }
@@ -115,7 +115,7 @@
           compare: true,
           ordered: false
         },
-        "default": [1, 2, 3],
+        default: [1, 2, 3],
         change: function(old) {
           return callcount += 1;
         }
@@ -149,7 +149,7 @@
             return a.toString() === b.toString();
           }
         },
-        "default": [1, 2, 3],
+        default: [1, 2, 3],
         change: function(old) {
           return callcount += 1;
         }
@@ -200,7 +200,7 @@
       callcount = 0;
       prop = new Property('prop', {
         collection: true,
-        "default": [1, 2, 3],
+        default: [1, 2, 3],
         itemAdded: function(item) {
           assert.include([4, 5], item);
           return callcount += 1;
@@ -219,7 +219,7 @@
       callcount = 0;
       prop = new Property('prop', {
         collection: true,
-        "default": [1, 2, 3, 4, 5],
+        default: [1, 2, 3, 4, 5],
         itemRemoved: function(item) {
           assert.include([4, 5], item);
           return callcount += 1;
@@ -245,6 +245,7 @@
         }
       }).getInstance({});
       assert.equal(callcount, 0);
+      //assert.equal prop.get().count(), 0
       prop.set(4);
       assert.equal(prop.get().count(), 1);
       assert.equal(prop.get().toString(), '4');
@@ -261,7 +262,7 @@
       };
       prop = new Property('prop', {
         collection: true,
-        "default": [1, 2, 3]
+        default: [1, 2, 3]
       }).getInstance(emitter);
       res = prop.get();
       assert.equal(emitter.callcount, 0);
@@ -277,7 +278,7 @@
             return 'test';
           }
         },
-        "default": [1, 2, 3]
+        default: [1, 2, 3]
       }).getInstance({});
       res = prop.get();
       assert.instanceOf(res, Collection);
@@ -291,7 +292,7 @@
             return 'test';
           }
         },
-        "default": [1, 2, 3]
+        default: [1, 2, 3]
       }).getInstance({});
       res = prop.get();
       assert.instanceOf(res, Collection);
@@ -305,3 +306,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/collection_property.js.map

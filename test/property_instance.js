@@ -55,3 +55,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/property_instance.js.map

@@ -1,7 +1,5 @@
 (function() {
-  var EventEmitter, Invalidator, assert,
-    extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    hasProp = {}.hasOwnProperty;
+  var EventEmitter, Invalidator, assert;
 
   assert = require('chai').assert;
 
@@ -387,16 +385,13 @@
     });
     it('should store unknown values', function() {
       var Source, invalidated, invalidator, res, source;
-      Source = (function(superClass) {
-        extend(Source, superClass);
-
-        function Source() {
+      Source = class Source extends EventEmitter {
+        constructor() {
+          super();
           this.test = 2;
         }
 
-        return Source;
-
-      })(EventEmitter);
+      };
       invalidated = {
         test: 1
       };
@@ -538,16 +533,13 @@
     it('should call unknown when there is a new unknown', function() {
       var Source, invalidated, invalidator, res, source, unknownCalls;
       unknownCalls = 0;
-      Source = (function(superClass) {
-        extend(Source, superClass);
-
-        function Source() {
+      Source = class Source extends EventEmitter {
+        constructor() {
+          super();
           this.test = 2;
         }
 
-        return Source;
-
-      })(EventEmitter);
+      };
       invalidated = {
         test: 1
       };
@@ -569,10 +561,9 @@
     });
     return it('can validate unknowns', function() {
       var Source, invalidated, invalidator, res, source;
-      Source = (function(superClass) {
-        extend(Source, superClass);
-
-        function Source() {
+      Source = class Source extends EventEmitter {
+        constructor() {
+          super();
           this.getCalls = 0;
           Object.defineProperty(this, 'test', {
             get: function() {
@@ -582,9 +573,7 @@
           });
         }
 
-        return Source;
-
-      })(EventEmitter);
+      };
       invalidated = {
         test: 1
       };
@@ -607,3 +596,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/invalidator.js.map

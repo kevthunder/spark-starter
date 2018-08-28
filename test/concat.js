@@ -1,7 +1,5 @@
 (function() {
-  var assert,
-    extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    hasProp = {}.hasOwnProperty;
+  var assert;
 
   assert = require('chai').assert;
 
@@ -20,12 +18,8 @@
       });
       return it('can create working Element', function() {
         var TestClass, obj;
-        TestClass = (function(superClass) {
-          extend(TestClass, superClass);
-
-          function TestClass() {
-            return TestClass.__super__.constructor.apply(this, arguments);
-          }
+        TestClass = (function() {
+          class TestClass extends Spark.Element {};
 
           TestClass.properties({
             hello: {
@@ -37,7 +31,7 @@
 
           return TestClass;
 
-        })(Spark.Element);
+        }).call(this);
         obj = new TestClass();
         return assert.equal(obj.hello, 'hello');
       });
@@ -56,12 +50,8 @@
       });
       return it('can create working Element', function() {
         var TestClass, obj;
-        TestClass = (function(superClass) {
-          extend(TestClass, superClass);
-
-          function TestClass() {
-            return TestClass.__super__.constructor.apply(this, arguments);
-          }
+        TestClass = (function() {
+          class TestClass extends Spark.Element {};
 
           TestClass.properties({
             hello: {
@@ -73,7 +63,7 @@
 
           return TestClass;
 
-        })(Spark.Element);
+        }).call(this);
         obj = new TestClass();
         return assert.equal(obj.hello, 'hello');
       });
@@ -81,3 +71,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=maps/concat.js.map
