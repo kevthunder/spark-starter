@@ -1,7 +1,7 @@
 assert = require('chai').assert
 ComposedProperty = require('../lib/ComposedProperty')
 Property = require('../lib/Property')
-EventEmitter = require("wolfy87-eventemitter")
+EventEmitter = require('../lib/EventEmitter')
 
 describe 'ComposedProperty', ->
 

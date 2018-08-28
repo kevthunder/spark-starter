@@ -1,4 +1,6 @@
 (function() {
+  require('./event_emitter');
+
   require('./updater');
 
   require('./collection');

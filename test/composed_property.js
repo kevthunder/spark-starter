@@ -7,7 +7,7 @@
 
   Property = require('../lib/Property');
 
-  EventEmitter = require("wolfy87-eventemitter");
+  EventEmitter = require('../lib/EventEmitter');
 
   describe('ComposedProperty', function() {
     it('should return collection when collection config is on', function() {

@@ -5,7 +5,7 @@
 
   Invalidator = require('../lib/Invalidator');
 
-  EventEmitter = require("wolfy87-eventemitter");
+  EventEmitter = require('../lib/EventEmitter');
 
   describe('Invalidator', function() {
     var propEvents;

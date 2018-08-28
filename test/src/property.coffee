@@ -1,7 +1,7 @@
 assert = require('chai').assert
 Property = require('../lib/Property')
 Invalidator = require('../lib/Invalidator')
-EventEmitter = require("wolfy87-eventemitter")
+EventEmitter = require('../lib/EventEmitter')
 
 describe 'Property', ->
 

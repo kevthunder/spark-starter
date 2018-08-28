@@ -7,7 +7,7 @@
 
   Invalidator = require('../lib/Invalidator');
 
-  EventEmitter = require("wolfy87-eventemitter");
+  EventEmitter = require('../lib/EventEmitter');
 
   describe('Property', function() {
     it('should define a property', function() {

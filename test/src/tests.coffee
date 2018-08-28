@@ -1,3 +1,4 @@
+require './event_emitter'
 require './updater'
 require './collection'
 require './event_bind'
