@@ -9,52 +9,6 @@ describe 'Element', ->
   invalidateEvents = ['propInvalidated']
   updateEvents = ['propChanged','propUpdated']
 
-
-  it 'can get includable attributes', ->
-    class TestClass extends Element
-      foo: ->
-        'hello'
-
-    class TestClass2 extends Element
-
-    assert.deepEqual TestClass2.getIncludableProperties(TestClass.prototype), ['foo']
-
-  it 'can include functions from an object', ->
-    toInclude = {
-      foo: 'hello'
-    }
-    class TestClass extends Element
-      @include toInclude
-
-    obj = new TestClass();
-    assert.equal obj.foo, 'hello'
-
-  it 'can extend a third class', ->
-    class BaseClass extends Element
-      foo: -> 'hello'
-      @bar = -> 'hey'
-      
-    class TestClass extends Element
-      @extend BaseClass
-
-    assert.equal TestClass.bar(), 'hey'
-    obj = new TestClass();
-    assert.equal obj.foo(), 'hello'
-
-  it 'can extend a nested class', ->
-    class BaseClass extends Element
-      foo: -> 'hello'
-      @bar = -> 'hey'
-
-    class SupClass extends BaseClass
-      
-    class TestClass extends Element
-      @extend SupClass
-
-    assert.equal TestClass.bar(), 'hey'
-    obj = new TestClass();
-    assert.equal obj.foo(), 'hello'
-
   it 'can extend a third class with properties', ->
     class BaseClass extends Element
       @properties
@@ -102,6 +56,7 @@ describe 'Element', ->
           default: 'hello'
         bar: 
           default: 'adios'
+
 
     class Test1Class extends Element
       constructor: () ->

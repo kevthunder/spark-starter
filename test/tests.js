@@ -1,6 +1,8 @@
 (function() {
   require('./event_emitter');
 
+  require('./mixable');
+
   require('./updater');
 
   require('./collection');

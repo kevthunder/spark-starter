@@ -1230,6 +1230,83 @@
   });
 
   (function(definition) {
+    Spark.Mixable = definition();
+    return Spark.Mixable.definition = definition;
+  })(function() {
+    var Mixable;
+    Mixable = (function() {
+      class Mixable {
+        static extend(obj) {
+          this.Extension.make(obj, this);
+          if (obj.prototype != null) {
+            return this.Extension.make(obj.prototype, this.prototype);
+          }
+        }
+
+        static include(obj) {
+          return this.Extension.make(obj, this.prototype);
+        }
+
+      };
+
+      Mixable.Extension = {
+        make: function(source, target) {
+          var j, key, len, ref3;
+          ref3 = this.getExtensionProperties(source, target);
+          for (j = 0, len = ref3.length; j < len; j++) {
+            key = ref3[j];
+            target[key] = source[key];
+          }
+          target.extensions = (target.extensions || []).concat([source]);
+          if (typeof source.extended === 'function') {
+            return source.extended(target);
+          }
+        },
+        alwaysFinal: ['extended', 'extensions', '__super__', 'constructor'],
+        getExtensionProperties: function(source, target) {
+          var alwaysFinal, props, targetChain;
+          alwaysFinal = this.alwaysFinal;
+          targetChain = this.getPrototypeChain(target);
+          props = [];
+          this.getPrototypeChain(source).every(function(obj) {
+            var exclude;
+            if (!targetChain.includes(obj)) {
+              exclude = alwaysFinal;
+              if (source.getFinalProperties != null) {
+                exclude = exclude.concat(source.getFinalProperties());
+              }
+              if (typeof obj === 'function') {
+                exclude = exclude.concat(["length", "prototype", "name"]);
+              }
+              props = props.concat(Object.getOwnPropertyNames(obj).filter((key) => {
+                return !target.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0;
+              }));
+              return true;
+            }
+          });
+          return props;
+        },
+        getPrototypeChain: function(obj) {
+          var basePrototype, chain;
+          chain = [];
+          basePrototype = Object.getPrototypeOf(Object);
+          while (true) {
+            chain.push(obj);
+            if (!((obj = Object.getPrototypeOf(obj)) && obj !== Object && obj !== basePrototype)) {
+              break;
+            }
+          }
+          return chain;
+        }
+      };
+
+      return Mixable;
+
+    }).call(this);
+    return Mixable;
+  });
+
+  (function(definition) {
     Spark.Property = definition();
     return Spark.Property.definition = definition;
   })(function(dependencies = {}) {
@@ -1429,128 +1506,74 @@
     Spark.Element = definition();
     return Spark.Element.definition = definition;
   })(function(dependencies = {}) {
-    var Element, Property;
+    var Element, Mixable, Property;
     Property = dependencies.hasOwnProperty("Property") ? dependencies.Property : Spark.Property;
-    Element = (function() {
-      class Element {
-        tap(name) {
-          var args;
-          args = Array.prototype.slice.call(arguments);
-          if (typeof name === 'function') {
-            name.apply(this, args.slice(1));
-          } else {
-            this[name].apply(this, args.slice(1));
-          }
-          return this;
+    Mixable = dependencies.hasOwnProperty("Mixable") ? dependencies.Mixable : Spark.Mixable;
+    Element = class Element extends Mixable {
+      tap(name) {
+        var args;
+        args = Array.prototype.slice.call(arguments);
+        if (typeof name === 'function') {
+          name.apply(this, args.slice(1));
+        } else {
+          this[name].apply(this, args.slice(1));
         }
+        return this;
+      }
 
-        callback(name) {
-          if (this._callbacks == null) {
-            this._callbacks = {};
-          }
-          if (this._callbacks[name] != null) {
-            return this._callbacks[name];
-          } else {
-            return this._callbacks[name] = (...args) => {
-              this[name].apply(this, args);
-              return null;
-            };
-          }
+      callback(name) {
+        if (this._callbacks == null) {
+          this._callbacks = {};
         }
-
-        static extend(obj) {
-          var j, key, len, ref3, ref4;
-          ref3 = this.getExtendableProperties(obj);
-          for (j = 0, len = ref3.length; j < len; j++) {
-            key = ref3[j];
-            this[key] = obj[key];
-          }
-          if (obj.prototype != null) {
-            this.include(obj.prototype);
-          }
-          if ((ref4 = obj.extended) != null) {
-            ref4.apply(this);
-          }
-          return this;
+        if (this._callbacks[name] != null) {
+          return this._callbacks[name];
+        } else {
+          return this._callbacks[name] = (...args) => {
+            this[name].apply(this, args);
+            return null;
+          };
         }
+      }
 
-        static getExtendableProperties(obj) {
-          var exclude, props;
-          exclude = Element.elementKeywords;
-          props = [];
-          while (true) {
-            props = props.concat(Object.getOwnPropertyNames(obj).filter((key) => {
-              return !this.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0 && (key !== "length" && key !== "prototype" && key !== "name");
-            }));
-            if (!((obj = Object.getPrototypeOf(obj)) && obj !== Object && obj !== Element)) {
-              break;
-            }
-          }
-          return props;
+      getFinalProperties() {
+        if (this._properties != null) {
+          return ['_properties'].concat(this._properties.map(function(prop) {
+            return prop.name;
+          }));
+        } else {
+          return [];
         }
+      }
 
-        static getIncludableProperties(obj) {
-          var exclude, props;
-          exclude = Element.elementKeywords;
-          if (obj._properties != null) {
-            exclude = exclude.concat(obj._properties.map(function(prop) {
-              return prop.name;
-            }));
-            exclude.push("_properties");
-          }
-          props = [];
-          while (true) {
-            props = props.concat(Object.getOwnPropertyNames(obj).filter((key) => {
-              return !this.prototype.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0 && indexOf.call(props, key) < 0;
-            }));
-            if (!((obj = Object.getPrototypeOf(obj)) && obj !== Object && obj !== Element.prototype)) {
-              break;
-            }
-          }
-          return props;
-        }
-
-        static include(obj) {
-          var j, k, key, len, len1, property, ref3, ref4, ref5;
-          ref3 = this.getIncludableProperties(obj);
-          for (j = 0, len = ref3.length; j < len; j++) {
-            key = ref3[j];
-            this.prototype[key] = obj[key];
-          }
-          if (obj._properties != null) {
-            ref4 = obj._properties;
-            for (k = 0, len1 = ref4.length; k < len1; k++) {
-              property = ref4[k];
-              this.property(property.name, Object.assign({}, property.options));
-            }
-          }
-          if ((ref5 = obj.included) != null) {
-            ref5.apply(this);
-          }
-          return this;
-        }
-
-        static property(prop, desc) {
-          return (new Property(prop, desc)).bind(this.prototype);
-        }
-
-        static properties(properties) {
-          var desc, prop, results;
+      extended(target) {
+        var j, len, options, property, ref3, results;
+        if (this._properties != null) {
+          ref3 = this._properties;
           results = [];
-          for (prop in properties) {
-            desc = properties[prop];
-            results.push(this.property(prop, desc));
+          for (j = 0, len = ref3.length; j < len; j++) {
+            property = ref3[j];
+            options = Object.assign({}, property.options);
+            results.push((new Property(property.name, options)).bind(target));
           }
           return results;
         }
+      }
 
-      };
+      static property(prop, desc) {
+        return (new Property(prop, desc)).bind(this.prototype);
+      }
 
-      Element.elementKeywords = ['extended', 'included', '__super__', 'constructor'];
+      static properties(properties) {
+        var desc, prop, results;
+        results = [];
+        for (prop in properties) {
+          desc = properties[prop];
+          results.push(this.property(prop, desc));
+        }
+        return results;
+      }
 
-      return Element;
-
-    }).call(this);
+    };
     return Element;
   });
 
