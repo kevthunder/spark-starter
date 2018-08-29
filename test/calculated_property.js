@@ -1,9 +1,7 @@
 (function() {
-  var Invalidator, Property, PropertyInstance, Updater, assert;
+  var Invalidator, Property, Updater, assert;
 
   assert = require('chai').assert;
-
-  PropertyInstance = require('../lib/PropertyInstance');
 
   Property = require('../lib/Property');
 

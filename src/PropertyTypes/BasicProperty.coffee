@@ -1,4 +1,4 @@
-class PropertyInstance
+class BasicProperty
   constructor: (@property, @obj) ->
     @init()
   init: ->
@@ -75,7 +75,7 @@ class PropertyInstance
 
   @compose = (prop)->
     unless prop.instanceType?
-      prop.instanceType = class extends PropertyInstance
+      prop.instanceType = class extends BasicProperty
 
     if typeof prop.options.set == 'function'
       prop.instanceType::set = @::callbackSet

@@ -1,6 +1,6 @@
 CalculatedProperty = require('./CalculatedProperty')
-Invalidator = require('./Invalidator')
-Collection = require('./Collection')
+Invalidator = require('../Invalidator')
+Collection = require('../Collection')
 
 class ComposedProperty extends CalculatedProperty
   init: ()->

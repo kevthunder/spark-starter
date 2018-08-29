@@ -1,5 +1,5 @@
 assert = require('chai').assert
-ComposedProperty = require('../lib/ComposedProperty')
+ComposedProperty = require('../lib/PropertyTypes/ComposedProperty')
 Property = require('../lib/Property')
 EventEmitter = require('../lib/EventEmitter')
 

@@ -1,9 +1,7 @@
 (function() {
-  var Collection, CollectionProperty, Property, assert;
+  var Collection, Property, assert;
 
   assert = require('chai').assert;
-
-  CollectionProperty = require('../lib/CollectionProperty');
 
   Property = require('../lib/Property');
 

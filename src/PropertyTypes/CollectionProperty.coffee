@@ -1,5 +1,5 @@
 DynamicProperty = require('./DynamicProperty')
-Collection = require('./Collection')
+Collection = require('../Collection')
 
 class CollectionProperty extends DynamicProperty
   ingest: (val)->

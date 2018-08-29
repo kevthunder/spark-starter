@@ -1,4 +1,4 @@
-Invalidator = require('./Invalidator')
+Invalidator = require('../Invalidator')
 DynamicProperty = require('./DynamicProperty')
 
 class CalculatedProperty extends DynamicProperty

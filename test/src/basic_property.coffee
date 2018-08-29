@@ -1,10 +1,9 @@
 assert = require('chai').assert
-PropertyInstance = require('../lib/PropertyInstance')
 Property = require('../lib/Property')
 Invalidator = require('../lib/Invalidator')
 Updater = require('../lib/Updater')
 
-describe 'PropertyInstance', ->
+describe 'BasicProperty', ->
 
   propEvents = ['testInvalidated','testUpdated']
   updateEvents = ['propChanged','propUpdated']

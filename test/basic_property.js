@@ -1,9 +1,7 @@
 (function() {
-  var Invalidator, Property, PropertyInstance, Updater, assert;
+  var Invalidator, Property, Updater, assert;
 
   assert = require('chai').assert;
-
-  PropertyInstance = require('../lib/PropertyInstance');
 
   Property = require('../lib/Property');
 
@@ -11,7 +9,7 @@
 
   Updater = require('../lib/Updater');
 
-  describe('PropertyInstance', function() {
+  describe('BasicProperty', function() {
     var propEvents, updateEvents;
     propEvents = ['testInvalidated', 'testUpdated'];
     updateEvents = ['propChanged', 'propUpdated'];
@@ -56,4 +54,4 @@
 
 }).call(this);
 
-//# sourceMappingURL=maps/property_instance.js.map
+//# sourceMappingURL=maps/basic_property.js.map

@@ -1,5 +1,4 @@
 assert = require('chai').assert
-CollectionProperty = require('../lib/CollectionProperty')
 Property = require('../lib/Property')
 Collection = require('../lib/Collection')
 

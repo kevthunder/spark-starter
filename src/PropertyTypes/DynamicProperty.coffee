@@ -1,7 +1,7 @@
-Invalidator = require('./Invalidator')
-PropertyInstance = require('./PropertyInstance')
+Invalidator = require('../Invalidator')
+BasicProperty = require('./BasicProperty')
 
-class DynamicProperty extends PropertyInstance
+class DynamicProperty extends BasicProperty
   
   
   init: ->

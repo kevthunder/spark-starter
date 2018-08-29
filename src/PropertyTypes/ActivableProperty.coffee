@@ -1,7 +1,7 @@
-Invalidator = require('./Invalidator')
-PropertyInstance = require('./PropertyInstance')
+Invalidator = require('../Invalidator')
+BasicProperty = require('./BasicProperty')
 
-class ActivableProperty extends PropertyInstance
+class ActivableProperty extends BasicProperty
   activableGet:->
     @get()
 

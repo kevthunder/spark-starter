@@ -10,7 +10,7 @@ var wrapper = require('spark-wrapper');
 var sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('coffee', function() {
-  return gulp.src(['./src/*.coffee'])
+  return gulp.src(['./src/**/*.coffee'])
     .pipe(sourcemaps.init())
     .pipe(coffee({bare: true}))
     .pipe(wrapper({namespace:'Spark'}))
@@ -20,7 +20,7 @@ gulp.task('coffee', function() {
 });
 
 gulp.task('concat', function() {
-  return gulp.src(['./src/*.coffee'])
+  return gulp.src(['./src/**/*.coffee'])
     .pipe(wrapper.compose({namespace:'Spark'}))
     .pipe(concat('spark-starter.coffee'))
     .pipe(gulp.dest('./tmp/'));

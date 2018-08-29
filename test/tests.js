@@ -11,7 +11,7 @@
 
   require('./invalidator');
 
-  require('./property_instance');
+  require('./basic_property');
 
   require('./calculated_property');
 
