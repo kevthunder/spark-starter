@@ -261,6 +261,8 @@ describe 'Element', ->
           [{}]
         addListener: (evt, listener) ->
           @added += 1
+          @listenerAdded(evt, listener)
+        listenerAdded: (e, listener) ->
         @properties
           prop: 
             calcul: (invalidated)->

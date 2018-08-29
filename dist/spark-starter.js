@@ -1307,16 +1307,107 @@
   });
 
   (function(definition) {
+    Spark.PropertyOwner = definition();
+    return Spark.PropertyOwner.definition = definition;
+  })(function() {
+    var PropertyOwner;
+    PropertyOwner = class PropertyOwner {
+      getProperty(name) {
+        return this._properties && this._properties.find(function(prop) {
+          return prop.name === name;
+        });
+      }
+
+      getPropertyInstance(name) {
+        var res;
+        res = this.getProperty(name);
+        if (res) {
+          return res.getInstance(this);
+        }
+      }
+
+      getProperties() {
+        return this._properties.slice();
+      }
+
+      getPropertyInstances() {
+        return this._properties.map((prop) => {
+          return prop.getInstance(this);
+        });
+      }
+
+      getInstantiatedProperties() {
+        return this._properties.filter((prop) => {
+          return prop.isInstantiated(this);
+        }).map((prop) => {
+          return prop.getInstance(this);
+        });
+      }
+
+      getManualDataProperties() {
+        return this._properties.reduce((res, prop) => {
+          var instance;
+          if (prop.isInstantiated(this)) {
+            instance = prop.getInstance(this);
+            if (instance.calculated && instance.manual) {
+              res[prop.name] = instance.value;
+            }
+          }
+          return res;
+        }, {});
+      }
+
+      setProperties(data, options = {}) {
+        var key, prop, val;
+        for (key in data) {
+          val = data[key];
+          if (((options.whitelist == null) || options.whitelist.indexOf(key) !== -1) && ((options.blacklist == null) || options.blacklist.indexOf(key) === -1)) {
+            prop = this.getPropertyInstance(key);
+            if (prop != null) {
+              prop.set(val);
+            }
+          }
+        }
+        return this;
+      }
+
+      destroyProperties() {
+        this.getInstantiatedProperties().forEach((prop) => {
+          return prop.destroy();
+        });
+        this._properties = [];
+        return true;
+      }
+
+      listenerAdded(event, listener) {
+        return this._properties.forEach((prop) => {
+          if (prop.getInstanceType().prototype.changeEventName === event) {
+            return prop.getInstance(this).get();
+          }
+        });
+      }
+
+      extended(target) {
+        return target.listenerAdded = this.listenerAdded;
+      }
+
+    };
+    return PropertyOwner;
+  });
+
+  (function(definition) {
     Spark.Property = definition();
     return Spark.Property.definition = definition;
   })(function(dependencies = {}) {
-    var ActivableProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, Property, PropertyInstance;
+    var ActivableProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, Mixable, Property, PropertyInstance, PropertyOwner;
     PropertyInstance = dependencies.hasOwnProperty("PropertyInstance") ? dependencies.PropertyInstance : Spark.PropertyInstance;
     CollectionProperty = dependencies.hasOwnProperty("CollectionProperty") ? dependencies.CollectionProperty : Spark.CollectionProperty;
     ComposedProperty = dependencies.hasOwnProperty("ComposedProperty") ? dependencies.ComposedProperty : Spark.ComposedProperty;
     DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
     ActivableProperty = dependencies.hasOwnProperty("ActivableProperty") ? dependencies.ActivableProperty : Spark.ActivableProperty;
+    PropertyOwner = dependencies.hasOwnProperty("PropertyOwner") ? dependencies.PropertyOwner : Spark.PropertyOwner;
+    Mixable = dependencies.hasOwnProperty("Mixable") ? dependencies.Mixable : Spark.Mixable;
     Property = (function() {
       class Property {
         constructor(name1, options1 = {}) {
@@ -1338,8 +1429,7 @@
                 return existing !== parent;
               });
             }
-            this.checkFunctions(target);
-            this.checkAfterAddListener(target);
+            this.makeOwner(target);
           }
           return prop;
         }
@@ -1364,32 +1454,10 @@
           }
         }
 
-        checkFunctions(target) {
-          var funct, name, ref3, results;
-          this.checkAfterAddListener(target);
-          ref3 = Property.fn;
-          results = [];
-          for (name in ref3) {
-            funct = ref3[name];
-            if (typeof target[name] === 'undefined') {
-              results.push(target[name] = funct);
-            } else {
-              results.push(void 0);
-            }
-          }
-          return results;
-        }
-
-        checkAfterAddListener(target) {
-          var overrided;
-          if (typeof target.addListener === 'function' && typeof target.afterAddListener === 'undefined' && typeof target.addListener.overrided === 'undefined') {
-            target.afterAddListener = Property.optionalFn.afterAddListener;
-            overrided = target.addListener;
-            target.addListener = function(evt, listener) {
-              this.addListener.overrided.call(this, evt, listener);
-              return this.afterAddListener(evt);
-            };
-            return target.addListener.overrided = overrided;
+        makeOwner(target) {
+          var ref3;
+          if (!((ref3 = target.extensions) != null ? ref3.includes(PropertyOwner.prototype) : void 0)) {
+            return Mixable.Extension.make(PropertyOwner.prototype, target);
           }
         }
 
@@ -1423,78 +1491,6 @@
       };
 
       Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, PropertyInstance, CalculatedProperty, ActivableProperty];
-
-      Property.fn = {
-        getProperty: function(name) {
-          return this._properties && this._properties.find(function(prop) {
-            return prop.name === name;
-          });
-        },
-        getPropertyInstance: function(name) {
-          var res;
-          res = this.getProperty(name);
-          if (res) {
-            return res.getInstance(this);
-          }
-        },
-        getProperties: function() {
-          return this._properties.slice();
-        },
-        getPropertyInstances: function() {
-          return this._properties.map((prop) => {
-            return prop.getInstance(this);
-          });
-        },
-        getInstantiatedProperties: function() {
-          return this._properties.filter((prop) => {
-            return prop.isInstantiated(this);
-          }).map((prop) => {
-            return prop.getInstance(this);
-          });
-        },
-        getManualDataProperties: function() {
-          return this._properties.reduce((res, prop) => {
-            var instance;
-            if (prop.isInstantiated(this)) {
-              instance = prop.getInstance(this);
-              if (instance.calculated && instance.manual) {
-                res[prop.name] = instance.value;
-              }
-            }
-            return res;
-          }, {});
-        },
-        setProperties: function(data, options = {}) {
-          var key, prop, val;
-          for (key in data) {
-            val = data[key];
-            if (((options.whitelist == null) || options.whitelist.indexOf(key) !== -1) && ((options.blacklist == null) || options.blacklist.indexOf(key) === -1)) {
-              prop = this.getPropertyInstance(key);
-              if (prop != null) {
-                prop.set(val);
-              }
-            }
-          }
-          return this;
-        },
-        destroyProperties: function() {
-          this.getInstantiatedProperties().forEach((prop) => {
-            return prop.destroy();
-          });
-          this._properties = [];
-          return true;
-        }
-      };
-
-      Property.optionalFn = {
-        afterAddListener: function(event) {
-          return this._properties.forEach((prop) => {
-            if (prop.getInstanceType().prototype.changeEventName === event) {
-              return prop.getInstance(this).get();
-            }
-          });
-        }
-      };
 
       return Property;
 

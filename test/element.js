@@ -440,8 +440,11 @@
           }
 
           addListener(evt, listener) {
-            return this.added += 1;
+            this.added += 1;
+            return this.listenerAdded(evt, listener);
           }
+
+          listenerAdded(e, listener) {}
 
           emitEvent(event, params) {
             if (event === 'propChanged') {

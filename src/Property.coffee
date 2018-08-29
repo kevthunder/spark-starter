@@ -4,6 +4,8 @@ ComposedProperty = require('./ComposedProperty')
 DynamicProperty = require('./DynamicProperty')
 CalculatedProperty = require('./CalculatedProperty')
 ActivableProperty = require('./ActivableProperty')
+PropertyOwner = require('./PropertyOwner')
+Mixable = require('./Mixable')
 
 class Property
   @::composers = [ComposedProperty, CollectionProperty, DynamicProperty, PropertyInstance, CalculatedProperty, ActivableProperty]
@@ -21,8 +23,7 @@ class Property
       if parent?
         target._properties = target._properties.filter (existing)->
           existing != parent
-      @checkFunctions(target)
-      @checkAfterAddListener(target)
+      @makeOwner(target)
     prop
     
   override: (parent) ->
@@ -34,20 +35,9 @@ class Property
         else if typeof @options[key] == 'undefined'
           @options[key] = value
     
-  checkFunctions: (target) ->
-    @checkAfterAddListener(target)
-    for name, funct of Property.fn
-      if typeof target[name] == 'undefined'
-        target[name] = funct
-      
-  checkAfterAddListener: (target) ->
-    if typeof target.addListener == 'function' and typeof target.afterAddListener == 'undefined' and typeof target.addListener.overrided == 'undefined'
-      target.afterAddListener = Property.optionalFn.afterAddListener
-      overrided = target.addListener
-      target.addListener = (evt, listener)-> 
-        @addListener.overrided.call(this, evt, listener)
-        @afterAddListener(evt)
-      target.addListener.overrided = overrided
+  makeOwner: (target) ->
+    unless target.extensions?.includes(PropertyOwner.prototype)
+      Mixable.Extension.make(PropertyOwner.prototype, target)
     
   getInstanceVarName: ->
     @options.instanceVarName ||
@@ -68,55 +58,3 @@ class Property
       @composers.forEach (composer)=>
         composer.compose(this)
     @instanceType
-    
-  @fn:
-    getProperty: (name)->
-      @_properties && @_properties.find (prop)->
-        prop.name == name
-        
-    getPropertyInstance: (name)->
-      res = @getProperty(name)
-      if res
-        res.getInstance(this)
-        
-    getProperties: ->
-      @_properties.slice()
-      
-    getPropertyInstances: ()->
-      @_properties.map (prop)=>
-        prop.getInstance(this)
-        
-    getInstantiatedProperties: ->
-      @_properties.filter (prop)=>
-        prop.isInstantiated(this)
-      .map (prop)=>
-        prop.getInstance(this)
-
-    getManualDataProperties: ->
-      @_properties.reduce (res,prop)=>
-        if prop.isInstantiated(this)
-          instance = prop.getInstance(this)
-          if instance.calculated && instance.manual
-            res[prop.name] = instance.value
-        res
-      , {}
-
-    setProperties: (data, options = {})->
-      for key,val of data
-        if (!options.whitelist? or options.whitelist.indexOf(key) != -1) and (!options.blacklist? or options.blacklist.indexOf(key) == -1)
-          prop = @getPropertyInstance(key)
-          if prop?
-            prop.set(val)
-      this
-        
-    destroyProperties: ->
-      @getInstantiatedProperties().forEach (prop)=>
-        prop.destroy()
-      @_properties = []
-      true
-      
-  @optionalFn:
-    afterAddListener: (event)->
-      @_properties.forEach (prop)=>
-        if prop.getInstanceType()::changeEventName == event
-          prop.getInstance(this).get()
