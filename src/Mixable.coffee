@@ -2,8 +2,8 @@
 class Mixable
   @Extension:
     make: (source, target) ->
-      for key in @getExtensionProperties(source, target)
-        target[key] = source[key]
+      for prop in @getExtensionProperties(source, target)
+        Object.defineProperty(target, prop.name, prop)
       target.extensions = (target.extensions || []).concat([source])
       if typeof source.extended == 'function'
         source.extended(target)
@@ -26,7 +26,11 @@ class Mixable
 
           props = props.concat(
             Object.getOwnPropertyNames(obj).filter (key)=>
-              !target.hasOwnProperty(key) and key.substr(0,2) != "__" and key not in exclude
+                !target.hasOwnProperty(key) and key.substr(0,2) != "__" and key not in exclude and !props.find((prop)->prop.name == key)
+              .map (key)->
+                prop = Object.getOwnPropertyDescriptor(obj, key)
+                prop.name = key
+                prop
           )
           true
       props

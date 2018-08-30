@@ -15,7 +15,9 @@
 
       };
       TestClass2 = class TestClass2 extends Mixable {};
-      return assert.deepEqual(Mixable.Extension.getExtensionProperties(TestClass.prototype, TestClass2.prototype), ['foo']);
+      return assert.deepEqual(Mixable.Extension.getExtensionProperties(TestClass.prototype, TestClass2.prototype).map(function(prop) {
+        return prop.name;
+      }), ['foo']);
     });
     it('can get prototype chain', function() {
       var TestClass, TestClass2;
@@ -63,18 +65,25 @@
       obj = new TestClass();
       return assert.equal(obj.foo(), 'hello');
     });
-    return it('can extend a nested class', function() {
+    it('can extend a nested class', function() {
       var BaseClass, SupClass, TestClass, obj;
-      BaseClass = class BaseClass extends Mixable {
-        foo() {
-          return 'hello';
-        }
+      BaseClass = (function() {
+        class BaseClass extends Mixable {
+          foo() {
+            return 'hello';
+          }
 
-        static bar() {
-          return 'hey';
-        }
+          static bar() {
+            return 'hey';
+          }
 
-      };
+        };
+
+        BaseClass.prototype.baz = 'hi';
+
+        return BaseClass;
+
+      }).call(this);
       SupClass = class SupClass extends BaseClass {};
       TestClass = (function() {
         class TestClass extends Mixable {};
@@ -86,7 +95,55 @@
       }).call(this);
       assert.equal(TestClass.bar(), 'hey');
       obj = new TestClass();
-      return assert.equal(obj.foo(), 'hello');
+      assert.equal(obj.foo(), 'hello');
+      return assert.equal(obj.baz, 'hi');
+    });
+    it('can extend a nested class with same property', function() {
+      var BaseClass, SupClass, TestClass, obj;
+      BaseClass = class BaseClass extends Mixable {
+        foo() {
+          return 'hello';
+        }
+
+      };
+      SupClass = class SupClass extends BaseClass {
+        foo() {
+          return 'hi';
+        }
+
+      };
+      TestClass = (function() {
+        class TestClass extends Mixable {};
+
+        TestClass.extend(SupClass);
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass();
+      return assert.equal(obj.foo(), 'hi');
+    });
+    return it('can extend properties with accessor', function() {
+      var BaseClass, TestClass, obj, val;
+      val = 1;
+      BaseClass = class BaseClass extends Mixable {};
+      Object.defineProperty(BaseClass.prototype, 'foo', {
+        get: function() {
+          return val;
+        }
+      });
+      TestClass = (function() {
+        class TestClass extends Mixable {};
+
+        TestClass.extend(BaseClass);
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass();
+      assert.equal(obj.foo, 1);
+      val = 2;
+      return assert.equal(obj.foo, 2);
     });
   });
 

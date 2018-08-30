@@ -249,11 +249,11 @@
 
       Mixable.Extension = {
         make: function(source, target) {
-          var j, key, len, ref3;
+          var j, len, prop, ref3;
           ref3 = this.getExtensionProperties(source, target);
           for (j = 0, len = ref3.length; j < len; j++) {
-            key = ref3[j];
-            target[key] = source[key];
+            prop = ref3[j];
+            Object.defineProperty(target, prop.name, prop);
           }
           target.extensions = (target.extensions || []).concat([source]);
           if (typeof source.extended === 'function') {
@@ -277,7 +277,14 @@
                 exclude = exclude.concat(["length", "prototype", "name"]);
               }
               props = props.concat(Object.getOwnPropertyNames(obj).filter((key) => {
-                return !target.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0;
+                return !target.hasOwnProperty(key) && key.substr(0, 2) !== "__" && indexOf.call(exclude, key) < 0 && !props.find(function(prop) {
+                  return prop.name === key;
+                });
+              }).map(function(key) {
+                var prop;
+                prop = Object.getOwnPropertyDescriptor(obj, key);
+                prop.name = key;
+                return prop;
               }));
               return true;
             }

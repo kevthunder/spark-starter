@@ -11,7 +11,7 @@ describe 'Mixable', ->
 
     class TestClass2 extends Mixable
 
-    assert.deepEqual Mixable.Extension.getExtensionProperties(TestClass.prototype, TestClass2.prototype), ['foo']
+    assert.deepEqual Mixable.Extension.getExtensionProperties(TestClass.prototype, TestClass2.prototype).map((prop)->prop.name), ['foo']
 
   it 'can get prototype chain', ->
     class TestClass extends Mixable
@@ -46,6 +46,7 @@ describe 'Mixable', ->
   it 'can extend a nested class', ->
     class BaseClass extends Mixable
       foo: -> 'hello'
+      baz: 'hi'
       @bar = -> 'hey'
 
     class SupClass extends BaseClass
@@ -56,3 +57,34 @@ describe 'Mixable', ->
     assert.equal TestClass.bar(), 'hey'
     obj = new TestClass();
     assert.equal obj.foo(), 'hello'
+    assert.equal obj.baz, 'hi'
+
+  it 'can extend a nested class with same property', ->
+    class BaseClass extends Mixable
+      foo: -> 'hello'
+
+    class SupClass extends BaseClass
+      foo: -> 'hi'
+      
+    class TestClass extends Mixable
+      @extend SupClass
+
+    obj = new TestClass();
+    assert.equal obj.foo(), 'hi'
+
+
+  it 'can extend properties with accessor', ->
+    val = 1
+    class BaseClass extends Mixable
+    Object.defineProperty(BaseClass.prototype,'foo',{
+      get: -> val
+    })
+
+    class TestClass extends Mixable
+      @extend BaseClass
+
+    obj = new TestClass()
+
+    assert.equal obj.foo, 1
+    val = 2
+    assert.equal obj.foo, 2
