@@ -3,6 +3,8 @@
 
   require('./mixable');
 
+  require('./overrider');
+
   require('./updater');
 
   require('./collection');

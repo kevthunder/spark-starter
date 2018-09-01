@@ -1,5 +1,6 @@
 require './event_emitter'
 require './mixable'
+require './overrider'
 require './updater'
 require './collection'
 require './event_bind'

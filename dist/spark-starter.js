@@ -650,7 +650,7 @@
           }
         }
         
-        // if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty
+        // if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty  
         if (typeof prop.options.get === 'function') {
           return prop.instanceType.prototype.get = this.prototype.callbackGet;
         }
@@ -1644,6 +1644,109 @@
 
     }).call(this);
     return EventEmitter;
+  });
+
+  (function(definition) {
+    Spark.Overrider = definition();
+    return Spark.Overrider.definition = definition;
+  })(function() {
+    var Overrider;
+    Overrider = (function() {
+      class Overrider {
+        static overrides(overrides) {
+          return this.Override.applyMany(this.prototype, this.name, overrides);
+        }
+
+        getFinalProperties() {
+          if (this._properties != null) {
+            return ['_overrides'].concat(this._overrides.map(function(override) {
+              return override.name;
+            }));
+          } else {
+            return [];
+          }
+        }
+
+        extended(target) {
+          if (this._overrides != null) {
+            return this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
+          }
+        }
+
+      };
+
+      Overrider.Override = {
+        makeMany: function(target, namespace, overrides) {
+          var fn, key, override, results;
+          results = [];
+          for (key in overrides) {
+            fn = overrides[key];
+            results.push(override = this.make(target, namespace, key, fn));
+          }
+          return results;
+        },
+        applyMany: function(target, namespace, overrides) {
+          var key, override, results;
+          results = [];
+          for (key in overrides) {
+            override = overrides[key];
+            if (typeof override === "function") {
+              override = this.make(target, namespace, key, override);
+            }
+            results.push(this.apply(target, namespace, override));
+          }
+          return results;
+        },
+        make: function(target, namespace, fnName, fn) {
+          var override;
+          override = {
+            fn: {
+              current: fn
+            },
+            name: fnName
+          };
+          override.fn['with' + namespace] = fn;
+          return override;
+        },
+        apply: function(target, namespace, override) {
+          var fnName, overrides, ref3, ref4, without;
+          fnName = override.name;
+          overrides = target._overrides != null ? Object.assign({}, target._overrides) : {};
+          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.current : void 0 : void 0) || target[fnName] || function() {};
+          override = Object.assign({}, override);
+          if (overrides[fnName] != null) {
+            override.fn = Object.assign({}, overrides[fnName].fn, override.fn);
+          } else {
+            override.fn = Object.assign({}, override.fn);
+          }
+          override.fn['without' + namespace] = without;
+          Object.defineProperty(target, fnName, {
+            configurable: true,
+            get: function() {
+              var finalFn, fn, key, ref5;
+              finalFn = override.fn.current.bind(this);
+              ref5 = override.fn;
+              for (key in ref5) {
+                fn = ref5[key];
+                finalFn[key] = fn.bind(this);
+              }
+              if (this.constructor.prototype !== this) {
+                Object.defineProperty(this, fnName, {
+                  value: finalFn
+                });
+              }
+              return finalFn;
+            }
+          });
+          overrides[fnName] = override;
+          return target._overrides = overrides;
+        }
+      };
+
+      return Overrider;
+
+    }).call(this);
+    return Overrider;
   });
 
   (function(definition) {
