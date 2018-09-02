@@ -3,12 +3,21 @@ CollectionProperty = require('./PropertyTypes/CollectionProperty')
 ComposedProperty = require('./PropertyTypes/ComposedProperty')
 DynamicProperty = require('./PropertyTypes/DynamicProperty')
 CalculatedProperty = require('./PropertyTypes/CalculatedProperty')
+InvalidatedProperty = require('./PropertyTypes/InvalidatedProperty')
 ActivableProperty = require('./PropertyTypes/ActivableProperty')
 PropertyOwner = require('./PropertyOwner')
 Mixable = require('./Mixable')
 
 class Property
-  @::composers = [ComposedProperty, CollectionProperty, DynamicProperty, BasicProperty, CalculatedProperty, ActivableProperty]
+  @::composers = [
+    ComposedProperty, 
+    CollectionProperty, 
+    DynamicProperty, 
+    BasicProperty, 
+    CalculatedProperty, 
+    InvalidatedProperty,
+    ActivableProperty
+  ]
 
   constructor: (@name, @options = {}) ->
     

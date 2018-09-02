@@ -1,5 +1,8 @@
-class BasicProperty
+Mixable = require('../Mixable')
+
+class BasicProperty extends Mixable
   constructor: (@property, @obj) ->
+    super()
     @init()
   init: ->
     @value = @ingest(@default)

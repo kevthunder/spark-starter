@@ -312,12 +312,103 @@
   });
 
   (function(definition) {
+    Spark.PropertyOwner = definition();
+    return Spark.PropertyOwner.definition = definition;
+  })(function() {
+    var PropertyOwner;
+    PropertyOwner = class PropertyOwner {
+      getProperty(name) {
+        return this._properties && this._properties.find(function(prop) {
+          return prop.name === name;
+        });
+      }
+
+      getPropertyInstance(name) {
+        var res;
+        res = this.getProperty(name);
+        if (res) {
+          return res.getInstance(this);
+        }
+      }
+
+      getProperties() {
+        return this._properties.slice();
+      }
+
+      getPropertyInstances() {
+        return this._properties.map((prop) => {
+          return prop.getInstance(this);
+        });
+      }
+
+      getInstantiatedProperties() {
+        return this._properties.filter((prop) => {
+          return prop.isInstantiated(this);
+        }).map((prop) => {
+          return prop.getInstance(this);
+        });
+      }
+
+      getManualDataProperties() {
+        return this._properties.reduce((res, prop) => {
+          var instance;
+          if (prop.isInstantiated(this)) {
+            instance = prop.getInstance(this);
+            if (instance.calculated && instance.manual) {
+              res[prop.name] = instance.value;
+            }
+          }
+          return res;
+        }, {});
+      }
+
+      setProperties(data, options = {}) {
+        var key, prop, val;
+        for (key in data) {
+          val = data[key];
+          if (((options.whitelist == null) || options.whitelist.indexOf(key) !== -1) && ((options.blacklist == null) || options.blacklist.indexOf(key) === -1)) {
+            prop = this.getPropertyInstance(key);
+            if (prop != null) {
+              prop.set(val);
+            }
+          }
+        }
+        return this;
+      }
+
+      destroyProperties() {
+        this.getInstantiatedProperties().forEach((prop) => {
+          return prop.destroy();
+        });
+        this._properties = [];
+        return true;
+      }
+
+      listenerAdded(event, listener) {
+        return this._properties.forEach((prop) => {
+          if (prop.getInstanceType().prototype.changeEventName === event) {
+            return prop.getInstance(this).get();
+          }
+        });
+      }
+
+      extended(target) {
+        return target.listenerAdded = this.listenerAdded;
+      }
+
+    };
+    return PropertyOwner;
+  });
+
+  (function(definition) {
     Spark.BasicProperty = definition();
     return Spark.BasicProperty.definition = definition;
-  })(function() {
-    var BasicProperty;
-    BasicProperty = class BasicProperty {
+  })(function(dependencies = {}) {
+    var BasicProperty, Mixable;
+    Mixable = dependencies.hasOwnProperty("Mixable") ? dependencies.Mixable : Spark.Mixable;
+    BasicProperty = class BasicProperty extends Mixable {
       constructor(property1, obj3) {
+        super();
         this.property = property1;
         this.obj = obj3;
         this.init();
@@ -472,95 +563,6 @@
   });
 
   (function(definition) {
-    Spark.PropertyOwner = definition();
-    return Spark.PropertyOwner.definition = definition;
-  })(function() {
-    var PropertyOwner;
-    PropertyOwner = class PropertyOwner {
-      getProperty(name) {
-        return this._properties && this._properties.find(function(prop) {
-          return prop.name === name;
-        });
-      }
-
-      getPropertyInstance(name) {
-        var res;
-        res = this.getProperty(name);
-        if (res) {
-          return res.getInstance(this);
-        }
-      }
-
-      getProperties() {
-        return this._properties.slice();
-      }
-
-      getPropertyInstances() {
-        return this._properties.map((prop) => {
-          return prop.getInstance(this);
-        });
-      }
-
-      getInstantiatedProperties() {
-        return this._properties.filter((prop) => {
-          return prop.isInstantiated(this);
-        }).map((prop) => {
-          return prop.getInstance(this);
-        });
-      }
-
-      getManualDataProperties() {
-        return this._properties.reduce((res, prop) => {
-          var instance;
-          if (prop.isInstantiated(this)) {
-            instance = prop.getInstance(this);
-            if (instance.calculated && instance.manual) {
-              res[prop.name] = instance.value;
-            }
-          }
-          return res;
-        }, {});
-      }
-
-      setProperties(data, options = {}) {
-        var key, prop, val;
-        for (key in data) {
-          val = data[key];
-          if (((options.whitelist == null) || options.whitelist.indexOf(key) !== -1) && ((options.blacklist == null) || options.blacklist.indexOf(key) === -1)) {
-            prop = this.getPropertyInstance(key);
-            if (prop != null) {
-              prop.set(val);
-            }
-          }
-        }
-        return this;
-      }
-
-      destroyProperties() {
-        this.getInstantiatedProperties().forEach((prop) => {
-          return prop.destroy();
-        });
-        this._properties = [];
-        return true;
-      }
-
-      listenerAdded(event, listener) {
-        return this._properties.forEach((prop) => {
-          if (prop.getInstanceType().prototype.changeEventName === event) {
-            return prop.getInstance(this).get();
-          }
-        });
-      }
-
-      extended(target) {
-        return target.listenerAdded = this.listenerAdded;
-      }
-
-    };
-    return PropertyOwner;
-  });
-
-  (function(definition) {
     Spark.DynamicProperty = definition();
     return Spark.DynamicProperty.definition = definition;
   })(function(dependencies = {}) {
@@ -700,63 +702,11 @@
         return this.value;
       }
 
-      invalidatedCalcul() {
-        if (!this.invalidator) {
-          this.invalidator = new Invalidator(this, this.obj);
-        }
-        this.invalidator.recycle((invalidator, done) => {
-          this.value = this.callOptionFunct(this.calculFunct, invalidator);
-          this.manual = false;
-          done();
-          if (invalidator.isEmpty()) {
-            return this.invalidator = null;
-          } else {
-            return invalidator.bind();
-          }
-        });
-        this.revalidated();
-        return this.value;
-      }
-
-      unknown() {
-        if (this.calculated || this.active === false) {
-          this._invalidateNotice();
-        }
-        return this;
-      }
-
-      destroyWhithoutInvalidator() {
-        return this.destroy();
-      }
-
-      destroyInvalidator() {
-        this.destroyWhithoutInvalidator();
-        if (this.invalidator != null) {
-          return this.invalidator.unbind();
-        }
-      }
-
-      invalidateInvalidator() {
-        if (this.calculated || this.active === false) {
-          this.calculated = false;
-          if (this._invalidateNotice() && (this.invalidator != null)) {
-            this.invalidator.unbind();
-          }
-        }
-        return this;
-      }
-
       static compose(prop) {
         if (typeof prop.options.calcul === 'function') {
           prop.instanceType.prototype.calculFunct = prop.options.calcul;
           prop.instanceType.prototype.get = this.prototype.calculatedGet;
-          if (prop.options.calcul.length > 0) {
-            prop.instanceType.prototype.calcul = this.prototype.invalidatedCalcul;
-            prop.instanceType.prototype.destroyWhithoutInvalidator = prop.instanceType.prototype.destroy;
-            prop.instanceType.prototype.destroy = this.prototype.destroyInvalidator;
-            prop.instanceType.prototype.invalidate = this.prototype.invalidateInvalidator;
-            return prop.instanceType.prototype.unknown = this.prototype.unknown;
-          } else {
+          if (!(prop.options.calcul.length > 0)) {
             return prop.instanceType.prototype.calcul = this.prototype.callbackCalcul;
           }
         }
@@ -990,6 +940,109 @@
   });
 
   (function(definition) {
+    Spark.Overrider = definition();
+    return Spark.Overrider.definition = definition;
+  })(function() {
+    var Overrider;
+    Overrider = (function() {
+      class Overrider {
+        static overrides(overrides) {
+          return this.Override.applyMany(this.prototype, this.name, overrides);
+        }
+
+        getFinalProperties() {
+          if (this._properties != null) {
+            return ['_overrides'].concat(this._overrides.map(function(override) {
+              return override.name;
+            }));
+          } else {
+            return [];
+          }
+        }
+
+        extended(target) {
+          if (this._overrides != null) {
+            return this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
+          }
+        }
+
+      };
+
+      Overrider.Override = {
+        makeMany: function(target, namespace, overrides) {
+          var fn, key, override, results;
+          results = [];
+          for (key in overrides) {
+            fn = overrides[key];
+            results.push(override = this.make(target, namespace, key, fn));
+          }
+          return results;
+        },
+        applyMany: function(target, namespace, overrides) {
+          var key, override, results;
+          results = [];
+          for (key in overrides) {
+            override = overrides[key];
+            if (typeof override === "function") {
+              override = this.make(target, namespace, key, override);
+            }
+            results.push(this.apply(target, namespace, override));
+          }
+          return results;
+        },
+        make: function(target, namespace, fnName, fn) {
+          var override;
+          override = {
+            fn: {
+              current: fn
+            },
+            name: fnName
+          };
+          override.fn['with' + namespace] = fn;
+          return override;
+        },
+        apply: function(target, namespace, override) {
+          var fnName, overrides, ref3, ref4, without;
+          fnName = override.name;
+          overrides = target._overrides != null ? Object.assign({}, target._overrides) : {};
+          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.current : void 0 : void 0) || target[fnName] || function() {};
+          override = Object.assign({}, override);
+          if (overrides[fnName] != null) {
+            override.fn = Object.assign({}, overrides[fnName].fn, override.fn);
+          } else {
+            override.fn = Object.assign({}, override.fn);
+          }
+          override.fn['without' + namespace] = without;
+          Object.defineProperty(target, fnName, {
+            configurable: true,
+            get: function() {
+              var finalFn, fn, key, ref5;
+              finalFn = override.fn.current.bind(this);
+              ref5 = override.fn;
+              for (key in ref5) {
+                fn = ref5[key];
+                finalFn[key] = fn.bind(this);
+              }
+              if (this.constructor.prototype !== this) {
+                Object.defineProperty(this, fnName, {
+                  value: finalFn
+                });
+              }
+              return finalFn;
+            }
+          });
+          overrides[fnName] = override;
+          return target._overrides = overrides;
+        }
+      };
+
+      return Overrider;
+
+    }).call(this);
+    return Overrider;
+  });
+
+  (function(definition) {
     Spark.CollectionProperty = definition();
     return Spark.CollectionProperty.definition = definition;
   })(function(dependencies = {}) {
@@ -1168,6 +1221,74 @@
 
     };
     return ActivableProperty;
+  });
+
+  (function(definition) {
+    Spark.InvalidatedProperty = definition();
+    return Spark.InvalidatedProperty.definition = definition;
+  })(function(dependencies = {}) {
+    var CalculatedProperty, InvalidatedProperty, Invalidator, Overrider;
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
+    Overrider = dependencies.hasOwnProperty("Overrider") ? dependencies.Overrider : Spark.Overrider;
+    InvalidatedProperty = (function() {
+      class InvalidatedProperty extends CalculatedProperty {
+        unknown() {
+          if (this.calculated || this.active === false) {
+            this._invalidateNotice();
+          }
+          return this;
+        }
+
+        static compose(prop) {
+          if (typeof prop.options.calcul === 'function' && prop.options.calcul.length > 0) {
+            return prop.instanceType.extend(InvalidatedProperty);
+          }
+        }
+
+      };
+
+      InvalidatedProperty.extend(Overrider);
+
+      InvalidatedProperty.overrides({
+        calcul: function() {
+          if (!this.invalidator) {
+            this.invalidator = new Invalidator(this, this.obj);
+          }
+          this.invalidator.recycle((invalidator, done) => {
+            this.value = this.callOptionFunct(this.calculFunct, invalidator);
+            this.manual = false;
+            done();
+            if (invalidator.isEmpty()) {
+              return this.invalidator = null;
+            } else {
+              return invalidator.bind();
+            }
+          });
+          this.revalidated();
+          return this.value;
+        },
+        destroy: function() {
+          this.destroy.withoutInvalidatedProperty();
+          if (this.invalidator != null) {
+            return this.invalidator.unbind();
+          }
+        },
+        invalidate: function() {
+          if (this.calculated || this.active === false) {
+            this.calculated = false;
+            if (this._invalidateNotice() && (this.invalidator != null)) {
+              this.invalidator.unbind();
+            }
+          }
+          return this;
+        }
+      });
+
+      return InvalidatedProperty;
+
+    }).call(this);
+    return InvalidatedProperty;
   });
 
   (function(definition) {
@@ -1406,12 +1527,13 @@
     Spark.Property = definition();
     return Spark.Property.definition = definition;
   })(function(dependencies = {}) {
-    var ActivableProperty, BasicProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, Mixable, Property, PropertyOwner;
+    var ActivableProperty, BasicProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, InvalidatedProperty, Mixable, Property, PropertyOwner;
     BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
     CollectionProperty = dependencies.hasOwnProperty("CollectionProperty") ? dependencies.CollectionProperty : Spark.CollectionProperty;
     ComposedProperty = dependencies.hasOwnProperty("ComposedProperty") ? dependencies.ComposedProperty : Spark.ComposedProperty;
     DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
+    InvalidatedProperty = dependencies.hasOwnProperty("InvalidatedProperty") ? dependencies.InvalidatedProperty : Spark.InvalidatedProperty;
     ActivableProperty = dependencies.hasOwnProperty("ActivableProperty") ? dependencies.ActivableProperty : Spark.ActivableProperty;
     PropertyOwner = dependencies.hasOwnProperty("PropertyOwner") ? dependencies.PropertyOwner : Spark.PropertyOwner;
     Mixable = dependencies.hasOwnProperty("Mixable") ? dependencies.Mixable : Spark.Mixable;
@@ -1497,7 +1619,7 @@
 
       };
 
-      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, BasicProperty, CalculatedProperty, ActivableProperty];
+      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, BasicProperty, CalculatedProperty, InvalidatedProperty, ActivableProperty];
 
       return Property;
 
@@ -1644,109 +1766,6 @@
 
     }).call(this);
     return EventEmitter;
-  });
-
-  (function(definition) {
-    Spark.Overrider = definition();
-    return Spark.Overrider.definition = definition;
-  })(function() {
-    var Overrider;
-    Overrider = (function() {
-      class Overrider {
-        static overrides(overrides) {
-          return this.Override.applyMany(this.prototype, this.name, overrides);
-        }
-
-        getFinalProperties() {
-          if (this._properties != null) {
-            return ['_overrides'].concat(this._overrides.map(function(override) {
-              return override.name;
-            }));
-          } else {
-            return [];
-          }
-        }
-
-        extended(target) {
-          if (this._overrides != null) {
-            return this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
-          }
-        }
-
-      };
-
-      Overrider.Override = {
-        makeMany: function(target, namespace, overrides) {
-          var fn, key, override, results;
-          results = [];
-          for (key in overrides) {
-            fn = overrides[key];
-            results.push(override = this.make(target, namespace, key, fn));
-          }
-          return results;
-        },
-        applyMany: function(target, namespace, overrides) {
-          var key, override, results;
-          results = [];
-          for (key in overrides) {
-            override = overrides[key];
-            if (typeof override === "function") {
-              override = this.make(target, namespace, key, override);
-            }
-            results.push(this.apply(target, namespace, override));
-          }
-          return results;
-        },
-        make: function(target, namespace, fnName, fn) {
-          var override;
-          override = {
-            fn: {
-              current: fn
-            },
-            name: fnName
-          };
-          override.fn['with' + namespace] = fn;
-          return override;
-        },
-        apply: function(target, namespace, override) {
-          var fnName, overrides, ref3, ref4, without;
-          fnName = override.name;
-          overrides = target._overrides != null ? Object.assign({}, target._overrides) : {};
-          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.current : void 0 : void 0) || target[fnName] || function() {};
-          override = Object.assign({}, override);
-          if (overrides[fnName] != null) {
-            override.fn = Object.assign({}, overrides[fnName].fn, override.fn);
-          } else {
-            override.fn = Object.assign({}, override.fn);
-          }
-          override.fn['without' + namespace] = without;
-          Object.defineProperty(target, fnName, {
-            configurable: true,
-            get: function() {
-              var finalFn, fn, key, ref5;
-              finalFn = override.fn.current.bind(this);
-              ref5 = override.fn;
-              for (key in ref5) {
-                fn = ref5[key];
-                finalFn[key] = fn.bind(this);
-              }
-              if (this.constructor.prototype !== this) {
-                Object.defineProperty(this, fnName, {
-                  value: finalFn
-                });
-              }
-              return finalFn;
-            }
-          });
-          overrides[fnName] = override;
-          return target._overrides = overrides;
-        }
-      };
-
-      return Overrider;
-
-    }).call(this);
-    return Overrider;
   });
 
   (function(definition) {
