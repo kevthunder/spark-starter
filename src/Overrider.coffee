@@ -21,11 +21,13 @@ class Overrider
       override.fn['with'+namespace] = fn
       override
 
+    emptyFn: ->
+
     apply: (target, namespace, override)->
       fnName = override.name
       overrides = if target._overrides? then Object.assign({},target._overrides) else {}
 
-      without = target._overrides?[fnName]?.current || target[fnName] || ->
+      without = target._overrides?[fnName]?.current || target[fnName]
 
       override = Object.assign({}, override)
       if overrides[fnName]?
@@ -33,7 +35,11 @@ class Overrider
       else
         override.fn = Object.assign({}, override.fn)
 
-      override.fn['without'+namespace] = without
+      override.fn['without'+namespace] = without || @emptyFn
+      unless without?
+        override.missingWithout = 'without'+namespace
+      else if override.missingWithout
+        override.fn[override.missingWithout] = without
 
       Object.defineProperty target, fnName,
         configurable: true
@@ -57,13 +63,15 @@ class Overrider
 
 
   getFinalProperties: ->
-    if @._properties?
-      ['_overrides'].concat @._overrides.map((override)->override.name)
+    if @._overrides?
+      ['_overrides'].concat Object.keys(@._overrides)
     else
       []
 
   extended: (target)->
     if @._overrides?
       @constructor.Override.applyMany(target, @constructor.name, @._overrides)
+    if @constructor == Overrider
+      target.extended = @extended
 
 

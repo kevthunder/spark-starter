@@ -951,10 +951,8 @@
         }
 
         getFinalProperties() {
-          if (this._properties != null) {
-            return ['_overrides'].concat(this._overrides.map(function(override) {
-              return override.name;
-            }));
+          if (this._overrides != null) {
+            return ['_overrides'].concat(Object.keys(this._overrides));
           } else {
             return [];
           }
@@ -962,7 +960,10 @@
 
         extended(target) {
           if (this._overrides != null) {
-            return this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
+            this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
+          }
+          if (this.constructor === Overrider) {
+            return target.extended = this.extended;
           }
         }
 
@@ -1001,18 +1002,24 @@
           override.fn['with' + namespace] = fn;
           return override;
         },
+        emptyFn: function() {},
         apply: function(target, namespace, override) {
           var fnName, overrides, ref3, ref4, without;
           fnName = override.name;
           overrides = target._overrides != null ? Object.assign({}, target._overrides) : {};
-          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.current : void 0 : void 0) || target[fnName] || function() {};
+          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.current : void 0 : void 0) || target[fnName];
           override = Object.assign({}, override);
           if (overrides[fnName] != null) {
             override.fn = Object.assign({}, overrides[fnName].fn, override.fn);
           } else {
             override.fn = Object.assign({}, override.fn);
           }
-          override.fn['without' + namespace] = without;
+          override.fn['without' + namespace] = without || this.emptyFn;
+          if (without == null) {
+            override.missingWithout = 'without' + namespace;
+          } else if (override.missingWithout) {
+            override.fn[override.missingWithout] = without;
+          }
           Object.defineProperty(target, fnName, {
             configurable: true,
             get: function() {

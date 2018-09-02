@@ -106,3 +106,19 @@ describe 'Overrider', ->
     assert.equal obj.foo(), 'hey hello hi'
     assert.equal alone1.foo(), 'hello '
     assert.equal alone2.foo(), 'hey '
+
+  it 'can be extended', ->
+    class Mixin1 extends Overrider
+      @overrides
+        foo: ->
+          ['hello',@foo.withoutMixin1()].join(' ')
+
+    class Mixin2 extends Mixin1
+
+    class TestClass extends Mixable
+      @extend Mixin2
+      foo: ->
+        'hi'
+
+    obj = new TestClass()
+    assert.equal obj.foo(), 'hello hi'

@@ -169,7 +169,7 @@
       assert.equal(obj.foo.withMixin1(), 'hello');
       return assert.equal(obj.foo.withoutMixin1(), 'hi');
     });
-    return it('does not change the original function', function() {
+    it('does not change the original function', function() {
       var Mixin1, Mixin2, TestClass, alone1, alone2, obj;
       Mixin1 = (function() {
         class Mixin1 extends Overrider {};
@@ -216,6 +216,37 @@
       assert.equal(obj.foo(), 'hey hello hi');
       assert.equal(alone1.foo(), 'hello ');
       return assert.equal(alone2.foo(), 'hey ');
+    });
+    return it('can be extended', function() {
+      var Mixin1, Mixin2, TestClass, obj;
+      Mixin1 = (function() {
+        class Mixin1 extends Overrider {};
+
+        Mixin1.overrides({
+          foo: function() {
+            return ['hello', this.foo.withoutMixin1()].join(' ');
+          }
+        });
+
+        return Mixin1;
+
+      }).call(this);
+      Mixin2 = class Mixin2 extends Mixin1 {};
+      TestClass = (function() {
+        class TestClass extends Mixable {
+          foo() {
+            return 'hi';
+          }
+
+        };
+
+        TestClass.extend(Mixin2);
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass();
+      return assert.equal(obj.foo(), 'hello hi');
     });
   });
 
