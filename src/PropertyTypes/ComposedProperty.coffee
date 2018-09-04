@@ -43,7 +43,6 @@ class ComposedProperty extends CalculatedProperty
   @compose = (prop)->
     if prop.options.composed?
       prop.instanceType = class extends ComposedProperty
-      prop.instanceType::get = @::calculatedGet
 
   @bind = (target,prop)->
     CalculatedProperty.bind(target,prop)

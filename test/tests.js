@@ -21,6 +21,8 @@
 
   require('./composed_property');
 
+  require('./activable_property');
+
   require('./property');
 
   require('./element');

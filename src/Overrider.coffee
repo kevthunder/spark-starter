@@ -27,7 +27,7 @@ class Overrider
       fnName = override.name
       overrides = if target._overrides? then Object.assign({},target._overrides) else {}
 
-      without = target._overrides?[fnName]?.current || target[fnName]
+      without = target._overrides?[fnName]?.fn.current || target[fnName]
 
       override = Object.assign({}, override)
       if overrides[fnName]?

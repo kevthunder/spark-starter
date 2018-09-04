@@ -34,7 +34,7 @@ gulp.task('concatCoffee', ['concat'], function() {
 
 gulp.task('compress', ['concatCoffee'], function () {
   return gulp.src('./dist/spark-starter.js')
-    .pipe(uglify())
+    .pipe(uglify({keep_classnames:true}))
     .pipe(rename('spark-starter.min.js'))
     .pipe(gulp.dest('./dist/'));
 });

@@ -1,10 +1,7 @@
 Invalidator = require('../Invalidator')
 CalculatedProperty = require('./CalculatedProperty')
-Overrider = require('../Overrider')
 
 class InvalidatedProperty extends CalculatedProperty
-  @extend Overrider
-
   unknown: ->
     if @calculated || @active == false
       @_invalidateNotice()

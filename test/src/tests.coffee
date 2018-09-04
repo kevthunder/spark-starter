@@ -9,6 +9,7 @@ require './basic_property'
 require './calculated_property'
 require './collection_property'
 require './composed_property'
+require './activable_property'
 require './property'
 require './element'
 
