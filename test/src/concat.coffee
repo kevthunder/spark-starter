@@ -2,10 +2,11 @@ assert = require('chai').assert
 
 describe 'concatened file check', ->
 
-  describe 'lib/spark-starter.js', ->
-    Spark =null
+  tests = (source) => 
+    Spark = null
+
     before ->
-      Spark = require('../lib/spark-starter.js')
+      Spark = require(source)
 
     it 'contains Element', ->
       assert.isFunction Spark.Element
@@ -19,21 +20,9 @@ describe 'concatened file check', ->
               'hello'
       obj = new TestClass()
       assert.equal obj.hello, 'hello'
+
+  describe 'lib/spark-starter.js', ->
+    tests '../lib/spark-starter.js'
 
   describe 'dist/spark-starter.min.js', ->
-    Spark =null
-    before ->
-      Spark = require('../dist/spark-starter.min.js')
-
-    it 'contains Element', ->
-      assert.isFunction Spark.Element
-    it 'contains Collection', ->
-      assert.isFunction Spark.Collection
-    it 'can create working Element', ->
-      class TestClass extends Spark.Element
-        @properties
-          hello:
-            calcul: ->
-              'hello'
-      obj = new TestClass()
-      assert.equal obj.hello, 'hello'
+    tests '../dist/spark-starter.min.js'

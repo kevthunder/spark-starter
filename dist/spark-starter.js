@@ -235,10 +235,6 @@
     Mixable = (function() {
       class Mixable {
         static extend(obj) {
-          if (!obj) {
-            console.log(this.name);
-            throw new Error('extend nothing ?');
-          }
           this.Extension.make(obj, this);
           if (obj.prototype != null) {
             return this.Extension.make(obj.prototype, this.prototype);
@@ -567,163 +563,178 @@
   });
 
   (function(definition) {
-    Spark.DynamicProperty = definition();
-    return Spark.DynamicProperty.definition = definition;
-  })(function(dependencies = {}) {
-    var BasicProperty, DynamicProperty, Invalidator;
-    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
-    BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
-    DynamicProperty = class DynamicProperty extends BasicProperty {
-      init() {
-        super.init();
-        return this.initRevalidate();
-      }
-
-      initRevalidate() {
-        return this.revalidateCallback = () => {
-          return this.get();
-        };
-      }
-
-      callbackGet() {
-        var res;
-        res = this.callOptionFunct("get");
-        this.revalidated();
-        return res;
-      }
-
-      invalidate() {
-        if (this.calculated || this.active === false) {
-          this.calculated = false;
-          this._invalidateNotice();
+    Spark.Overrider = definition();
+    return Spark.Overrider.definition = definition;
+  })(function() {
+    var Overrider;
+    Overrider = (function() {
+      class Overrider {
+        static overrides(overrides) {
+          return this.Override.applyMany(this.prototype, this.name, overrides);
         }
-        return this;
-      }
 
-      revalidate() {
-        super.revalidate();
-        return this.revalidateUpdater();
-      }
-
-      revalidateUpdater() {
-        if (this.getUpdater() != null) {
-          return this.getUpdater().unbind();
-        }
-      }
-
-      _invalidateNotice() {
-        if (this.isImmediate()) {
-          this.get();
-          return false;
-        } else {
-          if (typeof this.obj.emitEvent === 'function') {
-            this.obj.emitEvent(this.invalidateEventName);
-          }
-          if (this.getUpdater() != null) {
-            this.getUpdater().bind();
-          }
-          return true;
-        }
-      }
-
-      getUpdater() {
-        if (typeof this.updater === 'undefined') {
-          if (this.property.options.updater != null) {
-            this.updater = this.property.options.updater;
-            if (typeof this.updater.getBinder === 'function') {
-              this.updater = this.updater.getBinder();
-            }
-            if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
-              this.updater = null;
-            } else {
-              this.updater.callback = this.revalidateCallback;
-            }
+        getFinalProperties() {
+          if (this._overrides != null) {
+            return ['_overrides'].concat(Object.keys(this._overrides));
           } else {
-            this.updater = null;
+            return [];
           }
         }
-        return this.updater;
-      }
 
-      isImmediate() {
-        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
-      }
-
-      static compose(prop) {
-        if (typeof prop.options.get === 'function' || typeof prop.options.calcul === 'function' || typeof prop.options.active === 'function') {
-          if (prop.instanceType == null) {
-            prop.instanceType = class extends DynamicProperty {};
+        extended(target) {
+          if (this._overrides != null) {
+            this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
           }
-        }
-        
-        // if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty  
-        if (typeof prop.options.get === 'function') {
-          return prop.instanceType.prototype.get = this.prototype.callbackGet;
-        }
-      }
-
-    };
-    return DynamicProperty;
-  });
-
-  (function(definition) {
-    Spark.CalculatedProperty = definition();
-    return Spark.CalculatedProperty.definition = definition;
-  })(function(dependencies = {}) {
-    var CalculatedProperty, DynamicProperty, Invalidator, Overrider;
-    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
-    DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
-    Overrider = dependencies.hasOwnProperty("Overrider") ? dependencies.Overrider : Spark.Overrider;
-    CalculatedProperty = (function() {
-      class CalculatedProperty extends DynamicProperty {
-        calcul() {
-          this.value = this.callOptionFunct(this.calculFunct);
-          this.manual = false;
-          this.revalidated();
-          return this.value;
-        }
-
-        static compose(prop) {
-          if (typeof prop.options.calcul === 'function') {
-            prop.instanceType.prototype.calculFunct = prop.options.calcul;
-            if (!(prop.options.calcul.length > 0)) {
-              return prop.instanceType.extend(CalculatedProperty);
-            }
+          if (this.constructor === Overrider) {
+            return target.extended = this.extended;
           }
         }
 
       };
 
-      console.log('Overrider:', typeof Overrider);
-
-      CalculatedProperty.extend(Overrider);
-
-      CalculatedProperty.overrides({
-        get: function() {
-          var initiated, old;
-          if (this.invalidator) {
-            this.invalidator.validateUnknowns();
+      Overrider.Override = {
+        makeMany: function(target, namespace, overrides) {
+          var fn, key, override, results;
+          results = [];
+          for (key in overrides) {
+            fn = overrides[key];
+            results.push(override = this.make(target, namespace, key, fn));
           }
-          if (!this.calculated) {
-            old = this.value;
-            initiated = this.initiated;
-            this.calcul();
-            if (this.checkChanges(this.value, old)) {
-              if (initiated) {
-                this.changed(old);
-              } else if (typeof this.obj.emitEvent === 'function') {
-                this.obj.emitEvent(this.updateEventName, [old]);
-              }
+          return results;
+        },
+        applyMany: function(target, namespace, overrides) {
+          var key, override, results;
+          results = [];
+          for (key in overrides) {
+            override = overrides[key];
+            if (typeof override === "function") {
+              override = this.make(target, namespace, key, override);
             }
+            results.push(this.apply(target, namespace, override));
           }
-          return this.output();
+          return results;
+        },
+        make: function(target, namespace, fnName, fn) {
+          var override;
+          override = {
+            fn: {
+              current: fn
+            },
+            name: fnName
+          };
+          override.fn['with' + namespace] = fn;
+          return override;
+        },
+        emptyFn: function() {},
+        apply: function(target, namespace, override) {
+          var fnName, overrides, ref3, ref4, without;
+          fnName = override.name;
+          overrides = target._overrides != null ? Object.assign({}, target._overrides) : {};
+          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.fn.current : void 0 : void 0) || target[fnName];
+          override = Object.assign({}, override);
+          if (overrides[fnName] != null) {
+            override.fn = Object.assign({}, overrides[fnName].fn, override.fn);
+          } else {
+            override.fn = Object.assign({}, override.fn);
+          }
+          override.fn['without' + namespace] = without || this.emptyFn;
+          if (without == null) {
+            override.missingWithout = 'without' + namespace;
+          } else if (override.missingWithout) {
+            override.fn[override.missingWithout] = without;
+          }
+          Object.defineProperty(target, fnName, {
+            configurable: true,
+            get: function() {
+              var finalFn, fn, key, ref5;
+              finalFn = override.fn.current.bind(this);
+              ref5 = override.fn;
+              for (key in ref5) {
+                fn = ref5[key];
+                finalFn[key] = fn.bind(this);
+              }
+              if (this.constructor.prototype !== this) {
+                Object.defineProperty(this, fnName, {
+                  value: finalFn
+                });
+              }
+              return finalFn;
+            }
+          });
+          overrides[fnName] = override;
+          return target._overrides = overrides;
         }
-      });
+      };
 
-      return CalculatedProperty;
+      return Overrider;
 
     }).call(this);
-    return CalculatedProperty;
+    return Overrider;
+  });
+
+  (function(definition) {
+    Spark.EventBind = definition();
+    return Spark.EventBind.definition = definition;
+  })(function(dependencies = {}) {
+    var Binder, EventBind;
+    Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
+    EventBind = class EventBind extends Binder {
+      constructor(event1, target1, callback1) {
+        super();
+        this.event = event1;
+        this.target = target1;
+        this.callback = callback1;
+        this.ref = {
+          event: this.event,
+          target: this.target,
+          callback: this.callback
+        };
+      }
+
+      doBind() {
+        if (typeof this.target.addEventListener === 'function') {
+          return this.target.addEventListener(this.event, this.callback);
+        } else if (typeof this.target.addListener === 'function') {
+          return this.target.addListener(this.event, this.callback);
+        } else if (typeof this.target.on === 'function') {
+          return this.target.on(this.event, this.callback);
+        } else {
+          throw new Error('No function to add event listeners was found');
+        }
+      }
+
+      doUnbind() {
+        if (typeof this.target.removeEventListener === 'function') {
+          return this.target.removeEventListener(this.event, this.callback);
+        } else if (typeof this.target.removeListener === 'function') {
+          return this.target.removeListener(this.event, this.callback);
+        } else if (typeof this.target.off === 'function') {
+          return this.target.off(this.event, this.callback);
+        } else {
+          throw new Error('No function to remove event listeners was found');
+        }
+      }
+
+      equals(eventBind) {
+        return super.equals(eventBind) && eventBind.event === this.event;
+      }
+
+      match(event, target) {
+        return event === this.event && target === this.target;
+      }
+
+      static checkEmitter(emitter, fatal = true) {
+        if (typeof emitter.addEventListener === 'function' || typeof emitter.addListener === 'function' || typeof emitter.on === 'function') {
+          return true;
+        } else if (fatal) {
+          throw new Error('No function to add event listeners was found');
+        } else {
+          return false;
+        }
+      }
+
+    };
+    return EventBind;
   });
 
   (function(definition) {
@@ -950,113 +961,191 @@
   });
 
   (function(definition) {
-    Spark.Overrider = definition();
-    return Spark.Overrider.definition = definition;
-  })(function() {
-    var Overrider;
-    Overrider = (function() {
-      class Overrider {
-        static overrides(overrides) {
-          return this.Override.applyMany(this.prototype, this.name, overrides);
+    Spark.DynamicProperty = definition();
+    return Spark.DynamicProperty.definition = definition;
+  })(function(dependencies = {}) {
+    var BasicProperty, DynamicProperty, Invalidator;
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
+    DynamicProperty = class DynamicProperty extends BasicProperty {
+      init() {
+        super.init();
+        return this.initRevalidate();
+      }
+
+      initRevalidate() {
+        return this.revalidateCallback = () => {
+          return this.get();
+        };
+      }
+
+      callbackGet() {
+        var res;
+        res = this.callOptionFunct("get");
+        this.revalidated();
+        return res;
+      }
+
+      invalidate() {
+        if (this.calculated || this.active === false) {
+          this.calculated = false;
+          this._invalidateNotice();
         }
+        return this;
+      }
 
-        getFinalProperties() {
-          if (this._overrides != null) {
-            return ['_overrides'].concat(Object.keys(this._overrides));
-          } else {
-            return [];
-          }
+      revalidate() {
+        super.revalidate();
+        return this.revalidateUpdater();
+      }
+
+      revalidateUpdater() {
+        if (this.getUpdater() != null) {
+          return this.getUpdater().unbind();
         }
+      }
 
-        extended(target) {
-          if (this._overrides != null) {
-            this.constructor.Override.applyMany(target, this.constructor.name, this._overrides);
+      _invalidateNotice() {
+        if (this.isImmediate()) {
+          this.get();
+          return false;
+        } else {
+          if (typeof this.obj.emitEvent === 'function') {
+            this.obj.emitEvent(this.invalidateEventName);
           }
-          if (this.constructor === Overrider) {
-            return target.extended = this.extended;
+          if (this.getUpdater() != null) {
+            this.getUpdater().bind();
           }
+          return true;
         }
+      }
 
-      };
-
-      Overrider.Override = {
-        makeMany: function(target, namespace, overrides) {
-          var fn, key, override, results;
-          results = [];
-          for (key in overrides) {
-            fn = overrides[key];
-            results.push(override = this.make(target, namespace, key, fn));
-          }
-          return results;
-        },
-        applyMany: function(target, namespace, overrides) {
-          var key, override, results;
-          results = [];
-          for (key in overrides) {
-            override = overrides[key];
-            if (typeof override === "function") {
-              override = this.make(target, namespace, key, override);
+      getUpdater() {
+        if (typeof this.updater === 'undefined') {
+          if (this.property.options.updater != null) {
+            this.updater = this.property.options.updater;
+            if (typeof this.updater.getBinder === 'function') {
+              this.updater = this.updater.getBinder();
             }
-            results.push(this.apply(target, namespace, override));
-          }
-          return results;
-        },
-        make: function(target, namespace, fnName, fn) {
-          var override;
-          override = {
-            fn: {
-              current: fn
-            },
-            name: fnName
-          };
-          override.fn['with' + namespace] = fn;
-          return override;
-        },
-        emptyFn: function() {},
-        apply: function(target, namespace, override) {
-          var fnName, overrides, ref3, ref4, without;
-          fnName = override.name;
-          overrides = target._overrides != null ? Object.assign({}, target._overrides) : {};
-          without = ((ref3 = target._overrides) != null ? (ref4 = ref3[fnName]) != null ? ref4.fn.current : void 0 : void 0) || target[fnName];
-          override = Object.assign({}, override);
-          if (overrides[fnName] != null) {
-            override.fn = Object.assign({}, overrides[fnName].fn, override.fn);
+            if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
+              this.updater = null;
+            } else {
+              this.updater.callback = this.revalidateCallback;
+            }
           } else {
-            override.fn = Object.assign({}, override.fn);
+            this.updater = null;
           }
-          override.fn['without' + namespace] = without || this.emptyFn;
-          if (without == null) {
-            override.missingWithout = 'without' + namespace;
-          } else if (override.missingWithout) {
-            override.fn[override.missingWithout] = without;
+        }
+        return this.updater;
+      }
+
+      isImmediate() {
+        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
+      }
+
+      static compose(prop) {
+        if (typeof prop.options.get === 'function' || typeof prop.options.calcul === 'function' || typeof prop.options.active === 'function') {
+          if (prop.instanceType == null) {
+            prop.instanceType = class extends DynamicProperty {};
           }
-          Object.defineProperty(target, fnName, {
-            configurable: true,
-            get: function() {
-              var finalFn, fn, key, ref5;
-              finalFn = override.fn.current.bind(this);
-              ref5 = override.fn;
-              for (key in ref5) {
-                fn = ref5[key];
-                finalFn[key] = fn.bind(this);
-              }
-              if (this.constructor.prototype !== this) {
-                Object.defineProperty(this, fnName, {
-                  value: finalFn
-                });
-              }
-              return finalFn;
+        }
+        
+        // if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty
+        if (typeof prop.options.get === 'function') {
+          return prop.instanceType.prototype.get = this.prototype.callbackGet;
+        }
+      }
+
+    };
+    return DynamicProperty;
+  });
+
+  (function(definition) {
+    Spark.ActivableProperty = definition();
+    return Spark.ActivableProperty.definition = definition;
+  })(function(dependencies = {}) {
+    var ActivableProperty, BasicProperty, Invalidator, Overrider;
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
+    Overrider = dependencies.hasOwnProperty("Overrider") ? dependencies.Overrider : Spark.Overrider;
+    ActivableProperty = (function() {
+      class ActivableProperty extends BasicProperty {
+        isActive() {
+          return true;
+        }
+
+        manualActive() {
+          return this.active;
+        }
+
+        callbackActive() {
+          var invalidator;
+          invalidator = this.activeInvalidator || new Invalidator(this, this.obj);
+          invalidator.recycle((invalidator, done) => {
+            this.active = this.callOptionFunct(this.activeFunct, invalidator);
+            done();
+            if (this.active || invalidator.isEmpty()) {
+              invalidator.unbind();
+              return this.activeInvalidator = null;
+            } else {
+              this.invalidator = invalidator;
+              this.activeInvalidator = invalidator;
+              return invalidator.bind();
             }
           });
-          overrides[fnName] = override;
-          return target._overrides = overrides;
+          return this.active;
         }
+
+        static compose(prop) {
+          if (typeof prop.options.active !== "undefined") {
+            prop.instanceType.extend(ActivableProperty);
+            if (typeof prop.options.active === "boolean") {
+              prop.instanceType.prototype.active = prop.options.active;
+              return prop.instanceType.prototype.isActive = this.prototype.manualActive;
+            } else if (typeof prop.options.active === 'function') {
+              prop.instanceType.prototype.activeFunct = prop.options.active;
+              return prop.instanceType.prototype.isActive = this.prototype.callbackActive;
+            }
+          }
+        }
+
       };
 
-      return Overrider;
+      ActivableProperty.extend(Overrider);
+
+      ActivableProperty.overrides({
+        get: function() {
+          var out;
+          if (this.isActive()) {
+            out = this.get.withoutActivableProperty();
+            if (this.pendingChanges) {
+              this.changed(this.pendingOld);
+            }
+            return out;
+          } else {
+            this.initiated = true;
+            return void 0;
+          }
+        },
+        changed: function(old) {
+          if (this.isActive()) {
+            this.pendingChanges = false;
+            this.pendingOld = void 0;
+            this.changed.withoutActivableProperty(old);
+          } else {
+            this.pendingChanges = true;
+            if (typeof this.pendingOld === 'undefined') {
+              this.pendingOld = old;
+            }
+          }
+          return this;
+        }
+      });
+
+      return ActivableProperty;
 
     }).call(this);
-    return Overrider;
+    return ActivableProperty;
   });
 
   (function(definition) {
@@ -1151,221 +1240,61 @@
   });
 
   (function(definition) {
-    Spark.InvalidatedProperty = definition();
-    return Spark.InvalidatedProperty.definition = definition;
+    Spark.CalculatedProperty = definition();
+    return Spark.CalculatedProperty.definition = definition;
   })(function(dependencies = {}) {
-    var CalculatedProperty, InvalidatedProperty, Invalidator;
+    var CalculatedProperty, DynamicProperty, Invalidator, Overrider;
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
-    CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
-    InvalidatedProperty = (function() {
-      class InvalidatedProperty extends CalculatedProperty {
-        unknown() {
-          if (this.calculated || this.active === false) {
-            this._invalidateNotice();
-          }
-          return this;
-        }
-
-        static compose(prop) {
-          if (typeof prop.options.calcul === 'function' && prop.options.calcul.length > 0) {
-            return prop.instanceType.extend(InvalidatedProperty);
-          }
-        }
-
-      };
-
-      InvalidatedProperty.overrides({
-        calcul: function() {
-          if (!this.invalidator) {
-            this.invalidator = new Invalidator(this, this.obj);
-          }
-          this.invalidator.recycle((invalidator, done) => {
-            this.value = this.callOptionFunct(this.calculFunct, invalidator);
-            this.manual = false;
-            done();
-            if (invalidator.isEmpty()) {
-              return this.invalidator = null;
-            } else {
-              return invalidator.bind();
-            }
-          });
+    DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
+    Overrider = dependencies.hasOwnProperty("Overrider") ? dependencies.Overrider : Spark.Overrider;
+    CalculatedProperty = (function() {
+      class CalculatedProperty extends DynamicProperty {
+        calcul() {
+          this.value = this.callOptionFunct(this.calculFunct);
+          this.manual = false;
           this.revalidated();
           return this.value;
-        },
-        destroy: function() {
-          this.destroy.withoutInvalidatedProperty();
-          if (this.invalidator != null) {
-            return this.invalidator.unbind();
-          }
-        },
-        invalidate: function() {
-          if (this.calculated || this.active === false) {
-            this.calculated = false;
-            if (this._invalidateNotice() && (this.invalidator != null)) {
-              this.invalidator.unbind();
-            }
-          }
-          return this;
-        }
-      });
-
-      return InvalidatedProperty;
-
-    }).call(this);
-    return InvalidatedProperty;
-  });
-
-  (function(definition) {
-    Spark.ActivableProperty = definition();
-    return Spark.ActivableProperty.definition = definition;
-  })(function(dependencies = {}) {
-    var ActivableProperty, BasicProperty, Invalidator, Overrider;
-    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
-    BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
-    Overrider = dependencies.hasOwnProperty("Overrider") ? dependencies.Overrider : Spark.Overrider;
-    ActivableProperty = (function() {
-      class ActivableProperty extends BasicProperty {
-        isActive() {
-          return true;
-        }
-
-        manualActive() {
-          return this.active;
-        }
-
-        callbackActive() {
-          var invalidator;
-          invalidator = this.activeInvalidator || new Invalidator(this, this.obj);
-          invalidator.recycle((invalidator, done) => {
-            this.active = this.callOptionFunct(this.activeFunct, invalidator);
-            done();
-            if (this.active || invalidator.isEmpty()) {
-              invalidator.unbind();
-              return this.activeInvalidator = null;
-            } else {
-              this.invalidator = invalidator;
-              this.activeInvalidator = invalidator;
-              return invalidator.bind();
-            }
-          });
-          return this.active;
         }
 
         static compose(prop) {
-          if (typeof prop.options.active !== "undefined") {
-            prop.instanceType.extend(ActivableProperty);
-            if (typeof prop.options.active === "boolean") {
-              prop.instanceType.prototype.active = prop.options.active;
-              return prop.instanceType.prototype.isActive = this.prototype.manualActive;
-            } else if (typeof prop.options.active === 'function') {
-              prop.instanceType.prototype.activeFunct = prop.options.active;
-              return prop.instanceType.prototype.isActive = this.prototype.callbackActive;
+          if (typeof prop.options.calcul === 'function') {
+            prop.instanceType.prototype.calculFunct = prop.options.calcul;
+            if (!(prop.options.calcul.length > 0)) {
+              return prop.instanceType.extend(CalculatedProperty);
             }
           }
         }
 
       };
 
-      ActivableProperty.extend(Overrider);
+      CalculatedProperty.extend(Overrider);
 
-      ActivableProperty.overrides({
+      CalculatedProperty.overrides({
         get: function() {
-          var out;
-          if (this.isActive()) {
-            out = this.get.withoutActivableProperty();
-            if (this.pendingChanges) {
-              this.changed(this.pendingOld);
-            }
-            return out;
-          } else {
-            this.initiated = true;
-            return void 0;
+          var initiated, old;
+          if (this.invalidator) {
+            this.invalidator.validateUnknowns();
           }
-        },
-        changed: function(old) {
-          if (this.isActive()) {
-            this.pendingChanges = false;
-            this.pendingOld = void 0;
-            this.changed.withoutActivableProperty(old);
-          } else {
-            this.pendingChanges = true;
-            if (typeof this.pendingOld === 'undefined') {
-              this.pendingOld = old;
+          if (!this.calculated) {
+            old = this.value;
+            initiated = this.initiated;
+            this.calcul();
+            if (this.checkChanges(this.value, old)) {
+              if (initiated) {
+                this.changed(old);
+              } else if (typeof this.obj.emitEvent === 'function') {
+                this.obj.emitEvent(this.updateEventName, [old]);
+              }
             }
           }
-          return this;
+          return this.output();
         }
       });
 
-      return ActivableProperty;
+      return CalculatedProperty;
 
     }).call(this);
-    return ActivableProperty;
-  });
-
-  (function(definition) {
-    Spark.EventBind = definition();
-    return Spark.EventBind.definition = definition;
-  })(function(dependencies = {}) {
-    var Binder, EventBind;
-    Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
-    EventBind = class EventBind extends Binder {
-      constructor(event1, target1, callback1) {
-        super();
-        this.event = event1;
-        this.target = target1;
-        this.callback = callback1;
-        this.ref = {
-          event: this.event,
-          target: this.target,
-          callback: this.callback
-        };
-      }
-
-      doBind() {
-        if (typeof this.target.addEventListener === 'function') {
-          return this.target.addEventListener(this.event, this.callback);
-        } else if (typeof this.target.addListener === 'function') {
-          return this.target.addListener(this.event, this.callback);
-        } else if (typeof this.target.on === 'function') {
-          return this.target.on(this.event, this.callback);
-        } else {
-          throw new Error('No function to add event listeners was found');
-        }
-      }
-
-      doUnbind() {
-        if (typeof this.target.removeEventListener === 'function') {
-          return this.target.removeEventListener(this.event, this.callback);
-        } else if (typeof this.target.removeListener === 'function') {
-          return this.target.removeListener(this.event, this.callback);
-        } else if (typeof this.target.off === 'function') {
-          return this.target.off(this.event, this.callback);
-        } else {
-          throw new Error('No function to remove event listeners was found');
-        }
-      }
-
-      equals(eventBind) {
-        return super.equals(eventBind) && eventBind.event === this.event;
-      }
-
-      match(event, target) {
-        return event === this.event && target === this.target;
-      }
-
-      static checkEmitter(emitter, fatal = true) {
-        if (typeof emitter.addEventListener === 'function' || typeof emitter.addListener === 'function' || typeof emitter.on === 'function') {
-          return true;
-        } else if (fatal) {
-          throw new Error('No function to add event listeners was found');
-        } else {
-          return false;
-        }
-      }
-
-    };
-    return EventBind;
+    return CalculatedProperty;
   });
 
   (function(definition) {
@@ -1535,6 +1464,71 @@
   });
 
   (function(definition) {
+    Spark.InvalidatedProperty = definition();
+    return Spark.InvalidatedProperty.definition = definition;
+  })(function(dependencies = {}) {
+    var CalculatedProperty, InvalidatedProperty, Invalidator;
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
+    InvalidatedProperty = (function() {
+      class InvalidatedProperty extends CalculatedProperty {
+        unknown() {
+          if (this.calculated || this.active === false) {
+            this._invalidateNotice();
+          }
+          return this;
+        }
+
+        static compose(prop) {
+          if (typeof prop.options.calcul === 'function' && prop.options.calcul.length > 0) {
+            return prop.instanceType.extend(InvalidatedProperty);
+          }
+        }
+
+      };
+
+      InvalidatedProperty.overrides({
+        calcul: function() {
+          if (!this.invalidator) {
+            this.invalidator = new Invalidator(this, this.obj);
+          }
+          this.invalidator.recycle((invalidator, done) => {
+            this.value = this.callOptionFunct(this.calculFunct, invalidator);
+            this.manual = false;
+            done();
+            if (invalidator.isEmpty()) {
+              return this.invalidator = null;
+            } else {
+              return invalidator.bind();
+            }
+          });
+          this.revalidated();
+          return this.value;
+        },
+        destroy: function() {
+          this.destroy.withoutInvalidatedProperty();
+          if (this.invalidator != null) {
+            return this.invalidator.unbind();
+          }
+        },
+        invalidate: function() {
+          if (this.calculated || this.active === false) {
+            this.calculated = false;
+            if (this._invalidateNotice() && (this.invalidator != null)) {
+              this.invalidator.unbind();
+            }
+          }
+          return this;
+        }
+      });
+
+      return InvalidatedProperty;
+
+    }).call(this);
+    return InvalidatedProperty;
+  });
+
+  (function(definition) {
     Spark.Property = definition();
     return Spark.Property.definition = definition;
   })(function(dependencies = {}) {
@@ -1557,9 +1551,6 @@
 
         bind(target) {
           var parent, prop;
-          if (typeof target === "undefined") {
-            throw new Error('getInstance : undefined target ?');
-          }
           prop = this;
           if (!(typeof target.getProperty === 'function' && target.getProperty(this.name) === this)) {
             if (typeof target.getProperty === 'function' && ((parent = target.getProperty(this.name)) != null)) {
@@ -1614,9 +1605,6 @@
 
         getInstance(obj) {
           var Type, varName;
-          if (typeof obj === "undefined") {
-            throw new Error('getInstance : undefined obj ?');
-          }
           varName = this.getInstanceVarName();
           if (!this.isInstantiated(obj)) {
             Type = this.getInstanceType();

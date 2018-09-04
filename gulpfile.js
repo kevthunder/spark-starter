@@ -56,4 +56,10 @@ gulp.task('test', ['build','coffeeTest'], function() {
     .pipe(mocha({require:['source-map-support/register']}));
 });
 
+gulp.task('test-debug', ['build','coffeeTest'], function() {
+  return gulp.src('./test/tests.js')
+    .pipe(mocha({"inspect-brk":true, require:['source-map-support/register']}));
+});
+
+
 gulp.task('default', ['build']);

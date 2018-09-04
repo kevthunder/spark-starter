@@ -9,7 +9,9 @@
   },
   "scripts": {
     "test": "gulp test",
-    "build": "gulp build"
+    "build": "gulp build",
+    "build-debug": "node --inspect-brk ./node_modules/gulp/bin/gulp build",
+    "test-debug": "gulp test-debug"
   },
   "author": "kevthunder",
   "license": "ISC",
