@@ -72,8 +72,6 @@ class DynamicProperty extends BasicProperty
       unless prop.instanceType?
         prop.instanceType = class extends DynamicProperty
 
-    # if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty
-
     if typeof prop.options.get == 'function'
       prop.instanceType::get = @::callbackGet
 

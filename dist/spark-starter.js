@@ -1049,8 +1049,6 @@
             prop.instanceType = class extends DynamicProperty {};
           }
         }
-        
-        // if prop.instanceType? and prop.instanceType.prototype instanceof DynamicProperty
         if (typeof prop.options.get === 'function') {
           return prop.instanceType.prototype.get = this.prototype.callbackGet;
         }
