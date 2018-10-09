@@ -1,5 +1,5 @@
 (function() {
-  var Invalidator, Property, Updater, assert;
+  var EventEmitter, Invalidator, Property, Updater, assert;
 
   assert = require('chai').assert;
 
@@ -8,6 +8,8 @@
   Invalidator = require('../lib/Invalidator');
 
   Updater = require('../lib/Updater');
+
+  EventEmitter = require('../lib/EventEmitter');
 
   describe('CalculatedProperty', function() {
     var propEvents, updateEvents;
@@ -360,7 +362,7 @@
       prop.get();
       return assert.instanceOf(prop.invalidator, Invalidator);
     });
-    return it('allow implicit target for invalidators', function() {
+    it('allow implicit target for invalidators', function() {
       var emitter, prop, res;
       emitter = {
         addListener: function(evt, listener) {
@@ -378,6 +380,78 @@
       }).getInstance(emitter);
       res = prop.get();
       return assert.equal(res, 4);
+    });
+    return it('should re-calcul immediately if it invalidate inderectly an immediate property', function() {
+      var calculSourceCalls, calcultargetCalls, changeCalls, middle, prop, prop2, prop3, source, target, val;
+      calculSourceCalls = 0;
+      calcultargetCalls = 0;
+      changeCalls = 0;
+      val = 3;
+      source = new EventEmitter();
+      new Property('prop', {
+        calcul: function(invalidated) {
+          calculSourceCalls += 1;
+          return val += 1;
+        }
+      }).bind(source);
+      prop = source.getPropertyInstance('prop');
+      middle = new EventEmitter();
+      prop2 = new Property('prop2', {
+        calcul: function(invalidator) {
+          return invalidator.prop('prop', source);
+        }
+      }).bind(middle);
+      prop2 = middle.getPropertyInstance('prop2');
+      target = {};
+      prop3 = new Property('prop3', {
+        calcul: function(invalidator) {
+          calcultargetCalls += 1;
+          return invalidator.prop('prop2', middle);
+        },
+        change: function(old) {
+          return changeCalls += 1;
+        }
+      }).bind(target);
+      prop3 = target.getPropertyInstance('prop3');
+      assert.equal(calculSourceCalls, 0, "nb calcul calls for source");
+      assert.equal(calcultargetCalls, 0, "nb calcul calls for target");
+      assert.equal(changeCalls, 0, "nb change calls");
+      assert.equal(prop3.value, void 0);
+      assert.equal(prop3.calculated, false);
+      assert.equal(prop.value, void 0);
+      assert.equal(prop.calculated, false);
+      prop3.get();
+      assert.equal(calculSourceCalls, 1, "nb calcul calls for source");
+      assert.equal(calcultargetCalls, 1, "nb calcul calls for target");
+      assert.equal(changeCalls, 0, "nb change calls");
+      assert.equal(prop3.value, 4);
+      assert.equal(prop3.calculated, true);
+      assert.equal(prop.value, 4);
+      assert.equal(prop.calculated, true);
+      prop.invalidate();
+      assert.equal(calculSourceCalls, 2, "nb calcul calls for source");
+      assert.equal(calcultargetCalls, 2, "nb calcul calls for target");
+      assert.equal(changeCalls, 1, "nb change calls");
+      assert.equal(prop3.value, 5);
+      assert.equal(prop3.calculated, true);
+      assert.equal(prop.value, 5);
+      assert.equal(prop.calculated, true);
+      prop.invalidate();
+      assert.equal(calculSourceCalls, 3, "nb calcul calls for source");
+      assert.equal(calcultargetCalls, 3, "nb calcul calls for target");
+      assert.equal(changeCalls, 2, "nb change calls");
+      assert.equal(prop3.value, 6);
+      assert.equal(prop3.calculated, true);
+      assert.equal(prop.value, 6);
+      assert.equal(prop.calculated, true);
+      prop3.get();
+      assert.equal(calculSourceCalls, 3, "nb calcul calls for source");
+      assert.equal(calcultargetCalls, 3, "nb calcul calls for target");
+      assert.equal(changeCalls, 2, "nb change calls");
+      assert.equal(prop3.value, 6);
+      assert.equal(prop3.calculated, true);
+      assert.equal(prop.value, 6);
+      return assert.equal(prop.calculated, true);
     });
   });
 

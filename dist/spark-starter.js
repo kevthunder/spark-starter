@@ -1512,7 +1512,7 @@
         invalidate: function() {
           if (this.calculated || this.active === false) {
             this.calculated = false;
-            if (this._invalidateNotice() && (this.invalidator != null)) {
+            if (this._invalidateNotice() && !this.calculated && (this.invalidator != null)) {
               this.invalidator.unbind();
             }
           }

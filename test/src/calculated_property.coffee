@@ -2,6 +2,7 @@ assert = require('chai').assert
 Property = require('../lib/Property')
 Invalidator = require('../lib/Invalidator')
 Updater = require('../lib/Updater')
+EventEmitter = require('../lib/EventEmitter')
 
 describe 'CalculatedProperty', ->
 
@@ -347,4 +348,74 @@ describe 'CalculatedProperty', ->
     res = prop.get()
     assert.equal res, 4
   
+  it 'should re-calcul immediately if it invalidate inderectly an immediate property', ->
+    calculSourceCalls = 0
+    calcultargetCalls = 0
+    changeCalls = 0
+    val = 3
+
+    source = new EventEmitter()
+    new Property('prop',{
+      calcul: (invalidated)->
+        calculSourceCalls += 1
+        val += 1
+    }).bind(source);
+    prop = source.getPropertyInstance('prop')
+
+    middle = new EventEmitter()
+    prop2 = new Property('prop2',{
+      calcul: (invalidator)->
+        invalidator.prop('prop',source)
+    }).bind(middle);
+    prop2 = middle.getPropertyInstance('prop2')
+
+    target = {}
+    prop3 = new Property('prop3',{
+      calcul: (invalidator)->
+        calcultargetCalls += 1
+        invalidator.prop('prop2',middle)
+      change: (old)->
+        changeCalls += 1
+    }).bind(target);
+    prop3 = target.getPropertyInstance('prop3')
+
+    assert.equal calculSourceCalls, 0, "nb calcul calls for source"
+    assert.equal calcultargetCalls, 0, "nb calcul calls for target"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop3.value, undefined
+    assert.equal prop3.calculated, false
+    assert.equal prop.value, undefined
+    assert.equal prop.calculated, false
+    prop3.get()
+    assert.equal calculSourceCalls, 1, "nb calcul calls for source"
+    assert.equal calcultargetCalls, 1, "nb calcul calls for target"
+    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal prop3.value, 4
+    assert.equal prop3.calculated, true
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal calculSourceCalls, 2, "nb calcul calls for source"
+    assert.equal calcultargetCalls, 2, "nb calcul calls for target"
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop3.value, 5
+    assert.equal prop3.calculated, true
+    assert.equal prop.value, 5
+    assert.equal prop.calculated, true
+    prop.invalidate()
+    assert.equal calculSourceCalls, 3, "nb calcul calls for source"
+    assert.equal calcultargetCalls, 3, "nb calcul calls for target"
+    assert.equal changeCalls, 2, "nb change calls"
+    assert.equal prop3.value, 6
+    assert.equal prop3.calculated, true
+    assert.equal prop.value, 6
+    assert.equal prop.calculated, true
+    prop3.get()
+    assert.equal calculSourceCalls, 3, "nb calcul calls for source"
+    assert.equal calcultargetCalls, 3, "nb calcul calls for target"
+    assert.equal changeCalls, 2, "nb change calls"
+    assert.equal prop3.value, 6
+    assert.equal prop3.calculated, true
+    assert.equal prop.value, 6
+    assert.equal prop.calculated, true
   

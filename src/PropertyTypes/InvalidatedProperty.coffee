@@ -30,7 +30,7 @@ class InvalidatedProperty extends CalculatedProperty
     invalidate: ->
       if @calculated || @active == false
         @calculated = false
-        if @_invalidateNotice() && @invalidator?
+        if @_invalidateNotice() && !@calculated && @invalidator?
           @invalidator.unbind()
       this
 
