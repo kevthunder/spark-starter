@@ -270,21 +270,25 @@ describe 'CalculatedProperty', ->
     
     assert.equal calculCalls, 0, "nb calcul calls, before get"
     assert.equal changeCalls, 0, "nb change calls, before get"
+    assert.equal updater.callbacks.length, 0, "nb updater callback, before get"
     assert.equal prop.value, undefined
     assert.equal prop.calculated, false
     prop.get()
     assert.equal calculCalls, 1, "nb calcul calls, after get"
     assert.equal changeCalls, 0, "nb change calls, after get"
+    assert.equal updater.callbacks.length, 0, "nb updater callback, after get"
     assert.equal prop.value, 4
     assert.equal prop.calculated, true
     prop.invalidate()
     assert.equal calculCalls, 1, "nb calcul calls, after invalidate"
     assert.equal changeCalls, 0, "nb change calls, after invalidate"
+    assert.equal updater.callbacks.length, 1, "nb updater callback, after invalidate"
     assert.equal prop.value, 4
     assert.equal prop.calculated, false
     updater.update()
     assert.equal calculCalls, 2, "nb calcul calls, after update"
     assert.equal changeCalls, 1, "nb change calls, after update"
+    assert.equal updater.callbacks.length, 0, "nb updater callback, after update"
     assert.equal prop.value, 5
     assert.equal prop.calculated, true
 

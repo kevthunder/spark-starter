@@ -994,8 +994,8 @@
         return this;
       }
 
-      revalidate() {
-        super.revalidate();
+      revalidated() {
+        super.revalidated();
         return this.revalidateUpdater();
       }
 

@@ -23,7 +23,7 @@ class DynamicProperty extends BasicProperty
       @_invalidateNotice()
     this
 
-  revalidate: ->
+  revalidated: ->
     super()
     @revalidateUpdater()
 
