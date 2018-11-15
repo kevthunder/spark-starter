@@ -9,46 +9,59 @@
     return Spark.Binder.definition = definition;
   })(function() {
     var Binder;
-    Binder = class Binder {
-      bind() {
-        if (!this.binded && (this.callback != null) && (this.target != null)) {
-          this.doBind();
+    Binder = (function() {
+      class Binder {
+        bind() {
+          if (!this.binded && (this.callback != null) && (this.target != null)) {
+            this.doBind();
+          }
+          return this.binded = true;
         }
-        return this.binded = true;
-      }
 
-      doBind() {
-        throw new Error('Not implemented');
-      }
-
-      unbind() {
-        if (this.binded && (this.callback != null) && (this.target != null)) {
-          this.doUnbind();
+        doBind() {
+          throw new Error('Not implemented');
         }
-        return this.binded = false;
-      }
 
-      doUnbind() {
-        throw new Error('Not implemented');
-      }
+        unbind() {
+          if (this.binded && (this.callback != null) && (this.target != null)) {
+            this.doUnbind();
+          }
+          return this.binded = false;
+        }
 
-      equals(binder) {
-        return this.constructor.compareRefered(binder, this);
-      }
+        doUnbind() {
+          throw new Error('Not implemented');
+        }
 
-      static compareRefered(obj1, obj2) {
-        return obj1 === obj2 || ((obj1 != null) && (obj2 != null) && obj1.constructor === obj2.constructor && this.compareRef(obj1.ref, obj2.ref));
-      }
+        equals(binder) {
+          return this.constructor.compareRefered(binder, this);
+        }
 
-      static compareRef(ref1, ref2) {
-        return (ref1 != null) && (ref2 != null) && (ref1 === ref2 || (Array.isArray(ref1) && Array.isArray(ref1) && ref1.every((val, i) => {
-          return this.compareRefered(ref1[i], ref2[i]);
-        })) || (typeof ref1 === "object" && typeof ref2 === "object" && Object.keys(ref1).join() === Object.keys(ref2).join() && Object.keys(ref1).every((key) => {
-          return this.compareRefered(ref1[key], ref2[key]);
-        })));
-      }
+        getRef() {}
 
-    };
+        static compareRefered(obj1, obj2) {
+          return obj1 === obj2 || ((obj1 != null) && (obj2 != null) && obj1.constructor === obj2.constructor && this.compareRef(obj1.ref, obj2.ref));
+        }
+
+        static compareRef(ref1, ref2) {
+          return (ref1 != null) && (ref2 != null) && (ref1 === ref2 || (Array.isArray(ref1) && Array.isArray(ref1) && ref1.every((val, i) => {
+            return this.compareRefered(ref1[i], ref2[i]);
+          })) || (typeof ref1 === "object" && typeof ref2 === "object" && Object.keys(ref1).join() === Object.keys(ref2).join() && Object.keys(ref1).every((key) => {
+            return this.compareRefered(ref1[key], ref2[key]);
+          })));
+        }
+
+      };
+
+      Object.defineProperty(Binder.prototype, 'ref', {
+        get: function() {
+          return this.getRef();
+        }
+      });
+
+      return Binder;
+
+    }).call(this);
     return Binder;
   });
 
@@ -684,7 +697,10 @@
         this.event = event1;
         this.target = target1;
         this.callback = callback1;
-        this.ref = {
+      }
+
+      getRef() {
+        return {
           event: this.event,
           target: this.target,
           callback: this.callback
@@ -807,7 +823,6 @@
         addBinder(binder) {
           if (binder.callback == null) {
             binder.callback = this.invalidateCallback;
-            binder.ref.callback = this.invalidateCallback;
           }
           if (!this.invalidationEvents.some(function(eventBind) {
             return eventBind.equals(binder);
@@ -1847,7 +1862,10 @@
           super();
           this.target = target1;
           this.callback = callback1;
-          this.ref = {
+        }
+
+        getRef() {
+          return {
             target: this.target,
             callback: this.callback
           };

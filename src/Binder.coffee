@@ -15,6 +15,11 @@ class Binder
   equals: (binder) -> 
     @constructor.compareRefered(binder, this)
 
+  getRef: ->
+
+  Object.defineProperty @::, 'ref',
+    get: -> @getRef()
+
   @compareRefered = (obj1, obj2)->
     obj1 == obj2 || (
       obj1? and obj2? and

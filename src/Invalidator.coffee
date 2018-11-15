@@ -51,7 +51,6 @@ class Invalidator extends Binder
   addBinder: (binder) ->
     unless binder.callback?
       binder.callback = @invalidateCallback
-      binder.ref.callback = @invalidateCallback
     unless @invalidationEvents.some( (eventBind)-> eventBind.equals(binder))
       @invalidationEvents.push(
         pluck(@recycled, (eventBind)-> 

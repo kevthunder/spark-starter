@@ -28,6 +28,28 @@
       assert.isTrue(bind1.equals(bind2));
       return assert.isFalse(bind1.equals(bind3));
     });
+    it('can compare 2 EventBinds after a change', function() {
+      var bind1, bind2, calls, emitter, maker, testEvent;
+      testEvent = 'test';
+      maker = function(val) {
+        var callback;
+        callback = function() {
+          return null;
+        };
+        callback.ref = {
+          maker: arguments.callee,
+          val: val
+        };
+        return callback;
+      };
+      calls = 0;
+      emitter = {};
+      bind1 = new EventBind(testEvent, emitter, maker(1));
+      bind2 = new EventBind(testEvent, emitter, maker(1));
+      assert.isTrue(bind1.equals(bind2));
+      bind2.event = 'test2';
+      return assert.isFalse(bind1.equals(bind2));
+    });
     it('should add listener on bind', function() {
       var bind, calls, emitter, testEvent, testListener;
       testEvent = 'test';

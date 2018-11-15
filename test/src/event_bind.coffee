@@ -23,6 +23,26 @@ describe 'EventBind', ->
     assert.isTrue bind1.equals(bind2)
     assert.isFalse bind1.equals(bind3)
 
+  it 'can compare 2 EventBinds after a change', ->
+    testEvent = 'test'
+    maker = (val)->
+        callback = -> null
+        callback.ref = {
+          maker: arguments.callee
+          val: val
+        }
+        callback
+    
+    calls = 0
+    emitter = {}
+
+    bind1 = new EventBind(testEvent,emitter,maker(1))
+    bind2 = new EventBind(testEvent,emitter,maker(1))
+
+    assert.isTrue bind1.equals(bind2)
+    bind2.event = 'test2'
+    assert.isFalse bind1.equals(bind2)
+
   it 'should add listener on bind', ->
     testEvent = 'test'
     testListener = -> null
