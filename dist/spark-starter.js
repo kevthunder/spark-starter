@@ -806,6 +806,7 @@
         addBinder(binder) {
           if (binder.callback == null) {
             binder.callback = this.invalidateCallback;
+            binder.ref.callback = this.invalidateCallback;
           }
           if (!this.invalidationEvents.some(function(eventBind) {
             return eventBind.equals(binder);

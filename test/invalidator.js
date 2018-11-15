@@ -97,6 +97,21 @@
       assert.equal(invalidator.invalidationEvents[0].target, emitter);
       return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
     });
+    it('should have a distict bind than anoter Invalidator binding the same event', function() {
+      var emitter, invalidated, invalidator1, invalidator2;
+      invalidated = {
+        test1: 1,
+        test2: 1
+      };
+      emitter = new EventEmitter();
+      invalidator1 = new Invalidator('test1', invalidated);
+      invalidator2 = new Invalidator('test2', invalidated);
+      invalidator1.event('testChanged', emitter);
+      invalidator2.event('testChanged', emitter);
+      assert.equal(invalidator1.invalidationEvents.length, 1);
+      assert.equal(invalidator2.invalidationEvents.length, 1);
+      return assert.isFalse(invalidator1.invalidationEvents[0].equals(invalidator2.invalidationEvents[0]));
+    });
     it('should create a bind with invalidatedValue', function() {
       var emitter, invalidated, invalidator, res;
       invalidated = {
