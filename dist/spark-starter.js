@@ -770,6 +770,7 @@
             this.invalidate();
             return null;
           };
+          this.invalidateCallback.owner = this;
         }
 
         invalidate() {
@@ -975,9 +976,10 @@
       }
 
       initRevalidate() {
-        return this.revalidateCallback = () => {
+        this.revalidateCallback = () => {
           return this.get();
         };
+        return this.revalidateCallback.owner = this;
       }
 
       callbackGet() {
@@ -1654,14 +1656,14 @@
         if (this._callbacks == null) {
           this._callbacks = {};
         }
-        if (this._callbacks[name] != null) {
-          return this._callbacks[name];
-        } else {
-          return this._callbacks[name] = (...args) => {
+        if (this._callbacks[name] == null) {
+          this._callbacks[name] = (...args) => {
             this[name].apply(this, args);
             return null;
           };
+          this._callbacks[name].owner = this;
         }
+        return this._callbacks[name];
       }
 
       getFinalProperties() {

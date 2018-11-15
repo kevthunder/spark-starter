@@ -22,6 +22,7 @@ class Invalidator extends Binder
     @invalidateCallback = => 
       @invalidate()
       null
+    @invalidateCallback.owner = this
 
   invalidate: ->
     @invalidated = true

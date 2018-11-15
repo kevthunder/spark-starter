@@ -13,12 +13,12 @@ class Element extends Mixable
   callback: (name) ->
     unless @_callbacks?
       @_callbacks = {}
-    if @_callbacks[name]?
-      @_callbacks[name]
-    else
+    unless @_callbacks[name]?
       @_callbacks[name] = (args...)=> 
         this[name].apply(this,args)
         null
+      @_callbacks[name].owner = this
+    @_callbacks[name]
 
   getFinalProperties: ->
     if @._properties?

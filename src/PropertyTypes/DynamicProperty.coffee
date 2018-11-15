@@ -11,6 +11,7 @@ class DynamicProperty extends BasicProperty
   initRevalidate: ->
     @revalidateCallback = =>
       @get()
+    @revalidateCallback.owner = this
 
   callbackGet:->
     res = @callOptionFunct("get")
