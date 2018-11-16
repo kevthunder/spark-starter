@@ -1,5 +1,5 @@
 (function() {
-  var EventEmitter, Invalidator, Property, assert;
+  var EventEmitter, Invalidator, Property, Updater, assert;
 
   assert = require('chai').assert;
 
@@ -8,6 +8,8 @@
   Invalidator = require('../lib/Invalidator');
 
   EventEmitter = require('../lib/EventEmitter');
+
+  Updater = require('../lib/Updater');
 
   describe('Activable Property', function() {
     it('should not call calcul when not active', function() {
@@ -79,7 +81,7 @@
       assert.equal(calculCalls, 2, 'calculCalls after get 2');
       return assert.equal(changeCalls, 2, 'changeCalls after get 2');
     });
-    return it('trigger change when re-activeted', function() {
+    it('trigger change when re-activeted', function() {
       var changeCalls, emitter, res;
       emitter = new EventEmitter();
       changeCalls = 0;
@@ -107,6 +109,49 @@
       assert.equal(changeCalls, 1, 'changeCalls after get 2');
       emitter.bar = 'hey';
       return assert.equal(changeCalls, 2, 'changeCalls after set');
+    });
+    return it('trigger change when re-activeted using an updater', function() {
+      var changeCalls, emitter, res, updater;
+      updater = new Updater();
+      emitter = new EventEmitter();
+      changeCalls = 0;
+      (new Property('foo', {
+        default: null
+      })).bind(emitter);
+      (new Property('bar', {
+        updater: updater,
+        active: function(invalidator) {
+          return invalidator.prop('foo') != null;
+        },
+        change: function() {
+          return changeCalls += 1;
+        }
+      })).bind(emitter);
+      assert.equal(changeCalls, 0, 'changeCalls initial');
+      assert.equal(updater.callbacks.length, 0, "nb updater callback, initial");
+      res = emitter.bar;
+      assert.isUndefined(res);
+      assert.equal(changeCalls, 0, 'changeCalls after get');
+      assert.equal(updater.callbacks.length, 0, "nb updater callback, after get");
+      emitter.bar = 'hello';
+      assert.equal(changeCalls, 0, 'changeCalls after set');
+      assert.equal(updater.callbacks.length, 0, "nb updater callback, after set");
+      emitter.foo = 'foo';
+      assert.equal(changeCalls, 0, 'changeCalls after change foo');
+      assert.equal(updater.callbacks.length, 1, "nb updater callback, change foo");
+      updater.update();
+      assert.equal(changeCalls, 1, 'changeCalls after update');
+      assert.equal(updater.callbacks.length, 0, "nb updater callback, after update");
+      res = emitter.bar;
+      assert.equal(res, 'hello');
+      assert.equal(changeCalls, 1, 'changeCalls after get 2');
+      assert.equal(updater.callbacks.length, 0, "nb updater callback, after get 2");
+      emitter.bar = 'hey';
+      assert.equal(changeCalls, 1, 'changeCalls after set 2');
+      assert.equal(updater.callbacks.length, 1, "nb updater callback, after set 2");
+      updater.update();
+      assert.equal(changeCalls, 2, 'changeCalls after update 2');
+      return assert.equal(updater.callbacks.length, 0, "nb updater callback, after update 2");
     });
   });
 

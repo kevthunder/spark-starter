@@ -1090,6 +1090,13 @@
           return true;
         }
 
+        triggerPendingChanges() {
+          if ((typeof this.getUpdater === "function" ? this.getUpdater() : void 0) != null) {
+            this.getUpdater().unbind();
+          }
+          return this.changed(this.pendingOld);
+        }
+
         manualActive() {
           return this.active;
         }
@@ -1135,7 +1142,7 @@
           if (this.isActive()) {
             out = this.get.withoutActivableProperty();
             if (this.pendingChanges) {
-              this.changed(this.pendingOld);
+              this.triggerPendingChanges();
             }
             return out;
           } else {
