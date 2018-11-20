@@ -26,7 +26,7 @@ class EventEmitter
   listenerRemoved: (e, listener) ->
 
   emitEvent: (e, args...) ->
-    listeners = @getListeners(e)
+    listeners = @getListeners(e).slice()
     listeners.forEach (listener)->
       listener(args...)
 

@@ -1813,7 +1813,7 @@
 
         emitEvent(e, ...args) {
           var listeners;
-          listeners = this.getListeners(e);
+          listeners = this.getListeners(e).slice();
           return listeners.forEach(function(listener) {
             return listener(...args);
           });

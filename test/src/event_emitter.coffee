@@ -58,3 +58,21 @@ describe 'EventEmitter', ->
     emitter.addListener 'foo', fn
     emitter.emitEvent('foo')
     assert.equal called, 1
+
+
+  it 'insure callbacks cannot disrupt event triggering', ->
+    fn1 = ->
+      fn1.called += 1
+      emitter.removeListener 'foo', fn1
+    fn1.called = 0
+
+    fn2 = ->
+      fn2.called += 1
+    fn2.called = 0
+
+    emitter = new EventEmitter()
+    emitter.addListener 'foo', fn1
+    emitter.addListener 'foo', fn2
+    emitter.emitEvent('foo')
+    assert.equal fn1.called, 1, "fn1.called"
+    assert.equal fn2.called, 1, "fn2.called"
