@@ -985,18 +985,6 @@
     Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
     BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
     DynamicProperty = class DynamicProperty extends BasicProperty {
-      init() {
-        super.init();
-        return this.initRevalidate();
-      }
-
-      initRevalidate() {
-        this.revalidateCallback = () => {
-          return this.get();
-        };
-        return this.revalidateCallback.owner = this;
-      }
-
       callbackGet() {
         var res;
         res = this.callOptionFunct("get");
@@ -1012,17 +1000,6 @@
         return this;
       }
 
-      revalidated() {
-        super.revalidated();
-        return this.revalidateUpdater();
-      }
-
-      revalidateUpdater() {
-        if (this.getUpdater() != null) {
-          return this.getUpdater().unbind();
-        }
-      }
-
       _invalidateNotice() {
         if (this.isImmediate()) {
           this.get();
@@ -1031,34 +1008,12 @@
           if (typeof this.obj.emitEvent === 'function') {
             this.obj.emitEvent(this.invalidateEventName);
           }
-          if (this.getUpdater() != null) {
-            this.getUpdater().bind();
-          }
           return true;
         }
       }
 
-      getUpdater() {
-        if (typeof this.updater === 'undefined') {
-          if (this.property.options.updater != null) {
-            this.updater = this.property.options.updater;
-            if (typeof this.updater.getBinder === 'function') {
-              this.updater = this.updater.getBinder();
-            }
-            if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
-              this.updater = null;
-            } else {
-              this.updater.callback = this.revalidateCallback;
-            }
-          } else {
-            this.updater = null;
-          }
-        }
-        return this.updater;
-      }
-
       isImmediate() {
-        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : (this.getUpdater() == null) && (this.hasChangedEvents() || this.hasChangedFunctions())));
+        return this.property.options.immediate !== false && (this.property.options.immediate === true || (typeof this.property.options.immediate === 'function' ? this.callOptionFunct("immediate") : this.hasChangedEvents() || this.hasChangedFunctions()));
       }
 
       static compose(prop) {
@@ -1088,13 +1043,6 @@
       class ActivableProperty extends BasicProperty {
         isActive() {
           return true;
-        }
-
-        triggerPendingChanges() {
-          if ((typeof this.getUpdater === "function" ? this.getUpdater() : void 0) != null) {
-            this.getUpdater().unbind();
-          }
-          return this.changed(this.pendingOld);
         }
 
         manualActive() {
@@ -1142,7 +1090,7 @@
           if (this.isActive()) {
             out = this.get.withoutActivableProperty();
             if (this.pendingChanges) {
-              this.triggerPendingChanges();
+              this.changed(this.pendingOld);
             }
             return out;
           } else {
@@ -1318,6 +1266,96 @@
 
     }).call(this);
     return CalculatedProperty;
+  });
+
+  (function(definition) {
+    Spark.UpdatedProperty = definition();
+    return Spark.UpdatedProperty.definition = definition;
+  })(function(dependencies = {}) {
+    var DynamicProperty, Invalidator, Overrider, UpdatedProperty;
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
+    Overrider = dependencies.hasOwnProperty("Overrider") ? dependencies.Overrider : Spark.Overrider;
+    UpdatedProperty = (function() {
+      class UpdatedProperty extends DynamicProperty {
+        initRevalidate() {
+          this.revalidateCallback = () => {
+            this.updating = true;
+            this.get();
+            this.getUpdater().unbind();
+            if (this.pendingChanges) {
+              this.changed(this.pendingOld);
+            }
+            return this.updating = false;
+          };
+          return this.revalidateCallback.owner = this;
+        }
+
+        getUpdater() {
+          if (typeof this.updater === 'undefined') {
+            if (this.property.options.updater != null) {
+              this.updater = this.property.options.updater;
+              if (typeof this.updater.getBinder === 'function') {
+                this.updater = this.updater.getBinder();
+              }
+              if (typeof this.updater.bind !== 'function' || typeof this.updater.unbind !== 'function') {
+                this.updater = null;
+              } else {
+                this.updater.callback = this.revalidateCallback;
+              }
+            } else {
+              this.updater = null;
+            }
+          }
+          return this.updater;
+        }
+
+        static compose(prop) {
+          if (prop.options.updater != null) {
+            return prop.instanceType.extend(UpdatedProperty);
+          }
+        }
+
+      };
+
+      UpdatedProperty.extend(Overrider);
+
+      UpdatedProperty.overrides({
+        init: function() {
+          this.init.withoutUpdatedProperty();
+          return this.initRevalidate();
+        },
+        _invalidateNotice: function() {
+          var res;
+          res = this._invalidateNotice.withoutUpdatedProperty();
+          if (res) {
+            this.getUpdater().bind();
+          }
+          return res;
+        },
+        isImmediate: function() {
+          return false;
+        },
+        changed: function(old) {
+          if (this.updating) {
+            this.pendingChanges = false;
+            this.pendingOld = void 0;
+            this.changed.withoutUpdatedProperty(old);
+          } else {
+            this.pendingChanges = true;
+            if (typeof this.pendingOld === 'undefined') {
+              this.pendingOld = old;
+            }
+            this.getUpdater().bind();
+          }
+          return this;
+        }
+      });
+
+      return UpdatedProperty;
+
+    }).call(this);
+    return UpdatedProperty;
   });
 
   (function(definition) {
@@ -1555,7 +1593,7 @@
     Spark.Property = definition();
     return Spark.Property.definition = definition;
   })(function(dependencies = {}) {
-    var ActivableProperty, BasicProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, InvalidatedProperty, Mixable, Property, PropertyOwner;
+    var ActivableProperty, BasicProperty, CalculatedProperty, CollectionProperty, ComposedProperty, DynamicProperty, InvalidatedProperty, Mixable, Property, PropertyOwner, UpdatedProperty;
     BasicProperty = dependencies.hasOwnProperty("BasicProperty") ? dependencies.BasicProperty : Spark.BasicProperty;
     CollectionProperty = dependencies.hasOwnProperty("CollectionProperty") ? dependencies.CollectionProperty : Spark.CollectionProperty;
     ComposedProperty = dependencies.hasOwnProperty("ComposedProperty") ? dependencies.ComposedProperty : Spark.ComposedProperty;
@@ -1563,6 +1601,7 @@
     CalculatedProperty = dependencies.hasOwnProperty("CalculatedProperty") ? dependencies.CalculatedProperty : Spark.CalculatedProperty;
     InvalidatedProperty = dependencies.hasOwnProperty("InvalidatedProperty") ? dependencies.InvalidatedProperty : Spark.InvalidatedProperty;
     ActivableProperty = dependencies.hasOwnProperty("ActivableProperty") ? dependencies.ActivableProperty : Spark.ActivableProperty;
+    UpdatedProperty = dependencies.hasOwnProperty("UpdatedProperty") ? dependencies.UpdatedProperty : Spark.UpdatedProperty;
     PropertyOwner = dependencies.hasOwnProperty("PropertyOwner") ? dependencies.PropertyOwner : Spark.PropertyOwner;
     Mixable = dependencies.hasOwnProperty("Mixable") ? dependencies.Mixable : Spark.Mixable;
     Property = (function() {
@@ -1647,7 +1686,7 @@
 
       };
 
-      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, BasicProperty, CalculatedProperty, InvalidatedProperty, ActivableProperty];
+      Property.prototype.composers = [ComposedProperty, CollectionProperty, DynamicProperty, BasicProperty, UpdatedProperty, CalculatedProperty, InvalidatedProperty, ActivableProperty];
 
       return Property;
 

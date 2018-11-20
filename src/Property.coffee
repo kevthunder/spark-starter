@@ -5,6 +5,7 @@ DynamicProperty = require('./PropertyTypes/DynamicProperty')
 CalculatedProperty = require('./PropertyTypes/CalculatedProperty')
 InvalidatedProperty = require('./PropertyTypes/InvalidatedProperty')
 ActivableProperty = require('./PropertyTypes/ActivableProperty')
+UpdatedProperty = require('./PropertyTypes/UpdatedProperty')
 PropertyOwner = require('./PropertyOwner')
 Mixable = require('./Mixable')
 
@@ -14,6 +15,7 @@ class Property
     CollectionProperty, 
     DynamicProperty, 
     BasicProperty, 
+    UpdatedProperty,
     CalculatedProperty, 
     InvalidatedProperty,
     ActivableProperty

@@ -3,16 +3,6 @@ BasicProperty = require('./BasicProperty')
 
 class DynamicProperty extends BasicProperty
   
-  
-  init: ->
-    super()
-    @initRevalidate()
-
-  initRevalidate: ->
-    @revalidateCallback = =>
-      @get()
-    @revalidateCallback.owner = this
-
   callbackGet:->
     res = @callOptionFunct("get")
     @revalidated()
@@ -24,14 +14,6 @@ class DynamicProperty extends BasicProperty
       @_invalidateNotice()
     this
 
-  revalidated: ->
-    super()
-    @revalidateUpdater()
-
-  revalidateUpdater: ->
-    if @getUpdater()?
-      @getUpdater().unbind()
-
   _invalidateNotice: ->
     if @isImmediate()
       @get()
@@ -39,23 +21,7 @@ class DynamicProperty extends BasicProperty
     else 
       if typeof @obj.emitEvent == 'function'
         @obj.emitEvent(@invalidateEventName)
-      if @getUpdater()?
-        @getUpdater().bind()
       true
-
-  getUpdater: ->
-    if typeof @updater == 'undefined'
-      if @property.options.updater?
-        @updater = @property.options.updater
-        if typeof @updater.getBinder == 'function'
-          @updater = @updater.getBinder()
-        if typeof @updater.bind != 'function' or typeof @updater.unbind != 'function'
-          @updater = null
-        else
-          @updater.callback = @revalidateCallback
-      else
-        @updater = null
-    @updater
     
   isImmediate: ->
     @property.options.immediate != false and
@@ -64,7 +30,7 @@ class DynamicProperty extends BasicProperty
         if typeof @property.options.immediate == 'function'
           @callOptionFunct("immediate")
         else
-          !@getUpdater()? and (@hasChangedEvents() or @hasChangedFunctions())
+          @hasChangedEvents() or @hasChangedFunctions()
     )
 
   @compose = (prop)->

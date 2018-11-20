@@ -10,7 +10,7 @@ class ActivableProperty extends BasicProperty
       if @isActive()
         out = @get.withoutActivableProperty()
         if @pendingChanges
-          @triggerPendingChanges()
+          @changed(@pendingOld)
         out
       else
         @initiated = true
@@ -29,11 +29,6 @@ class ActivableProperty extends BasicProperty
 
   isActive: ->
     true
-
-  triggerPendingChanges: ->
-    if @getUpdater?()?
-      @getUpdater().unbind()
-    @changed(@pendingOld)
 
   manualActive: ->
     @active

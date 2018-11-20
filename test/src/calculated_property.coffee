@@ -284,6 +284,7 @@ describe 'CalculatedProperty', ->
     assert.equal changeCalls, 0, "nb change calls, after invalidate"
     assert.equal updater.callbacks.length, 1, "nb updater callback, after invalidate"
     assert.equal prop.value, 4
+    assert.equal prop.isImmediate(), false, "isImmediate"
     assert.equal prop.calculated, false
     updater.update()
     assert.equal calculCalls, 2, "nb calcul calls, after update"
