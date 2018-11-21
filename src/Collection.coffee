@@ -28,6 +28,10 @@ class Collection
 
   get: (i)->
     @_array[i]
+
+  getRandom: ()->
+    @_array[Math.floor(Math.random()*@_array.length)]
+
   set: (i, val)->
     if @_array[i] != val
       old = @toArray()

@@ -37,6 +37,22 @@
       assert.equal(coll.count(), 4, 'new Count');
       return assert.equal(coll.get(3), 4, 'new val');
     });
+    it('can get randomitem', function() {
+      var coll, i, res, val2;
+      coll = new Collection([1, 2, 3]);
+      res = coll.getRandom();
+      assert.isTrue(coll.includes(res));
+      i = 0;
+      val2 = coll.getRandom();
+      while (res === val2) {
+        val2 = coll.getRandom();
+        i++;
+        if (i > 1000) {
+          break;
+        }
+      }
+      return assert.notEqual(res, val2);
+    });
     it('can convert to array', function() {
       var arr, coll;
       coll = new Collection([1, 2, 3]);

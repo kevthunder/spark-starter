@@ -108,6 +108,10 @@
           return this._array[i];
         }
 
+        getRandom() {
+          return this._array[Math.floor(Math.random() * this._array.length)];
+        }
+
         set(i, val) {
           var old;
           if (this._array[i] !== val) {

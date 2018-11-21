@@ -27,6 +27,20 @@ describe 'Collection', ->
     coll.push(4)
     assert.equal coll.count(), 4, 'new Count'
     assert.equal coll.get(3), 4, 'new val'
+
+  it 'can get randomitem', ->
+    coll = new Collection([1,2,3])
+    res = coll.getRandom()
+    assert.isTrue coll.includes(res)
+
+    i = 0
+    val2 = coll.getRandom()
+    while res == val2
+        val2 = coll.getRandom()
+        i++
+        if i > 1000
+            break
+    assert.notEqual res, val2
     
   it 'can convert to array', ->
     coll = new Collection([1,2,3])
