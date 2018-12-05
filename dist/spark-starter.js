@@ -94,7 +94,11 @@
               return a === b;
             };
           }
-          old = this.copy(old.slice());
+          if (old != null) {
+            old = this.copy(old.slice());
+          } else {
+            old = [];
+          }
           return this.count() !== old.length || (ordered ? this.some(function(val, i) {
             return !compareFunction(old.get(i), val);
           }) : this.some(function(a) {

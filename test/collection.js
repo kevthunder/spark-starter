@@ -172,6 +172,10 @@
       assert.isTrue(coll.checkChanges(["4", "2", "3"], true, compareFunction));
       return assert.isTrue(coll.checkChanges([1, 3], true, compareFunction));
     });
+    it('can detect changes¸from a null like its en empty array', function() {
+      assert.isTrue((new Collection([1, 2, 3])).checkChanges(null));
+      return assert.isFalse((new Collection([])).checkChanges(null));
+    });
     it('can tell what items were added compared to another array', function() {
       var newColl, old;
       old = [1, 2, 3];

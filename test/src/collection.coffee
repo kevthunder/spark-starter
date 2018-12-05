@@ -149,6 +149,12 @@ describe 'Collection', ->
     assert.isTrue coll.checkChanges(["4","2","3"], true, compareFunction)
     assert.isTrue coll.checkChanges([1,3], true, compareFunction)
 
+  it 'can detect changes from a null like its an empty array', ->
+    assert.isTrue (new Collection([1,2,3])).checkChanges(null)
+
+    assert.isFalse (new Collection([])).checkChanges(null)
+
+
   it 'can tell what items were added compared to another array', ->
     old = [1,2,3]
     newColl = new Collection([1,4,2,3,5])
