@@ -897,6 +897,17 @@
           }
         }
 
+        propPath(path, target = this.obj) {
+          var prop, val;
+          path = path.split('.');
+          val = target;
+          while ((val != null) && path.length > 0) {
+            prop = path.shift();
+            val = this.prop(prop, val);
+          }
+          return val;
+        }
+
         propInitiated(prop, target = this.obj) {
           var initiated;
           initiated = target.getPropertyInstance(prop).initiated;

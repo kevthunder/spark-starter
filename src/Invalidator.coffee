@@ -98,6 +98,14 @@ class Invalidator extends Binder
     else
       target[prop]
 
+  propPath: (path, target = @obj) ->
+    path = path.split('.')
+    val = target
+    while val? and path.length > 0
+      prop = path.shift()
+      val = @prop(prop, val)
+    val
+
   propInitiated:  (prop, target = @obj) ->
     initiated = target.getPropertyInstance(prop).initiated
     if !initiated and @checkEmitter(target)

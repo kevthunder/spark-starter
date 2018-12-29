@@ -214,6 +214,33 @@ describe 'Invalidator', ->
       if invalidator.invalidationEvents[i].event == 'testUpdated'
         assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
     
+  it 'can bind to a property with propPath', ->
+    invalidated = new EventEmitter()
+    invalidated.invalidateTest = ->
+      @invalidateCalls++
+    invalidated.invalidateCalls = 0
+    invalidated.foo = new EventEmitter()
+    invalidated.foo.bar = 4
+
+    invalidator = new Invalidator('test', invalidated)
+    
+    res = invalidator.propPath('foo.bar')
+    invalidator.bind()
+
+    assert.equal 4, res
+    assert.equal 0, invalidated.invalidateCalls
+
+    invalidated.trigger('fooUpdated')
+    assert.equal 1, invalidated.invalidateCalls
+
+    invalidated.foo.trigger('barUpdated')
+    assert.equal 2, invalidated.invalidateCalls
+
+    invalidated.foo.bar = 5
+    assert.equal 5, invalidator.propPath('foo.bar')
+
+    invalidated.foo = null
+    assert.isNull invalidator.propPath('foo.bar')
 
   it 'should add listener on bind', ->
   
