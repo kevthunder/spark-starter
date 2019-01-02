@@ -19,6 +19,9 @@ class BasicProperty extends Mixable
 
   get: ->
     @calculated = true
+    unless @initiated 
+      @initiated = true
+      @emitEvent('updated')
     @output()
 
   set: (val)->
@@ -68,8 +71,8 @@ class BasicProperty extends Mixable
       @value
       
   changed: (old)->
-    @emitEvent('updated', [old])
-    @emitEvent('changed', [old])
+    @emitEvent('updated', old)
+    @emitEvent('changed', old)
     this
 
   @compose = (prop)->
@@ -82,7 +85,6 @@ class BasicProperty extends Mixable
       prop.instanceType::set = @::setAndCheckChanges
 
     prop.instanceType::default = prop.options.default
-    prop.instanceType::initiated = typeof prop.options.default != 'undefined'
 
   @bind = (target, prop)->
     maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1)
@@ -124,6 +126,7 @@ class BasicProperty extends Mixable
           scope: target
           property: instance || prop.name
           initByLoader: true
+          autoBind: true
           callback: prop.options.change
           ref: ref
     preload

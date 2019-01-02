@@ -45,13 +45,13 @@
       });
       assert.equal(call, 0);
       prop.get();
-      assert.equal(call, 0);
-      prop.set(2);
       assert.equal(call, 1);
       prop.set(2);
-      assert.equal(call, 1);
+      assert.equal(call, 2);
+      prop.set(2);
+      assert.equal(call, 2);
       prop.set(4);
-      return assert.equal(call, 2);
+      return assert.equal(call, 3);
     });
     return it('should allow to alter the input value', function() {
       var prop;

@@ -18,7 +18,9 @@ class CalculatedProperty extends DynamicProperty
           if initiated 
             @changed(old)
           else
-            @emitEvent('updated', [old])
+            @emitEvent('updated', old)
+        else if !initiated 
+          @emitEvent('updated', old)
       @output()
 
   calcul: ->

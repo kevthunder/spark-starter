@@ -156,6 +156,8 @@ describe 'ComposedProperty', ->
         calls++
     }).getInstance({});
 
+    assert.equal calls, 1
+
     prop.members.setValueRef(2,'prop1')
     prop.members.setValueRef(2,'prop2')
 

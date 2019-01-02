@@ -60,6 +60,8 @@ class CollectionProperty extends DynamicProperty
           loaderAsScope: true
           scope: target
           property: instance || prop.name
+          initByLoader: true
+          autoBind: true
           callback: prop.options.change
           onAdded: prop.options.itemAdded
           onRemoved: prop.options.itemRemoved

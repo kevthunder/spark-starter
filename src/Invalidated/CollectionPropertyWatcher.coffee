@@ -8,8 +8,7 @@ class CollectionPropertyWatcher extends PropertyWatcher
     @onRemoved = options.onRemoved
 
   handleChange: (value, old)->
-    @old = @old.copy()
-    old = old || value.copy([])
+    old = value.copy(old || [])
     if typeof @callback == 'function'
       @callback.call(@scope, old)
     if typeof @onAdded == 'function'

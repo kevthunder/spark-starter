@@ -146,6 +146,7 @@
           return calls++;
         }
       }).getInstance({});
+      assert.equal(calls, 1);
       prop.members.setValueRef(2, 'prop1');
       prop.members.setValueRef(2, 'prop2');
       assert.equal(calls, 3);

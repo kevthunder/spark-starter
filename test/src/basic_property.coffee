@@ -41,13 +41,13 @@ describe 'BasicProperty', ->
 
     assert.equal call, 0
     prop.get()
-    assert.equal call, 0
-    prop.set(2)
     assert.equal call, 1
     prop.set(2)
-    assert.equal call, 1
-    prop.set(4)
     assert.equal call, 2
+    prop.set(2)
+    assert.equal call, 2
+    prop.set(4)
+    assert.equal call, 3
   
   it 'should allow to alter the input value', ->
     prop = new Property('prop',{
