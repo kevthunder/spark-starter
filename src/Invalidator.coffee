@@ -12,36 +12,36 @@ pluck = (arr,fn) ->
 
 class Invalidator extends Binder
   @strict = true
-  constructor: (@property, @obj = null) ->
+  constructor: (@invalidated, @scope = null) ->
     super()
     @invalidationEvents = []
     @recycled = []
     @unknowns = []
     @strict = @constructor.strict
-    @invalidated = false
+    @invalid = false
     @invalidateCallback = => 
       @invalidate()
       null
     @invalidateCallback.owner = this
 
   invalidate: ->
-    @invalidated = true
-    if typeof @property == "function"
-      @property()
+    @invalid = true
+    if typeof @invalidated == "function"
+      @invalidated()
     else if typeof @callback == "function"
       @callback()
-    else if @property? and typeof @property.invalidate == "function"
-      @property.invalidate()
-    else if typeof @property == "string"
-      functName = 'invalidate' + @property.charAt(0).toUpperCase() + @property.slice(1)
-      if typeof @obj[functName] == "function"
-        @obj[functName]()
+    else if @invalidated? and typeof @invalidated.invalidate == "function"
+      @invalidated.invalidate()
+    else if typeof @invalidated == "string"
+      functName = 'invalidate' + @invalidated.charAt(0).toUpperCase() + @invalidated.slice(1)
+      if typeof @scope[functName] == "function"
+        @scope[functName]()
       else
-        @obj[@property] = null
+        @scope[@invalidated] = null
 
   unknown: ->
-    if typeof @property.unknown == "function"
-      @property.unknown()
+    if typeof @invalidated?.unknown == "function"
+      @invalidated.unknown()
     else
       @invalidate()
         
@@ -59,46 +59,48 @@ class Invalidator extends Binder
         binder
       )
       
-  getUnknownCallback: (prop, target) ->
+  getUnknownCallback: (prop) ->
     callback = => 
       @addUnknown -> 
-          target[prop]
-        , prop, target
+          prop.get()
+        , prop
     callback.ref = {
       prop: prop
-      target: target
     }
     callback
 
-  addUnknown: (fn,prop,target) ->
-    unless @findUnknown(prop,target)
-      fn.ref = {"prop": prop, "target": target}
+  addUnknown: (fn,prop) ->
+    unless @findUnknown(prop)
+      fn.ref = {"prop": prop}
       @unknowns.push(fn)
       @unknown()
 
-  findUnknown: (prop,target) ->
+  findUnknown: (prop) ->
     if prop? or target?
       @unknowns.find (unknown)-> 
-          unknown.ref.prop == prop && unknown.ref.target == target
+          unknown.ref.prop == prop
       
-  event: (event, target = @obj) ->
+  event: (event, target = @scope) ->
     if @checkEmitter(target)
       @addEventBind(event, target)
   
-  value: (val, event, target = @obj) ->
+  value: (val, event, target = @scope) ->
     @event(event, target)
     val
   
-  prop: (prop, target = @obj) ->
-    if typeof prop != 'string'
-      throw new Error('Property name must be a string')
-    if @checkEmitter(target)
-      @addEventBind(prop+'Invalidated', target, @getUnknownCallback(prop,target))
-      @value(target[prop], prop+'Updated', target)
-    else
-      target[prop]
+  prop: (prop, target = @scope) ->
+    if typeof prop == 'string'
+      if target.getPropertyInstance?
+        prop = target.getPropertyInstance(prop)
+      else
+        return target[prop] 
+    else if !@checkPropInstance(prop)
+      throw new Error('Property must be a PropertyInstance or a string')
 
-  propPath: (path, target = @obj) ->
+    @addEventBind('invalidated', prop, @getUnknownCallback(prop))
+    @value(prop.get(), 'updated', prop)
+
+  propPath: (path, target = @scope) ->
     path = path.split('.')
     val = target
     while val? and path.length > 0
@@ -106,10 +108,15 @@ class Invalidator extends Binder
       val = @prop(prop, val)
     val
 
-  propInitiated:  (prop, target = @obj) ->
-    initiated = target.getPropertyInstance(prop).initiated
-    if !initiated and @checkEmitter(target)
-      @event(prop+'Updated', target)
+  propInitiated:  (prop, target = @scope) ->
+    if typeof prop == 'string' and target.getPropertyInstance?
+        prop = target.getPropertyInstance(prop)
+    else if !@checkPropInstance(prop)
+      throw new Error('Property must be a PropertyInstance or a string')
+
+    initiated = prop.initiated
+    if !initiated
+      @event('updated', prop)
     initiated
 
   funct: (funct)->
@@ -123,7 +130,7 @@ class Invalidator extends Binder
     @invalidationEvents.push(invalidator)
     res
 
-  validateUnknowns: (prop, target = @obj) ->
+  validateUnknowns: ->
     unknowns = @unknowns
     @unknowns = []
     unknowns.forEach (unknown)->
@@ -133,16 +140,14 @@ class Invalidator extends Binder
     @invalidationEvents.length == 0
     
   bind: ->
-    @invalidated = false
+    @invalid = false
     @invalidationEvents.forEach (eventBind)-> eventBind.bind()
     
   recycle: (callback)-> 
     @recycled = @invalidationEvents
     @invalidationEvents = []
     
-    done = =>
-      @recycled.forEach (eventBind)-> eventBind.unbind()
-      @recycled = []
+    done = @endRecycle.bind(this)
       
     if typeof callback == "function"
       if callback.length > 1
@@ -154,8 +159,15 @@ class Invalidator extends Binder
     else
       done
 
+  endRecycle: ->
+    @recycled.forEach (eventBind)-> eventBind.unbind()
+    @recycled = []
+
   checkEmitter: (emitter)->
     EventBind.checkEmitter(emitter,@strict)
+
+  checkPropInstance: (prop)->
+    typeof prop.get == "function" && @checkEmitter(prop)
 
   unbind: ->
     @invalidationEvents.forEach (eventBind)-> eventBind.unbind()

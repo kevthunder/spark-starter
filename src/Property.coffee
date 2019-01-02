@@ -4,8 +4,6 @@ ComposedProperty = require('./PropertyTypes/ComposedProperty')
 DynamicProperty = require('./PropertyTypes/DynamicProperty')
 CalculatedProperty = require('./PropertyTypes/CalculatedProperty')
 InvalidatedProperty = require('./PropertyTypes/InvalidatedProperty')
-ActivableProperty = require('./PropertyTypes/ActivableProperty')
-UpdatedProperty = require('./PropertyTypes/UpdatedProperty')
 PropertyOwner = require('./PropertyOwner')
 Mixable = require('./Mixable')
 
@@ -14,11 +12,9 @@ class Property
     ComposedProperty, 
     CollectionProperty, 
     DynamicProperty, 
-    BasicProperty, 
-    UpdatedProperty,
+    BasicProperty,
     CalculatedProperty, 
-    InvalidatedProperty,
-    ActivableProperty
+    InvalidatedProperty
   ]
 
   constructor: (@name, @options = {}) ->
@@ -62,6 +58,7 @@ class Property
     unless @isInstantiated(obj)
       Type = @getInstanceType()
       obj[varName] = new Type(this,obj)
+      obj[varName].init()
     obj[varName]
 
   getInstanceType: () ->

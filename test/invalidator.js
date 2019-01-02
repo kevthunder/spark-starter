@@ -1,11 +1,13 @@
 (function() {
-  var EventEmitter, Invalidator, assert;
+  var EventEmitter, Invalidator, Property, assert;
 
   assert = require('chai').assert;
 
   Invalidator = require('../lib/Invalidator');
 
   EventEmitter = require('../lib/EventEmitter');
+
+  Property = require('../lib/Property');
 
   describe('Invalidator', function() {
     var propEvents;
@@ -51,11 +53,11 @@
     it('tolerate having nothing to invalidate', function() {
       var invalidator;
       invalidator = new Invalidator();
-      assert.isFalse(invalidator.invalidated);
+      assert.isFalse(invalidator.invalid);
       invalidator.invalidate();
-      assert.isTrue(invalidator.invalidated);
+      assert.isTrue(invalidator.invalid);
       invalidator.bind();
-      return assert.isFalse(invalidator.invalidated);
+      return assert.isFalse(invalidator.invalid);
     });
     it('should remove old value with invalidate', function() {
       var invalidated, invalidator;
@@ -112,6 +114,26 @@
       assert.equal(invalidator2.invalidationEvents.length, 1);
       return assert.isFalse(invalidator1.invalidationEvents[0].equals(invalidator2.invalidationEvents[0]));
     });
+    it('should add listener on bind', function() {
+      var emitter, invalidator;
+      emitter = new EventEmitter();
+      invalidator = new Invalidator();
+      invalidator.event('test', emitter);
+      assert.equal(emitter.getListeners('test').length, 0);
+      invalidator.bind();
+      return assert.equal(emitter.getListeners('test').length, 1);
+    });
+    it('should remove listener on unbind', function() {
+      var emitter, invalidator;
+      emitter = new EventEmitter();
+      invalidator = new Invalidator();
+      invalidator.event('test', emitter);
+      assert.equal(emitter.getListeners('test').length, 0);
+      invalidator.bind();
+      assert.equal(emitter.getListeners('test').length, 1);
+      invalidator.unbind();
+      return assert.equal(emitter.getListeners('test').length, 0);
+    });
     it('should create a bind with invalidatedValue', function() {
       var emitter, invalidated, invalidator, res;
       invalidated = {
@@ -129,65 +151,46 @@
       assert.equal(invalidator.invalidationEvents[0].target, emitter);
       return assert.equal(invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback);
     });
-    it('should create a bind with invalidatedProperty', function() {
-      var emitter, i, invalidated, invalidator, j, len, propEvent, res, results;
-      invalidated = {
-        test: 1
-      };
-      emitter = {
-        test: 2,
-        on: function() {}
-      };
-      invalidator = new Invalidator('test', invalidated);
-      assert.equal(invalidator.invalidationEvents.length, 0);
-      res = invalidator.prop('test', emitter);
-      assert.equal(res, 2);
-      assert.equal(invalidator.invalidationEvents.length, propEvents.length);
-      results = [];
-      for (i = j = 0, len = propEvents.length; j < len; i = ++j) {
-        propEvent = propEvents[i];
-        assert.equal(invalidator.invalidationEvents[i].event, propEvent);
-        assert.equal(invalidator.invalidationEvents[i].target, emitter);
-        if (invalidator.invalidationEvents[i].event === 'testUpdated') {
-          results.push(assert.equal(invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback));
-        } else {
-          results.push(void 0);
+    it('can test for a property instance', function() {
+      var invalidator, prop;
+      prop = new Property('prop', {}).getInstance({});
+      invalidator = new Invalidator();
+      return assert.isTrue(invalidator.checkPropInstance(prop));
+    });
+    it('can test for a non-property instance', function() {
+      var invalidator;
+      invalidator = new Invalidator();
+      return assert.isFalse(invalidator.checkPropInstance({}));
+    });
+    it('can create a bind with a property', function() {
+      var invalidator, invalidedCalls, prop, res;
+      prop = new Property('prop', {
+        get: function() {
+          return 3;
         }
-      }
-      return results;
+      }).getInstance({});
+      invalidedCalls = 0;
+      invalidator = new Invalidator(function() {
+        return invalidedCalls++;
+      });
+      assert.equal(invalidator.invalidationEvents.length, 0);
+      res = invalidator.prop(prop);
+      invalidator.bind();
+      assert.equal(invalidedCalls, 0);
+      assert.equal(res, 3);
+      prop.changed();
+      return assert.equal(invalidedCalls, 1);
     });
-    it('should throw error if a bind target is not a emitter', function() {
-      var bind, invalidated, invalidator, nonEmitter;
-      invalidated = {
+    it('allow to get an non-dynamic property', function() {
+      var invalidator, obj, res;
+      obj = {
         test: 1
       };
-      nonEmitter = {
-        test: 2
-      };
-      invalidator = new Invalidator('test', invalidated);
-      bind = function() {
-        var res;
-        return res = invalidator.prop('test', nonEmitter);
-      };
-      return assert.throws(bind, 'No function to add event listeners was found');
+      invalidator = new Invalidator(null, obj);
+      res = invalidator.prop('test');
+      return assert.equal(res, 1);
     });
-    it('should not throw error for a non-emitter when strict is false', function() {
-      var bind, invalidated, invalidator, nonEmitter;
-      Invalidator.strict = false;
-      invalidated = {
-        test: 1
-      };
-      nonEmitter = {
-        test: 2
-      };
-      invalidator = new Invalidator('test', invalidated);
-      bind = function() {
-        var res;
-        return res = invalidator.prop('test', nonEmitter);
-      };
-      return assert.doesNotThrow(bind);
-    });
-    it('throws an error when prop name is not a string', function() {
+    it('throws an error when prop name is not a valid property', function() {
       var emitter, invalidated, invalidator;
       invalidated = {
         test: 1
@@ -198,249 +201,106 @@
       invalidator = new Invalidator('test', invalidated);
       return assert.throws(function() {
         return invalidator.prop(emitter, 'test');
-      }, 'Property name must be a string');
+      }, 'Property must be a PropertyInstance or a string');
     });
-    it('should create a bind with invalidatedProperty with implicit target', function() {
-      var i, invalidated, invalidator, j, len, propEvent, res, results;
-      invalidated = {
-        test: 1,
-        on: function() {}
-      };
-      invalidator = new Invalidator('test', invalidated);
+    it('can create a bind with a property with implicit target', function() {
+      var invalidator, invalidedCalls, obj, res;
+      obj = {};
+      new Property('test', {
+        default: 3
+      }).bind(obj);
+      invalidedCalls = 0;
+      invalidator = new Invalidator(function() {
+        return invalidedCalls++;
+      }, obj);
       assert.equal(invalidator.invalidationEvents.length, 0);
       res = invalidator.prop('test');
-      assert.equal(res, 1);
-      assert.equal(invalidator.invalidationEvents.length, propEvents.length);
-      results = [];
-      for (i = j = 0, len = propEvents.length; j < len; i = ++j) {
-        propEvent = propEvents[i];
-        assert.equal(invalidator.invalidationEvents[i].event, propEvent);
-        assert.equal(invalidator.invalidationEvents[i].target, invalidated);
-        if (invalidator.invalidationEvents[i].event === 'testUpdated') {
-          results.push(assert.equal(invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback));
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
+      invalidator.bind();
+      assert.equal(invalidedCalls, 0);
+      assert.equal(res, 3);
+      obj.test = 5;
+      return assert.equal(invalidedCalls, 1);
     });
     it('can bind to a property with propPath', function() {
-      var invalidated, invalidator, res;
-      invalidated = new EventEmitter();
-      invalidated.invalidateTest = function() {
-        return this.invalidateCalls++;
-      };
-      invalidated.invalidateCalls = 0;
-      invalidated.foo = new EventEmitter();
-      invalidated.foo.bar = 4;
-      invalidator = new Invalidator('test', invalidated);
+      var invalidateCalls, invalidator, obj, res;
+      obj = {};
+      new Property('foo', {}).bind(obj);
+      obj.foo = {};
+      new Property('bar', {}).bind(obj.foo);
+      obj.foo.bar = 4;
+      invalidateCalls = 0;
+      invalidator = new Invalidator(function() {
+        return invalidateCalls++;
+      }, obj);
       res = invalidator.propPath('foo.bar');
       invalidator.bind();
       assert.equal(4, res);
-      assert.equal(0, invalidated.invalidateCalls);
-      invalidated.trigger('fooUpdated');
-      assert.equal(1, invalidated.invalidateCalls);
-      invalidated.foo.trigger('barUpdated');
-      assert.equal(2, invalidated.invalidateCalls);
-      invalidated.foo.bar = 5;
+      assert.equal(0, invalidateCalls);
+      obj.getPropertyInstance('foo').changed();
+      assert.equal(1, invalidateCalls);
+      obj.foo.getPropertyInstance('bar').changed();
+      assert.equal(2, invalidateCalls);
+      obj.foo.bar = 5;
       assert.equal(5, invalidator.propPath('foo.bar'));
-      invalidated.foo = null;
+      obj.foo = null;
       return assert.isNull(invalidator.propPath('foo.bar'));
     });
-    it('should add listener on bind', function() {
-      var calls, emitter, invalidated, invalidator, res;
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      calls = 0;
-      emitter = {
-        addListener: function(evt, listener) {
-          assert.include(['testInvalidated', 'testUpdated'], evt);
-          if (evt === 'testUpdated') {
-            assert.equal(listener, invalidator.invalidateCallback);
-          }
-          return calls += 1;
-        }
-      };
-      res = invalidator.prop('test', emitter);
-      assert.equal(calls, 0);
-      invalidator.bind();
-      return assert.equal(calls, 2);
-    });
-    it('should remove listener on unbind', function() {
-      var calls, emitter, invalidated, invalidator, res;
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      calls = 0;
-      emitter = {
-        addListener: function(evt, listener) {
-          assert.include(propEvents, evt);
-          if (evt === 'testUpdated') {
-            return assert.equal(listener, invalidator.invalidateCallback);
-          }
-        },
-        removeListener: function(evt, listener) {
-          assert.include(propEvents, evt);
-          if (evt === 'testUpdated') {
-            assert.equal(listener, invalidator.invalidateCallback);
-          }
-          return calls += 1;
-        }
-      };
-      res = invalidator.prop('test', emitter);
-      invalidator.bind();
-      assert.equal(calls, 0);
-      invalidator.unbind();
-      return assert.equal(calls, propEvents.length);
-    });
     it('should remove old value when the listener is triggered', function() {
-      var emitter, invalidated, invalidator, res;
+      var invalidated, invalidator, res;
       invalidated = {
         test: 1
       };
       invalidator = new Invalidator('test', invalidated);
-      emitter = {
-        addListener: function(evt, listener) {
-          this.event = evt;
-          return this.listener = listener;
-        },
-        removeListener: function(evt, listener) {
-          this.event = null;
-          return this.listener = null;
-        },
-        emit: function() {
-          if (this.listener != null) {
-            return this.listener();
-          }
-        }
-      };
-      res = invalidator.prop('test', emitter);
+      res = invalidator.prop('test');
+      assert.equal(res, 1);
       invalidator.bind();
       assert.equal(invalidated.test, 1);
-      emitter.emit();
+      invalidator.invalidate();
       return assert.equal(invalidated.test, null);
     });
     it('should reuse old bindEvent when calling recycle', function() {
-      var addCalls, emitter, invalidated, invalidator, removeCalls, res;
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      addCalls = 0;
-      removeCalls = 0;
-      emitter = {
-        addListener: function(evt, listener) {
-          assert.include(propEvents, evt);
-          if (evt === 'testUpdated') {
-            assert.equal(listener, invalidator.invalidateCallback);
-          }
-          addCalls += 1;
-          this.event = evt;
-          return this.listener = listener;
-        },
-        removeListener: function(evt, listener) {
-          assert.include(propEvents, evt);
-          if (evt === 'testUpdated') {
-            assert.equal(listener, invalidator.invalidateCallback);
-          }
-          removeCalls += 1;
-          this.event = null;
-          return this.listener = null;
-        },
-        emit: function() {
-          if (this.listener != null) {
-            return this.listener();
-          }
-        }
-      };
-      res = invalidator.prop('test', emitter);
-      assert.equal(addCalls, 0);
-      assert.equal(removeCalls, 0);
+      var emitter, invalidator;
+      emitter = new EventEmitter();
+      invalidator = new Invalidator();
+      invalidator.event('test', emitter);
+      assert.equal(emitter.getListeners('test').length, 0);
       invalidator.bind();
-      assert.equal(addCalls, propEvents.length);
-      assert.equal(removeCalls, 0);
+      assert.equal(emitter.getListeners('test').length, 1);
       invalidator.recycle(function(invalidator) {
-        return invalidator.prop('test', emitter);
+        assert.equal(emitter.getListeners('test').length, 1);
+        invalidator.event('test', emitter);
+        return assert.equal(emitter.getListeners('test').length, 1);
       });
       invalidator.bind();
-      assert.equal(addCalls, propEvents.length);
-      assert.equal(removeCalls, 0);
-      assert.equal(invalidated.test, 1);
-      emitter.emit();
-      return assert.equal(invalidated.test, null);
+      return assert.equal(emitter.getListeners('test').length, 1);
     });
     it('should unbind old unused bindEvent after calling recycle', function() {
-      var addCalls, emitter, invalidated, invalidator, removeCalls, res;
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      addCalls = 0;
-      removeCalls = 0;
-      emitter = {
-        addListener: function(evt, listener) {
-          assert.include(propEvents, evt);
-          if (evt === 'testUpdated') {
-            assert.equal(listener, invalidator.invalidateCallback);
-          }
-          addCalls += 1;
-          this.event = evt;
-          return this.listener = listener;
-        },
-        removeListener: function(evt, listener) {
-          assert.include(propEvents, evt);
-          if (evt === 'testUpdated') {
-            assert.equal(listener, invalidator.invalidateCallback);
-          }
-          removeCalls += 1;
-          this.event = null;
-          return this.listener = null;
-        },
-        emit: function() {
-          if (this.listener != null) {
-            return this.listener();
-          }
-        }
-      };
-      res = invalidator.prop('test', emitter);
-      assert.equal(addCalls, 0);
-      assert.equal(removeCalls, 0);
+      var emitter, invalidator;
+      emitter = new EventEmitter();
+      invalidator = new Invalidator();
+      invalidator.event('test', emitter);
+      assert.equal(emitter.getListeners('test').length, 0);
       invalidator.bind();
-      assert.equal(addCalls, propEvents.length);
-      assert.equal(removeCalls, 0);
+      assert.equal(emitter.getListeners('test').length, 1);
       invalidator.recycle(function(invalidator) {
         return null;
       });
-      invalidator.bind();
-      assert.equal(addCalls, propEvents.length);
-      assert.equal(removeCalls, propEvents.length);
-      assert.equal(invalidated.test, 1);
-      emitter.emit();
-      return assert.equal(invalidated.test, 1);
+      return assert.equal(emitter.getListeners('test').length, 0);
     });
     it('should store unknown values', function() {
-      var Source, invalidated, invalidator, res, source;
-      Source = class Source extends EventEmitter {
-        constructor() {
-          super();
-          this.test = 2;
-        }
-
-      };
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      source = new Source();
+      var invalidator, invalidedCalls, obj, res;
+      obj = {};
+      new Property('test', {
+        default: 2
+      }).bind(obj);
+      invalidedCalls = 0;
+      invalidator = new Invalidator(null, obj);
       assert.equal(invalidator.unknowns.length, 0, "unknowns at beginning");
-      res = invalidator.prop('test', source);
+      res = invalidator.prop('test');
       invalidator.bind();
       assert.equal(res, 2);
       assert.equal(invalidator.unknowns.length, 0, "unknowns after call prop");
-      source.emit('testInvalidated');
+      obj.getPropertyInstance('test').trigger('invalidated');
       return assert.equal(invalidator.unknowns.length, 1, "unknowns after invalidation");
     });
     it('can be invalidated by a subfunction', function() {
@@ -569,67 +429,53 @@
       return assert.equal(invalidateCalls, 0, 'invalidateCalls after');
     });
     it('should call unknown when there is a new unknown', function() {
-      var Source, invalidated, invalidator, res, source, unknownCalls;
+      var invalidated, invalidator, obj, res, unknownCalls;
+      obj = {};
+      new Property('test', {
+        default: 2
+      }).bind(obj);
       unknownCalls = 0;
-      Source = class Source extends EventEmitter {
-        constructor() {
-          super();
-          this.test = 2;
-        }
-
-      };
       invalidated = {
-        test: 1
+        unknown: function() {
+          return unknownCalls += 1;
+        }
       };
-      invalidator = new Invalidator('test', invalidated);
-      invalidator.unknown = function() {
-        return unknownCalls += 1;
-      };
-      source = new Source();
+      invalidator = new Invalidator(invalidated, obj);
       assert.equal(invalidator.unknowns.length, 0, "unknowns at beginning");
       assert.equal(unknownCalls, 0, "unknownCalls at beginning");
-      res = invalidator.prop('test', source);
+      res = invalidator.prop('test');
       invalidator.bind();
       assert.equal(res, 2);
       assert.equal(invalidator.unknowns.length, 0, "unknowns after call prop");
       assert.equal(unknownCalls, 0, "unknownCalls after call prop");
-      source.emit('testInvalidated');
+      obj.getPropertyInstance('test').trigger('invalidated');
       assert.equal(invalidator.unknowns.length, 1, "unknowns after invalidation");
       return assert.equal(unknownCalls, 1, "unknownCalls after invalidation");
     });
     return it('can validate unknowns', function() {
-      var Source, invalidated, invalidator, res, source;
-      Source = class Source extends EventEmitter {
-        constructor() {
-          super();
-          this.getCalls = 0;
-          Object.defineProperty(this, 'test', {
-            get: function() {
-              this.getCalls += 1;
-              return 2;
-            }
-          });
+      var getCalls, invalidator, obj, res;
+      obj = {};
+      getCalls = 0;
+      new Property('test', {
+        get: function() {
+          getCalls += 1;
+          return 2;
         }
-
-      };
-      invalidated = {
-        test: 1
-      };
-      invalidator = new Invalidator('test', invalidated);
-      source = new Source();
+      }).bind(obj);
+      invalidator = new Invalidator(null, obj);
       assert.equal(invalidator.unknowns.length, 0, "unknowns at beginning");
-      assert.equal(source.getCalls, 0, "getCalls at beginning");
-      res = invalidator.prop('test', source);
+      assert.equal(getCalls, 0, "getCalls at beginning");
+      res = invalidator.prop('test');
       invalidator.bind();
       assert.equal(res, 2);
       assert.equal(invalidator.unknowns.length, 0, "unknowns after call prop");
-      assert.equal(source.getCalls, 1, "getCalls after call prop");
-      source.emit('testInvalidated');
+      assert.equal(getCalls, 1, "getCalls after call prop");
+      obj.getPropertyInstance('test').trigger('invalidated');
       assert.equal(invalidator.unknowns.length, 1, "unknowns after invalidation");
-      assert.equal(source.getCalls, 1, "getCalls after invalidation");
+      assert.equal(getCalls, 1, "getCalls after invalidation");
       invalidator.validateUnknowns();
       assert.equal(invalidator.unknowns.length, 0, "unknowns after validating Unknowns");
-      return assert.equal(source.getCalls, 2, "getCalls validating Unknowns");
+      return assert.equal(getCalls, 2, "getCalls validating Unknowns");
     });
   });
 

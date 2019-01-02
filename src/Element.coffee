@@ -2,6 +2,10 @@ Property = require('./Property')
 Mixable = require('./Mixable')
 
 class Element extends Mixable
+  constructor: ->
+    super()
+    @init()
+  init: ->
   tap: (name) ->
     args = Array::slice.call(arguments)
     if typeof name == 'function'

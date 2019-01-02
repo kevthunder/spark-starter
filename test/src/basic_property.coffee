@@ -28,6 +28,26 @@ describe 'BasicProperty', ->
     assert.equal prop.calculated, true
     prop.invalidate()
     assert.equal prop.calculated, false
+
+  it 'should emit event when value change', ->
+    
+    prop = new Property('prop',{
+      default: 1
+    }).getInstance({});
+
+    call = 0
+    prop.on 'updated', ->
+      call++
+
+    assert.equal call, 0
+    prop.get()
+    assert.equal call, 0
+    prop.set(2)
+    assert.equal call, 1
+    prop.set(2)
+    assert.equal call, 1
+    prop.set(4)
+    assert.equal call, 2
   
   it 'should allow to alter the input value', ->
     prop = new Property('prop',{

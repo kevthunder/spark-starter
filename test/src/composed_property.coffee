@@ -159,23 +159,23 @@ describe 'ComposedProperty', ->
     prop.members.setValueRef(2,'prop1')
     prop.members.setValueRef(2,'prop2')
 
-    assert.equal calls, 0
+    assert.equal calls, 3
 
     res = prop.get()
     assert.equal res, 4
-    assert.equal calls, 1
+    assert.equal calls, 3
 
     prop.members.setValueRef(2,'prop2')
 
     res = prop.get()
     assert.equal res, 4
-    assert.equal calls, 1
+    assert.equal calls, 3
     
     prop.members.setValueRef(3,'prop2')
 
     res = prop.get()
     assert.equal res, 5
-    assert.equal calls, 2
+    assert.equal calls, 4
 
 
   it 'returns a value composed of many ref functions', ->

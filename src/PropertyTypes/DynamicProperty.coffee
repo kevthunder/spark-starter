@@ -9,33 +9,19 @@ class DynamicProperty extends BasicProperty
     res
 
   invalidate: ->
-    if @calculated || @active == false
+    if @calculated
       @calculated = false
       @_invalidateNotice()
     this
 
   _invalidateNotice: ->
-    if @isImmediate()
-      @get()
-      false
-    else 
-      if typeof @obj.emitEvent == 'function'
-        @obj.emitEvent(@invalidateEventName)
-      true
+    @emitEvent('invalidated')
+    true
     
-  isImmediate: ->
-    @property.options.immediate != false and
-    (
-      @property.options.immediate == true or
-        if typeof @property.options.immediate == 'function'
-          @callOptionFunct("immediate")
-        else
-          @hasChangedEvents() or @hasChangedFunctions()
-    )
 
   @compose = (prop)->
  
-    if typeof prop.options.get == 'function' || typeof prop.options.calcul == 'function' || typeof prop.options.active == 'function'
+    if typeof prop.options.get == 'function' || typeof prop.options.calcul == 'function'
       unless prop.instanceType?
         prop.instanceType = class extends DynamicProperty
 

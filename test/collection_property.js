@@ -61,17 +61,16 @@
         collection: true,
         default: [1, 2, 3],
         change: function(old) {
-          assert.isArray(old);
           return callcount += 1;
         }
       }).getInstance({});
       res = prop.get();
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       assert.equal(res.count(), 3);
       res.push(4);
       assert.equal(res.count(), 4);
       assert.equal(res.toString(), '1,2,3,4');
-      return assert.equal(callcount, 1);
+      return assert.equal(callcount, 2);
     });
     it('can check items before calling change function', function() {
       var callcount, prop, res;
@@ -87,23 +86,23 @@
       }).getInstance({});
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, 2, 3]);
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
-      prop.set([1, 3, 2]);
-      res = prop.get();
-      assert.equal(res.toString(), '1,3,2');
       assert.equal(callcount, 1);
       prop.set([1, 3, 2]);
       res = prop.get();
       assert.equal(res.toString(), '1,3,2');
-      assert.equal(callcount, 1);
+      assert.equal(callcount, 2);
+      prop.set([1, 3, 2]);
+      res = prop.get();
+      assert.equal(res.toString(), '1,3,2');
+      assert.equal(callcount, 2);
       prop.set([1, 3, 2, 4]);
       res = prop.get();
       assert.equal(res.toString(), '1,3,2,4');
-      return assert.equal(callcount, 2);
+      return assert.equal(callcount, 3);
     });
     it('can check items before calling change function while unordered', function() {
       var callcount, prop, res;
@@ -120,23 +119,23 @@
       }).getInstance({});
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, 2, 3]);
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, 3, 2]);
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, 3, 2]);
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, 3, 2, 4]);
       res = prop.get();
       assert.equal(res.toString(), '1,3,2,4');
-      return assert.equal(callcount, 1);
+      return assert.equal(callcount, 2);
     });
     it('can check items with user function before calling change function', function() {
       var callcount, prop, res;
@@ -154,15 +153,15 @@
       }).getInstance({});
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, "2", 3]);
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       prop.set([1, 3, 2]);
       res = prop.get();
       assert.equal(res.toString(), '1,3,2');
-      return assert.equal(callcount, 1);
+      return assert.equal(callcount, 2);
     });
     it('can check caculated items before calling change function', function() {
       var callcount, prop, res, val;
@@ -181,36 +180,38 @@
       }).getInstance({});
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       val = [1, 2, 3];
       prop.invalidate();
       res = prop.get();
       assert.equal(res.toString(), '1,2,3');
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 1);
       val = [1, 2, 3, 4];
       prop.invalidate();
       res = prop.get();
       assert.equal(res.toString(), '1,2,3,4');
-      return assert.equal(callcount, 1);
+      return assert.equal(callcount, 2);
     });
     it('should call itemAdded function when something is added', function() {
-      var callcount, prop, res;
+      var callcount, prop, res, shouldAdd;
       callcount = 0;
+      shouldAdd = [1, 2, 3];
       prop = new Property('prop', {
         collection: true,
         default: [1, 2, 3],
         itemAdded: function(item) {
-          assert.include([4, 5], item);
+          assert.include(shouldAdd, item);
           return callcount += 1;
         }
       }).getInstance({});
       res = prop.get();
-      assert.equal(callcount, 0);
+      assert.equal(callcount, 3);
       assert.equal(res.count(), 3);
+      shouldAdd = [4, 5];
       res.splice(4, 0, 4, 5);
       assert.equal(res.count(), 5);
       assert.equal(res.toString(), '1,2,3,4,5');
-      return assert.equal(callcount, 2);
+      return assert.equal(callcount, 5);
     });
     it('should call itemRemoved function when something is removed', function() {
       var callcount, prop, res;
@@ -224,7 +225,6 @@
         }
       }).getInstance({});
       res = prop.get();
-      assert.isTrue(prop.isImmediate());
       assert.equal(callcount, 0);
       assert.equal(res.count(), 5);
       res.splice(3, 2);
@@ -232,41 +232,22 @@
       assert.equal(res.toString(), '1,2,3');
       return assert.equal(callcount, 2);
     });
-    it('should pass the old value of an uninitiated collection as an array', function() {
+    it('should pass the old value of an uninitiated collection as a Collection', function() {
       var callcount, prop;
       callcount = 0;
       prop = new Property('prop', {
         collection: true,
         change: function(old) {
-          assert.isArray(old);
+          assert.isArray(old.toArray());
           return callcount += 1;
         }
       }).getInstance({});
-      assert.equal(callcount, 0);
-      //assert.equal prop.get().count(), 0
+      assert.equal(callcount, 1);
+      assert.equal(prop.get().count(), 0);
       prop.set(4);
       assert.equal(prop.get().count(), 1);
       assert.equal(prop.get().toString(), '4');
-      return assert.equal(callcount, 1);
-    });
-    it('should trigger change event when collection changed', function() {
-      var emitter, prop, res;
-      emitter = {
-        emitEvent: function(evt, params) {
-          assert.include(updateEvents, evt);
-          return this.callcount += 1;
-        },
-        callcount: 0
-      };
-      prop = new Property('prop', {
-        collection: true,
-        default: [1, 2, 3]
-      }).getInstance(emitter);
-      res = prop.get();
-      assert.equal(emitter.callcount, 0);
-      res.set(2, 4);
-      assert.equal(res.toString(), '1,2,4');
-      return assert.equal(emitter.callcount, updateEvents.length);
+      return assert.equal(callcount, 2);
     });
     it('can add method to a collection', function() {
       var prop, res;

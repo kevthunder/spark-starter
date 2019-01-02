@@ -1,6 +1,10 @@
 
 class Mixable
   @Extension:
+    makeOnce: (source, target) ->
+      unless target.extensions?.includes(source)
+        @make(source, target)
+
     make: (source, target) ->
       for prop in @getExtensionProperties(source, target)
         Object.defineProperty(target, prop.name, prop)

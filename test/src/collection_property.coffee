@@ -54,17 +54,16 @@ describe 'CollectionProperty', ->
       collection: true
       default: [1,2,3]
       change: (old)->
-        assert.isArray old
         callcount+=1
     }).getInstance({});
     
     res = prop.get()
-    assert.equal callcount, 0
+    assert.equal callcount, 1
     assert.equal res.count(), 3
     res.push(4)
     assert.equal res.count(), 4
     assert.equal res.toString(), '1,2,3,4'
-    assert.equal callcount, 1
+    assert.equal callcount, 2
 
   it 'can check items before calling change function', ->
     callcount = 0
@@ -78,27 +77,27 @@ describe 'CollectionProperty', ->
 
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,2,3])
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
-
-    prop.set([1,3,2])
-    res = prop.get()
-    assert.equal res.toString(), '1,3,2'
     assert.equal callcount, 1
 
     prop.set([1,3,2])
     res = prop.get()
     assert.equal res.toString(), '1,3,2'
-    assert.equal callcount, 1
+    assert.equal callcount, 2
+
+    prop.set([1,3,2])
+    res = prop.get()
+    assert.equal res.toString(), '1,3,2'
+    assert.equal callcount, 2
 
     prop.set([1,3,2,4])
     res = prop.get()
     assert.equal res.toString(), '1,3,2,4'
-    assert.equal callcount, 2
+    assert.equal callcount, 3
 
   it 'can check items before calling change function while unordered', ->
     callcount = 0
@@ -113,27 +112,27 @@ describe 'CollectionProperty', ->
 
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,2,3])
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,3,2])
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,3,2])
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,3,2,4])
     res = prop.get()
     assert.equal res.toString(), '1,3,2,4'
-    assert.equal callcount, 1
+    assert.equal callcount, 2
 
   it 'can check items with user function before calling change function', ->
     callcount = 0
@@ -148,17 +147,17 @@ describe 'CollectionProperty', ->
 
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,"2",3])
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     prop.set([1,3,2])
     res = prop.get()
     assert.equal res.toString(), '1,3,2'
-    assert.equal callcount, 1
+    assert.equal callcount, 2
 
 
   it 'can check caculated items before calling change function', ->
@@ -175,39 +174,41 @@ describe 'CollectionProperty', ->
 
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     val = [1,2,3]
     prop.invalidate()
     res = prop.get()
     assert.equal res.toString(), '1,2,3'
-    assert.equal callcount, 0
+    assert.equal callcount, 1
 
     val = [1,2,3,4]
     prop.invalidate()
     res = prop.get()
     assert.equal res.toString(), '1,2,3,4'
-    assert.equal callcount, 1
+    assert.equal callcount, 2
 
 
 
   it 'should call itemAdded function when something is added', ->
     callcount = 0
+    shouldAdd = [1,2,3]
     prop = new Property('prop',{
       collection: true
       default: [1,2,3]
       itemAdded: (item)->
-        assert.include [4,5], item
+        assert.include shouldAdd, item
         callcount+=1
     }).getInstance({});
     
     res = prop.get()
-    assert.equal callcount, 0
+    assert.equal callcount, 3
     assert.equal res.count(), 3
+    shouldAdd = [4,5]
     res.splice(4,0,  4, 5)
     assert.equal res.count(), 5
     assert.equal res.toString(), '1,2,3,4,5'
-    assert.equal callcount, 2
+    assert.equal callcount, 5
 
   it 'should call itemRemoved function when something is removed', ->
     callcount = 0
@@ -220,7 +221,6 @@ describe 'CollectionProperty', ->
     }).getInstance({});
     
     res = prop.get()
-    assert.isTrue prop.isImmediate()
     assert.equal callcount, 0
     assert.equal res.count(), 5
     res.splice(3,2)
@@ -229,39 +229,21 @@ describe 'CollectionProperty', ->
     assert.equal callcount, 2
 
     
-  it 'should pass the old value of an uninitiated collection as an array', ->
+  it 'should pass the old value of an uninitiated collection as a Collection', ->
     callcount = 0
     prop = new Property('prop',{
       collection: true
       change: (old)->
-        assert.isArray old
+        assert.isArray old.toArray()
         callcount+=1
     }).getInstance({});
     
-    assert.equal callcount, 0
-    #assert.equal prop.get().count(), 0
+    assert.equal callcount, 1
+    assert.equal prop.get().count(), 0
     prop.set(4)
     assert.equal prop.get().count(), 1
     assert.equal prop.get().toString(), '4'
-    assert.equal callcount, 1
-    
-  it 'should trigger change event when collection changed', ->
-    emitter = {
-      emitEvent: (evt,params)->
-        assert.include updateEvents, evt
-        @callcount += 1
-      callcount: 0
-    }
-    prop = new Property('prop',{
-      collection: true
-      default: [1,2,3]
-    }).getInstance(emitter);
-    
-    res = prop.get()
-    assert.equal emitter.callcount, 0
-    res.set(2,4)
-    assert.equal res.toString(), '1,2,4'
-    assert.equal emitter.callcount, updateEvents.length
+    assert.equal callcount, 2
     
   it 'can add method to a collection', ->
     prop = new Property('prop',{

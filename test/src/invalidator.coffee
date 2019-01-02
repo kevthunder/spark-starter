@@ -1,6 +1,7 @@
 assert = require('chai').assert
 Invalidator = require('../lib/Invalidator')
 EventEmitter = require('../lib/EventEmitter')
+Property = require('../lib/Property')
 
 describe 'Invalidator', ->
 
@@ -46,12 +47,12 @@ describe 'Invalidator', ->
   it 'tolerate having nothing to invalidate', ->
     invalidator = new Invalidator();
 
-    assert.isFalse invalidator.invalidated
+    assert.isFalse invalidator.invalid
     invalidator.invalidate()
-    assert.isTrue invalidator.invalidated
+    assert.isTrue invalidator.invalid
 
     invalidator.bind()
-    assert.isFalse invalidator.invalidated
+    assert.isFalse invalidator.invalid
 
 
   it 'should remove old value with invalidate', ->
@@ -110,6 +111,30 @@ describe 'Invalidator', ->
     assert.equal invalidator2.invalidationEvents.length, 1
     assert.isFalse invalidator1.invalidationEvents[0].equals(invalidator2.invalidationEvents[0])
 
+
+  it 'should add listener on bind', ->
+    emitter = new EventEmitter();
+    invalidator = new Invalidator();
+
+    invalidator.event('test', emitter)
+    
+    assert.equal emitter.getListeners('test').length, 0
+    invalidator.bind()
+    assert.equal emitter.getListeners('test').length, 1
+    
+    
+  it 'should remove listener on unbind', ->
+    emitter = new EventEmitter();
+    invalidator = new Invalidator();
+
+    invalidator.event('test', emitter)
+    
+    assert.equal emitter.getListeners('test').length, 0
+    invalidator.bind()
+    assert.equal emitter.getListeners('test').length, 1
+    invalidator.unbind()
+    assert.equal emitter.getListeners('test').length, 0
+
     
   it 'should create a bind with invalidatedValue', ->
     invalidated = {
@@ -128,61 +153,46 @@ describe 'Invalidator', ->
     assert.equal invalidator.invalidationEvents[0].target, emitter
     assert.equal invalidator.invalidationEvents[0].callback, invalidator.invalidateCallback
     
-  it 'should create a bind with invalidatedProperty', ->
-    invalidated = {
-      test: 1
-    }
-    emitter = {
-      test: 2
-      on:->
-    }
-    invalidator = new Invalidator('test', invalidated);
+  it 'can test for a property instance', ->
+    prop = new Property('prop',{}).getInstance({});
+    invalidator = new Invalidator()
+    assert.isTrue invalidator.checkPropInstance(prop)
+
+  it 'can test for a non-property instance', ->
+    invalidator = new Invalidator()
+    assert.isFalse invalidator.checkPropInstance({})
+
+  it 'can create a bind with a property', ->
+
+    prop = new Property('prop',{
+      get: ->
+         3
+    }).getInstance({});
+    invalidedCalls = 0
+    invalidator = new Invalidator ->
+      invalidedCalls++
     
     assert.equal invalidator.invalidationEvents.length, 0
     
-    res = invalidator.prop('test',emitter)
+    res = invalidator.prop(prop)
+    invalidator.bind()
     
-    assert.equal res, 2
-    assert.equal invalidator.invalidationEvents.length, propEvents.length
-    for propEvent, i in propEvents
-      assert.equal invalidator.invalidationEvents[i].event, propEvent
-      assert.equal invalidator.invalidationEvents[i].target, emitter
-      if invalidator.invalidationEvents[i].event == 'testUpdated'
-        assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
+    assert.equal invalidedCalls, 0
+    assert.equal res, 3
 
+    prop.changed()
+    assert.equal invalidedCalls, 1
 
-  it 'should throw error if a bind target is not a emitter', ->
-    invalidated = {
+  it 'allow to get an non-dynamic property', ->
+    obj = {
       test: 1
     }
-    nonEmitter = {
-      test: 2
-    }
-    invalidator = new Invalidator('test', invalidated);
-    
-    bind = ->
-      res = invalidator.prop('test',nonEmitter)
+    invalidator = new Invalidator(null,obj)
+    res = invalidator.prop('test')
 
-    assert.throws bind, 'No function to add event listeners was found'
+    assert.equal res, 1
 
-  it 'should not throw error for a non-emitter when strict is false', ->
-    Invalidator.strict = false
-
-    invalidated = {
-      test: 1
-    }
-    nonEmitter = {
-      test: 2
-    }
-    invalidator = new Invalidator('test', invalidated);
-    
-    bind = ->
-      res = invalidator.prop('test',nonEmitter)
-
-    assert.doesNotThrow bind
-
-
-  it 'throws an error when prop name is not a string', ->
+  it 'throws an error when prop name is not a valid property', ->
     invalidated = {
       test: 1
     }
@@ -193,238 +203,125 @@ describe 'Invalidator', ->
 
     assert.throws ->
         invalidator.prop(emitter,'test')
-      , 'Property name must be a string'
+      , 'Property must be a PropertyInstance or a string'
     
-  it 'should create a bind with invalidatedProperty with implicit target', ->
-    invalidated = {
-      test: 1
-      on:->
-    }
-    invalidator = new Invalidator('test', invalidated);
+  it 'can create a bind with a property with implicit target', ->
+    
+    obj = {}
+    new Property('test',{
+      default: 3
+    }).bind(obj);
+
+    invalidedCalls = 0
+    invalidator = new Invalidator ->
+        invalidedCalls++
+      , obj
     
     assert.equal invalidator.invalidationEvents.length, 0
     
     res = invalidator.prop('test')
+    invalidator.bind()
     
-    assert.equal res, 1
-    assert.equal invalidator.invalidationEvents.length, propEvents.length
-    for propEvent, i in propEvents
-      assert.equal invalidator.invalidationEvents[i].event, propEvent
-      assert.equal invalidator.invalidationEvents[i].target, invalidated
-      if invalidator.invalidationEvents[i].event == 'testUpdated'
-        assert.equal invalidator.invalidationEvents[i].callback, invalidator.invalidateCallback
+    assert.equal invalidedCalls, 0
+    assert.equal res, 3
+
+    obj.test = 5
+    assert.equal invalidedCalls, 1
     
   it 'can bind to a property with propPath', ->
-    invalidated = new EventEmitter()
-    invalidated.invalidateTest = ->
-      @invalidateCalls++
-    invalidated.invalidateCalls = 0
-    invalidated.foo = new EventEmitter()
-    invalidated.foo.bar = 4
 
-    invalidator = new Invalidator('test', invalidated)
+    obj = {}
+    new Property('foo',{}).bind(obj);
+    obj.foo = {}
+    new Property('bar',{}).bind(obj.foo);
+    obj.foo.bar = 4
+
+    invalidateCalls = 0
+    invalidator = new Invalidator ->
+        invalidateCalls++
+      , obj
     
     res = invalidator.propPath('foo.bar')
     invalidator.bind()
 
     assert.equal 4, res
-    assert.equal 0, invalidated.invalidateCalls
+    assert.equal 0, invalidateCalls
 
-    invalidated.trigger('fooUpdated')
-    assert.equal 1, invalidated.invalidateCalls
+    obj.getPropertyInstance('foo').changed()
+    assert.equal 1, invalidateCalls
 
-    invalidated.foo.trigger('barUpdated')
-    assert.equal 2, invalidated.invalidateCalls
+    obj.foo.getPropertyInstance('bar').changed()
+    assert.equal 2, invalidateCalls
 
-    invalidated.foo.bar = 5
+    obj.foo.bar = 5
     assert.equal 5, invalidator.propPath('foo.bar')
 
-    invalidated.foo = null
+    obj.foo = null
     assert.isNull invalidator.propPath('foo.bar')
-
-  it 'should add listener on bind', ->
-  
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    calls = 0
-    emitter = {
-      addListener: (evt, listener) ->
-        assert.include ['testInvalidated','testUpdated'], evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-        calls += 1
-    }
-    res = invalidator.prop('test',emitter)
-    
-    
-    assert.equal calls, 0
-    invalidator.bind()
-    assert.equal calls, 2
-    
-    
-  it 'should remove listener on unbind', ->
-  
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    calls = 0
-    emitter = {
-      addListener: (evt, listener) ->
-        assert.include propEvents, evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-      removeListener: (evt, listener) ->
-        assert.include propEvents, evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-        calls += 1
-    }
-    res = invalidator.prop('test',emitter)
-    
-    
-    invalidator.bind()
-    assert.equal calls, 0
-    invalidator.unbind()
-    assert.equal calls, propEvents.length
-    
     
   it 'should remove old value when the listener is triggered', ->
     invalidated = {
       test: 1
     }
     invalidator = new Invalidator('test', invalidated);
-    emitter = {
-      addListener: (evt, listener) ->
-        @event = evt
-        @listener = listener
-      removeListener: (evt, listener) ->
-        @event = null
-        @listener = null
-      emit: ->
-        if @listener?
-          @listener()
-    }
-    res = invalidator.prop('test',emitter)
+    res = invalidator.prop('test')
+    assert.equal res, 1
     invalidator.bind()
     
     assert.equal invalidated.test, 1
-    emitter.emit();
+    invalidator.invalidate()
     assert.equal invalidated.test, null
     
     
   it 'should reuse old bindEvent when calling recycle', ->
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    addCalls = 0
-    removeCalls = 0
-    emitter = {
-      addListener: (evt, listener) ->
-        assert.include propEvents, evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-        addCalls += 1
-        @event = evt
-        @listener = listener
-      removeListener: (evt, listener) ->
-        assert.include propEvents, evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-        removeCalls += 1
-        @event = null
-        @listener = null
-      emit: ->
-        if @listener?
-          @listener()
-    }
-    res = invalidator.prop('test',emitter)
+    emitter = new EventEmitter();
+    invalidator = new Invalidator();
+
+    invalidator.event('test', emitter)
     
-    assert.equal addCalls, 0
-    assert.equal removeCalls, 0
+    assert.equal emitter.getListeners('test').length, 0
     invalidator.bind()
-    assert.equal addCalls, propEvents.length
-    assert.equal removeCalls, 0
+    assert.equal emitter.getListeners('test').length, 1
     invalidator.recycle (invalidator)->
-      invalidator.prop('test',emitter)
-    
+      assert.equal emitter.getListeners('test').length, 1
+      invalidator.event('test', emitter)
+      assert.equal emitter.getListeners('test').length, 1
     invalidator.bind()
-    assert.equal addCalls, propEvents.length
-    assert.equal removeCalls, 0
-    
-    assert.equal invalidated.test, 1
-    emitter.emit();
-    assert.equal invalidated.test, null
+    assert.equal emitter.getListeners('test').length, 1
     
     
   it 'should unbind old unused bindEvent after calling recycle', ->
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    addCalls = 0
-    removeCalls = 0
-    emitter = {
-      addListener: (evt, listener) ->
-        assert.include propEvents, evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-        addCalls += 1
-        @event = evt
-        @listener = listener
-      removeListener: (evt, listener) ->
-        assert.include propEvents, evt
-        if evt == 'testUpdated'
-          assert.equal listener, invalidator.invalidateCallback
-        removeCalls += 1
-        @event = null
-        @listener = null
-      emit: ->
-        if @listener?
-          @listener()
-    }
-    res = invalidator.prop('test',emitter)
+    emitter = new EventEmitter();
+    invalidator = new Invalidator();
+
+    invalidator.event('test', emitter)
     
-    assert.equal addCalls, 0
-    assert.equal removeCalls, 0
+    assert.equal emitter.getListeners('test').length, 0
     invalidator.bind()
-    assert.equal addCalls, propEvents.length
-    assert.equal removeCalls, 0
+    assert.equal emitter.getListeners('test').length, 1
     invalidator.recycle (invalidator)->
       null
-    
-    invalidator.bind()
-    assert.equal addCalls, propEvents.length
-    assert.equal removeCalls, propEvents.length
-    
-    assert.equal invalidated.test, 1
-    emitter.emit();
-    assert.equal invalidated.test, 1
+    assert.equal emitter.getListeners('test').length, 0
   
   
   it 'should store unknown values', ->
-    class Source extends EventEmitter
-      constructor: () ->
-        super()
-        @test = 2
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    source = new Source()
+    obj = {}
+    new Property('test',{
+      default: 2
+    }).bind(obj);
+
+    invalidedCalls = 0
+    invalidator = new Invalidator null, obj
 
     assert.equal invalidator.unknowns.length, 0, "unknowns at beginning"
 
-    res = invalidator.prop('test',source)
+    res = invalidator.prop('test')
     invalidator.bind()
 
     assert.equal res, 2
     assert.equal invalidator.unknowns.length, 0, "unknowns after call prop"
 
-    source.emit('testInvalidated')
+    obj.getPropertyInstance('test').trigger('invalidated')
 
     assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
   
@@ -562,66 +459,59 @@ describe 'Invalidator', ->
 
 
   it 'should call unknown when there is a new unknown', ->
+    obj = {}
+    new Property('test',{
+      default: 2
+    }).bind(obj);
+
     unknownCalls = 0
-    class Source extends EventEmitter
-      constructor: () ->
-        super()
-        @test = 2
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    invalidator.unknown = ->
-      unknownCalls+=1
-    source = new Source()
+    invalidated = 
+      unknown: ->
+        unknownCalls+=1
+    invalidator = new Invalidator invalidated, obj
 
     assert.equal invalidator.unknowns.length, 0, "unknowns at beginning"
     assert.equal unknownCalls, 0, "unknownCalls at beginning"
 
-    res = invalidator.prop('test',source)
+    res = invalidator.prop('test')
     invalidator.bind()
 
     assert.equal res, 2
     assert.equal invalidator.unknowns.length, 0, "unknowns after call prop"
     assert.equal unknownCalls, 0, "unknownCalls after call prop"
 
-    source.emit('testInvalidated')
+    obj.getPropertyInstance('test').trigger('invalidated')
 
     assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
     assert.equal unknownCalls, 1, "unknownCalls after invalidation"
   
   it 'can validate unknowns', ->
-    class Source extends EventEmitter
-      constructor: () ->
-        super()
-        @getCalls = 0
-        Object.defineProperty this, 'test', {
-          get: ->
-            @getCalls+=1
-            2
-        }
-    invalidated = {
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
-    source = new Source()
+    obj = {}
+    getCalls = 0
+    new Property('test',{
+      get: ->
+        getCalls+=1
+        2
+    }).bind(obj);
+
+    invalidator = new Invalidator null, obj
 
     assert.equal invalidator.unknowns.length, 0, "unknowns at beginning"
-    assert.equal source.getCalls, 0, "getCalls at beginning"
+    assert.equal getCalls, 0, "getCalls at beginning"
 
-    res = invalidator.prop('test',source)
+    res = invalidator.prop('test')
     invalidator.bind()
 
     assert.equal res, 2
     assert.equal invalidator.unknowns.length, 0, "unknowns after call prop"
-    assert.equal source.getCalls, 1, "getCalls after call prop"
+    assert.equal getCalls, 1, "getCalls after call prop"
 
-    source.emit('testInvalidated')
+    obj.getPropertyInstance('test').trigger('invalidated')
 
     assert.equal invalidator.unknowns.length, 1, "unknowns after invalidation"
-    assert.equal source.getCalls, 1, "getCalls after invalidation"
+    assert.equal getCalls, 1, "getCalls after invalidation"
 
     invalidator.validateUnknowns()
 
     assert.equal invalidator.unknowns.length, 0, "unknowns after validating Unknowns"
-    assert.equal source.getCalls, 2, "getCalls validating Unknowns"
+    assert.equal getCalls, 2, "getCalls validating Unknowns"

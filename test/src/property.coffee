@@ -66,59 +66,59 @@ describe 'Property', ->
     assert.equal obj.prop, 11
     assert.equal res, obj
 
-  it 'should call change only when value differ', ->
+  it 'should call change on init and when value differ', ->
+    obj = {callcount: 0}
     prop = new Property('prop',{
       change: ->
+        assert.equal this, obj
         @callcount += 1
     })
-    obj = {callcount: 0};
     prop.bind(obj)
     
     assert.equal obj.callcount, 0
+    obj.initPreloaded()
+    assert.equal obj.callcount, 1
     obj.prop = 7
     assert.equal obj.prop, 7
-    assert.equal obj.callcount, 1
-    obj.setProp(11)
-    assert.equal obj.prop, 11
     assert.equal obj.callcount, 2
     obj.setProp(11)
     assert.equal obj.prop, 11
-    assert.equal obj.callcount, 2
+    assert.equal obj.callcount, 3
+    obj.setProp(11)
+    assert.equal obj.prop, 11
+    assert.equal obj.callcount, 3
 
 
-  it 'can trigger an invalidator when initialising a property', ->
+  it 'can trigger an invalidator when initializing a property', ->
 
-    emitter = new EventEmitter()
+    obj = {}
     prop = (new Property('hello',{
       calcul: ->
         'hello'
-    })).bind(emitter)
+    })).bind(obj)
 
     calls = 0
-    invalidated = {
-      invalidateTest: ->
+    invalidated =  ->
         calls += 1
-      test: 1
-    }
-    invalidator = new Invalidator('test', invalidated);
+    invalidator = new Invalidator(invalidated);
 
     assert.equal calls, 0, 'nb calls initial'
 
-    initiated = invalidator.propInitiated('hello',emitter)
+    initiated = invalidator.propInitiated('hello',obj)
     assert.isFalse initiated
     invalidator.bind()
     assert.equal calls, 0, 'nb calls after propInitiated'
 
-    res = emitter.hello
+    res = obj.hello
     assert.equal res, 'hello'
     assert.equal calls, 1, 'nb calls after get'
 
     invalidator.recycle ->
-        initiated = invalidator.propInitiated('hello',emitter)
+        initiated = invalidator.propInitiated('hello',obj)
     invalidator.bind()
     assert.isTrue initiated
     assert.equal calls, 1, 'nb calls after propInitiated 2'
 
-    emitter.hello = 'meh'
+    obj.hello = 'meh'
     assert.equal calls, 1, 'nb calls after set'
 

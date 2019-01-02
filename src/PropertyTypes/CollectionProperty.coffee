@@ -1,5 +1,6 @@
 DynamicProperty = require('./DynamicProperty')
 Collection = require('../Collection')
+CollectionPropertyWatcher = require('../Invalidated/CollectionPropertyWatcher')
 
 class CollectionProperty extends DynamicProperty
   ingest: (val)->
@@ -28,22 +29,6 @@ class CollectionProperty extends DynamicProperty
     col.changed = (old)-> prop.changed(old)
     col
 
-  callChangedFunctions: (old)->
-    if typeof @property.options.itemAdded == 'function'
-      @value.forEach (item, i)=>
-        unless old.includes(item)
-          @callOptionFunct("itemAdded", item, i)
-    if typeof @property.options.itemRemoved == 'function'
-      old.forEach (item, i)=>
-        unless @value.includes(item)
-          @callOptionFunct("itemRemoved", item, i)
-    super(old)
-
-  hasChangedFunctions: ()->
-    super() || 
-      typeof @property.options.itemAdded == 'function' || 
-      typeof @property.options.itemRemoved == 'function'
-
   @defaultCollectionOptions = {
     compare: false
     ordered: true
@@ -62,3 +47,21 @@ class CollectionProperty extends DynamicProperty
 
       if prop.options.collection.compare?
         prop.instanceType::checkChanges = @::checkChangedItems
+
+  @getPreload = (target, prop, instance)->
+    preload = []
+    if typeof prop.options.change == "function" || typeof prop.options.itemAdded == 'function' || typeof prop.options.itemRemoved == 'function'
+      ref = 
+        prop: prop.name
+        context: 'change'
+      unless target.preloaded?.find (loaded)-> Referred.compareRef(ref, loaded.ref) and loaded.instance?
+        preload.push
+          type: CollectionPropertyWatcher
+          loaderAsScope: true
+          scope: target
+          property: instance || prop.name
+          callback: prop.options.change
+          onAdded: prop.options.itemAdded
+          onRemoved: prop.options.itemRemoved
+          ref: ref
+    preload

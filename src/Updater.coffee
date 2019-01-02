@@ -1,19 +1,28 @@
 Binder = require('./Binder')
 
 class Updater
-  constructor: () ->
+  constructor: (options) ->
     @callbacks = []
     @next = []
     @updating = false
+
+    if options?.callback?
+      @addCallback(options.callback)
+
+    if options?.callbacks?.forEach?
+      options.callbacks.forEach (callback)=>
+        @addCallback(callback)
   update: ->
     @updating = true
     @next = @callbacks.slice()
     while @callbacks.length > 0
       callback = @callbacks.shift()
-      callback()
+      @runCallback(callback)
     @callbacks = @next
     @updating = false
     this
+  runCallback: (callback)->
+    callback()
   addCallback: (callback)->
     unless @callbacks.includes(callback)
       @callbacks.push(callback)

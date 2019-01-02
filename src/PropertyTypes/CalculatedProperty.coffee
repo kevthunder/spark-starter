@@ -17,8 +17,8 @@ class CalculatedProperty extends DynamicProperty
         if @checkChanges(@value, old)
           if initiated 
             @changed(old)
-          else if typeof @obj.emitEvent == 'function'
-            @obj.emitEvent(@updateEventName, [old])
+          else
+            @emitEvent('updated', [old])
       @output()
 
   calcul: ->

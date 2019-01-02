@@ -109,8 +109,11 @@ describe 'CalculatedProperty', ->
     assert.equal prop.calculated, true, 'calculated true after get'
     assert.isTrue binded
     prop.invalidate()
-    assert.equal prop.calculated, true, 'calculated false after invalidation'
-    assert.isTrue binded, 'binded should be true after invalidation'
+    assert.equal prop.calculated, false, 'calculated false after invalidation'
+    assert.isFalse binded, 'binded should be false after invalidation'
+    prop.get()
+    assert.equal prop.calculated, true, 'calculated true after get 2'
+    assert.isTrue binded
     
   it 'should re-calcul only on the next get after an invalidation', ->
     callcount = 0
@@ -136,202 +139,50 @@ describe 'CalculatedProperty', ->
     assert.equal prop.value, 3
     assert.equal prop.calculated, true
     
-  it 'should re-calcul immediately when the option is true', ->
-    callcount = 0
-    prop = new Property('prop',{
-      calcul: (invalidated)->
-        callcount += 1
-        3
-      immediate: true
-    }).getInstance({});
-    
-    assert.equal callcount, 0
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
-    prop.get()
-    assert.equal callcount, 1
-    assert.equal prop.value, 3
-    assert.equal prop.calculated, true
-    prop.invalidate()
-    assert.equal callcount, 2
-    assert.equal prop.value, 3
-    assert.equal prop.calculated, true
-    prop.get()
-    assert.equal callcount, 2
-    assert.equal prop.value, 3
-    assert.equal prop.calculated, true
-
-  it 'can use a function to determine immediate re-calcul', ->
-    callcount = 0
-    prop = new Property('prop',{
-      calcul: (invalidated)->
-        callcount += 1
-        3
-      immediate: ->
-        true
-    }).getInstance({});
-    
-    assert.equal callcount, 0
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
-    prop.get()
-    assert.equal callcount, 1
-    assert.equal prop.value, 3
-    assert.equal prop.calculated, true
-    prop.invalidate()
-    assert.equal callcount, 2
-    assert.equal prop.value, 3
-    assert.equal prop.calculated, true
-    prop.get()
-    assert.equal callcount, 2
-    assert.equal prop.value, 3
-    assert.equal prop.calculated, true
-    
-    
   it 'should re-calcul immediately if the change option is defined', ->
     calculCalls = 0
     changeCalls = 0
     val = 3
+
     prop = new Property('prop',{
       calcul: (invalidated)->
         calculCalls += 1
-        val += 1
+        val
       change: (old)->
         changeCalls += 1
     }).getInstance({});
     
-    assert.equal calculCalls, 0, "nb calcul calls"
-    assert.equal changeCalls, 0, "nb change calls"
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
+    assert.equal calculCalls, 1, "nb calcul calls"
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop.value, 3
+    assert.equal prop.calculated, true
     prop.get()
     assert.equal calculCalls, 1, "nb calcul calls"
-    assert.equal changeCalls, 0, "nb change calls"
-    assert.equal prop.value, 4
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop.value, 3
     assert.equal prop.calculated, true
     prop.invalidate()
     assert.equal calculCalls, 2, "nb calcul calls"
     assert.equal changeCalls, 1, "nb change calls"
-    assert.equal prop.value, 5
-    assert.equal prop.calculated, true
-    prop.get()
-    assert.equal calculCalls, 2, "nb calcul calls"
-    assert.equal changeCalls, 1, "nb change calls"
-    assert.equal prop.value, 5
-    assert.equal prop.calculated, true
-
-  it 'should use immediate function in priority to change option being defined for immediate re-calcul', ->
-    calculCalls = 0
-    changeCalls = 0
-    val = 3
-    prop = new Property('prop',{
-      calcul: (invalidated)->
-        calculCalls += 1
-        val += 1
-      change: (old)->
-        changeCalls += 1
-      immediate: ->
-        false
-    }).getInstance({});
-    
-    assert.equal calculCalls, 0, "nb calcul calls"
-    assert.equal changeCalls, 0, "nb change calls"
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
-    prop.get()
-    assert.equal calculCalls, 1, "nb calcul calls"
-    assert.equal changeCalls, 0, "nb change calls"
-    assert.equal prop.value, 4
-    assert.equal prop.calculated, true
-    prop.invalidate()
-    assert.equal calculCalls, 1, "nb calcul calls"
-    assert.equal changeCalls, 0, "nb change calls"
-    assert.equal prop.value, 4
-    assert.equal prop.calculated, false
-    prop.get()
-    assert.equal calculCalls, 2, "nb calcul calls"
-    assert.equal changeCalls, 1, "nb change calls"
-    assert.equal prop.value, 5
-    assert.equal prop.calculated, true
-
-  it 'should only recalcul when the updater tells it, if it is defined', ->
-    calculCalls = 0
-    changeCalls = 0
-    val = 3
-    updater = new Updater()
-    prop = new Property('prop',{
-      calcul: (invalidated)->
-        calculCalls += 1
-        val += 1
-      change: (old)->
-        changeCalls += 1
-      updater: updater
-    }).getInstance({});
-    
-    assert.equal calculCalls, 0, "nb calcul calls, before get"
-    assert.equal changeCalls, 0, "nb change calls, before get"
-    assert.equal updater.callbacks.length, 0, "nb updater callback, before get"
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
-    prop.get()
-    assert.equal calculCalls, 1, "nb calcul calls, after get"
-    assert.equal changeCalls, 0, "nb change calls, after get"
-    assert.equal updater.callbacks.length, 0, "nb updater callback, after get"
-    assert.equal prop.value, 4
-    assert.equal prop.calculated, true
-    prop.invalidate()
-    assert.equal calculCalls, 1, "nb calcul calls, after invalidate"
-    assert.equal changeCalls, 0, "nb change calls, after invalidate"
-    assert.equal updater.callbacks.length, 1, "nb updater callback, after invalidate"
-    assert.equal prop.value, 4
-    assert.equal prop.isImmediate(), false, "isImmediate"
-    assert.equal prop.calculated, false
-    updater.update()
-    assert.equal calculCalls, 2, "nb calcul calls, after update"
-    assert.equal changeCalls, 1, "nb change calls, after update"
-    assert.equal updater.callbacks.length, 0, "nb updater callback, after update"
-    assert.equal prop.value, 5
-    assert.equal prop.calculated, true
-
-    
-  it 'should re-calcul immediately if there is a listener on the change event', ->
-    callcount = 0
-    prop = new Property('prop',{
-      calcul: (invalidated)->
-        callcount += 1
-        3
-    }).getInstance({
-        getListeners: -> 
-          [{}]
-    });
-    
-    assert.equal callcount, 0
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
-    prop.get()
-    assert.equal callcount, 1
     assert.equal prop.value, 3
     assert.equal prop.calculated, true
+    val = 4
     prop.invalidate()
-    assert.equal callcount, 2
-    assert.equal prop.value, 3
+    assert.equal calculCalls, 3, "nb calcul calls"
+    assert.equal changeCalls, 2, "nb change calls"
+    assert.equal prop.value, 4
     assert.equal prop.calculated, true
     prop.get()
-    assert.equal callcount, 2
-    assert.equal prop.value, 3
+    assert.equal calculCalls, 3, "nb calcul calls"
+    assert.equal changeCalls, 2, "nb change calls"
+    assert.equal prop.value, 4
     assert.equal prop.calculated, true
 
   it 'keeps properties invalidators', ->
-    emitter = {
-      addListener: (evt, listener) ->
-        assert.include propEvents, evt
-      removeListener: (evt, listener) ->
-        assert.include propEvents, evt
-      test: 4
-    }
+    emitter = new EventEmitter()
     prop = new Property('prop',{
       calcul: (invalidated)->
-        invalidated.prop('test',emitter)
+        invalidated.event('test',emitter)
     }).getInstance({});
     
     prop.get()
@@ -353,13 +204,13 @@ describe 'CalculatedProperty', ->
     res = prop.get()
     assert.equal res, 4
   
-  it 'should re-calcul immediately if it invalidate inderectly an immediate property', ->
+  it 'should re-calcul immediately if it invalidate indirectly an immediate property', ->
     calculSourceCalls = 0
     calcultargetCalls = 0
     changeCalls = 0
     val = 3
 
-    source = new EventEmitter()
+    source = {}
     new Property('prop',{
       calcul: (invalidated)->
         calculSourceCalls += 1
@@ -367,7 +218,7 @@ describe 'CalculatedProperty', ->
     }).bind(source);
     prop = source.getPropertyInstance('prop')
 
-    middle = new EventEmitter()
+    middle = {}
     prop2 = new Property('prop2',{
       calcul: (invalidator)->
         invalidator.prop('prop',source)
@@ -384,17 +235,17 @@ describe 'CalculatedProperty', ->
     }).bind(target);
     prop3 = target.getPropertyInstance('prop3')
 
-    assert.equal calculSourceCalls, 0, "nb calcul calls for source"
-    assert.equal calcultargetCalls, 0, "nb calcul calls for target"
-    assert.equal changeCalls, 0, "nb change calls"
-    assert.equal prop3.value, undefined
-    assert.equal prop3.calculated, false
-    assert.equal prop.value, undefined
-    assert.equal prop.calculated, false
+    assert.equal calculSourceCalls, 1, "nb calcul calls for source"
+    assert.equal calcultargetCalls, 1, "nb calcul calls for target"
+    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal prop3.value, 4
+    assert.equal prop3.calculated, true
+    assert.equal prop.value, 4
+    assert.equal prop.calculated, true
     prop3.get()
     assert.equal calculSourceCalls, 1, "nb calcul calls for source"
     assert.equal calcultargetCalls, 1, "nb calcul calls for target"
-    assert.equal changeCalls, 0, "nb change calls"
+    assert.equal changeCalls, 1, "nb change calls"
     assert.equal prop3.value, 4
     assert.equal prop3.calculated, true
     assert.equal prop.value, 4
@@ -402,7 +253,7 @@ describe 'CalculatedProperty', ->
     prop.invalidate()
     assert.equal calculSourceCalls, 2, "nb calcul calls for source"
     assert.equal calcultargetCalls, 2, "nb calcul calls for target"
-    assert.equal changeCalls, 1, "nb change calls"
+    assert.equal changeCalls, 2, "nb change calls"
     assert.equal prop3.value, 5
     assert.equal prop3.calculated, true
     assert.equal prop.value, 5
@@ -410,7 +261,7 @@ describe 'CalculatedProperty', ->
     prop.invalidate()
     assert.equal calculSourceCalls, 3, "nb calcul calls for source"
     assert.equal calcultargetCalls, 3, "nb calcul calls for target"
-    assert.equal changeCalls, 2, "nb change calls"
+    assert.equal changeCalls, 3, "nb change calls"
     assert.equal prop3.value, 6
     assert.equal prop3.calculated, true
     assert.equal prop.value, 6
@@ -418,7 +269,7 @@ describe 'CalculatedProperty', ->
     prop3.get()
     assert.equal calculSourceCalls, 3, "nb calcul calls for source"
     assert.equal calcultargetCalls, 3, "nb calcul calls for target"
-    assert.equal changeCalls, 2, "nb change calls"
+    assert.equal changeCalls, 3, "nb change calls"
     assert.equal prop3.value, 6
     assert.equal prop3.calculated, true
     assert.equal prop.value, 6

@@ -1,4 +1,6 @@
 
+# todo : 
+#  simplified form : @withoutName method
 class Overrider
 
   @Override: {

@@ -4,8 +4,8 @@ Collection = require('../Collection')
 
 class ComposedProperty extends CalculatedProperty
   init: ()->
-    super()
     @initComposed()
+    super()
 
   initComposed: ()->
     if @property.options.hasOwnProperty('default')

@@ -1,12 +1,21 @@
 Mixable = require('../Mixable')
+EventEmitter = require('../EventEmitter')
+Loader = require('../Loader')
+PropertyWatcher = require('../Invalidated/PropertyWatcher')
+Referred = require('../Referred')
 
 class BasicProperty extends Mixable
+  @extend EventEmitter
   constructor: (@property, @obj) ->
     super()
-    @init()
+
   init: ->
     @value = @ingest(@default)
     @calculated = false
+
+    preload = @constructor.getPreload(@obj, @property, this)
+    if preload.length > 0
+      Loader.loadMany(preload)
 
   get: ->
     @calculated = true
@@ -59,22 +68,9 @@ class BasicProperty extends Mixable
       @value
       
   changed: (old)->
-    @callChangedFunctions(old)
-    if typeof @obj.emitEvent == 'function'
-      @obj.emitEvent(@updateEventName, [old])
-      @obj.emitEvent(@changeEventName, [old])
+    @emitEvent('updated', [old])
+    @emitEvent('changed', [old])
     this
-
-  callChangedFunctions: (old)->
-    if typeof @property.options.change == 'function'
-      @callOptionFunct("change", old)
-
-  hasChangedFunctions: ()->
-    typeof @property.options.change == 'function'
-
-  hasChangedEvents: ()->
-    typeof @obj.getListeners == 'function' and
-      @obj.getListeners(@changeEventName).length > 0
 
   @compose = (prop)->
     unless prop.instanceType?
@@ -87,14 +83,8 @@ class BasicProperty extends Mixable
 
     prop.instanceType::default = prop.options.default
     prop.instanceType::initiated = typeof prop.options.default != 'undefined'
-    @setEventNames(prop);
 
-  @setEventNames = (prop)->
-    prop.instanceType::changeEventName = prop.options.changeEventName || prop.name+'Changed'
-    prop.instanceType::updateEventName = prop.options.updateEventName || prop.name+'Updated'
-    prop.instanceType::invalidateEventName = prop.options.invalidateEventName || prop.name+'Invalidated'
-
-  @bind = (target,prop)->
+  @bind = (target, prop)->
     maj = prop.name.charAt(0).toUpperCase() + prop.name.slice(1)
     opt = {
       configurable: true
@@ -114,3 +104,26 @@ class BasicProperty extends Mixable
     target['invalidate'+maj] = ->
         prop.getInstance(this).invalidate()
         this
+
+    preload = @getPreload(target, prop)
+    if preload.length > 0
+      Mixable.Extension.makeOnce(Loader.prototype, target)
+      target.preload(preload)
+
+  @getPreload = (target, prop, instance)->
+    preload = []
+    if typeof prop.options.change == "function"
+      ref = 
+        prop: prop.name
+        callback: prop.options.change
+        context: 'change'
+      unless target.preloaded?.find (loaded)-> Referred.compareRef(ref, loaded.ref) and !instance || loaded.instance?
+        preload.push
+          type: PropertyWatcher
+          loaderAsScope: true
+          scope: target
+          property: instance || prop.name
+          initByLoader: true
+          callback: prop.options.change
+          ref: ref
+    preload

@@ -11,11 +11,11 @@ var sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('coffee', function() {
   return gulp.src(['./src/**/*.coffee'])
-    .pipe(sourcemaps.init())
+    // .pipe(sourcemaps.init())
     .pipe(coffee({bare: true}))
     .pipe(wrapper({namespace:'Spark'}))
     .pipe(wrapper.loader({namespace:'Spark','filename':'spark-starter'}))
-    .pipe(sourcemaps.write('./maps'))
+    // .pipe(sourcemaps.write('./maps'))
     .pipe(gulp.dest('./lib/'));
 });
 

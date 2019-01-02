@@ -75,59 +75,59 @@
       assert.equal(obj.prop, 11);
       return assert.equal(res, obj);
     });
-    it('should call change only when value differ', function() {
+    it('should call change on init and when value differ', function() {
       var obj, prop;
-      prop = new Property('prop', {
-        change: function() {
-          return this.callcount += 1;
-        }
-      });
       obj = {
         callcount: 0
       };
+      prop = new Property('prop', {
+        change: function() {
+          assert.equal(this, obj);
+          return this.callcount += 1;
+        }
+      });
       prop.bind(obj);
       assert.equal(obj.callcount, 0);
+      obj.initPreloaded();
+      assert.equal(obj.callcount, 1);
       obj.prop = 7;
       assert.equal(obj.prop, 7);
-      assert.equal(obj.callcount, 1);
-      obj.setProp(11);
-      assert.equal(obj.prop, 11);
       assert.equal(obj.callcount, 2);
       obj.setProp(11);
       assert.equal(obj.prop, 11);
-      return assert.equal(obj.callcount, 2);
+      assert.equal(obj.callcount, 3);
+      obj.setProp(11);
+      assert.equal(obj.prop, 11);
+      return assert.equal(obj.callcount, 3);
     });
-    return it('can trigger an invalidator when initialising a property', function() {
-      var calls, emitter, initiated, invalidated, invalidator, prop, res;
-      emitter = new EventEmitter();
+    return it('can trigger an invalidator when initializing a property', function() {
+      var calls, initiated, invalidated, invalidator, obj, prop, res;
+      obj = {};
       prop = (new Property('hello', {
         calcul: function() {
           return 'hello';
         }
-      })).bind(emitter);
+      })).bind(obj);
       calls = 0;
-      invalidated = {
-        invalidateTest: function() {
-          return calls += 1;
-        },
-        test: 1
+      invalidated = function() {
+        return calls += 1;
       };
-      invalidator = new Invalidator('test', invalidated);
+      invalidator = new Invalidator(invalidated);
       assert.equal(calls, 0, 'nb calls initial');
-      initiated = invalidator.propInitiated('hello', emitter);
+      initiated = invalidator.propInitiated('hello', obj);
       assert.isFalse(initiated);
       invalidator.bind();
       assert.equal(calls, 0, 'nb calls after propInitiated');
-      res = emitter.hello;
+      res = obj.hello;
       assert.equal(res, 'hello');
       assert.equal(calls, 1, 'nb calls after get');
       invalidator.recycle(function() {
-        return initiated = invalidator.propInitiated('hello', emitter);
+        return initiated = invalidator.propInitiated('hello', obj);
       });
       invalidator.bind();
       assert.isTrue(initiated);
       assert.equal(calls, 1, 'nb calls after propInitiated 2');
-      emitter.hello = 'meh';
+      obj.hello = 'meh';
       return assert.equal(calls, 1, 'nb calls after set');
     });
   });
