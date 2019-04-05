@@ -767,7 +767,8 @@
     Loader = (function() {
       class Loader extends Overrider {
         constructor() {
-          initPreloaded();
+          super();
+          this.initPreloaded();
         }
 
         initPreloaded() {

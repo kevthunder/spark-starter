@@ -576,7 +576,6 @@
         return TestClass;
 
       }).call(this);
-      debugger;
       TestClass.properties({
         prop: {
           change: function(old, overrided) {

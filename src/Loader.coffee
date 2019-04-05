@@ -2,7 +2,9 @@ Overrider = require('./Overrider')
 
 class Loader extends Overrider
   constructor: ->
-    initPreloaded()
+    super()
+    @initPreloaded()
+    
   preloaded: []
 
   @overrides

@@ -5,6 +5,8 @@
 
   require('./overrider');
 
+  require('./loader');
+
   require('./updater');
 
   require('./collection');
