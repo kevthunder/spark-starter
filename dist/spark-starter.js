@@ -676,9 +676,9 @@
       }
 
       doBind() {
+        this.update();
         this.getProperty().on('invalidated', this.invalidateCallback);
-        this.getProperty().on('updated', this.updateCallback);
-        return this.getProperty().get();
+        return this.getProperty().on('updated', this.updateCallback);
       }
 
       doUnbind() {
@@ -873,6 +873,7 @@
           var preload;
           this.value = this.ingest(this.default);
           this.calculated = false;
+          this.initiated = false;
           preload = this.constructor.getPreload(this.obj, this.property, this);
           if (preload.length > 0) {
             return Loader.loadMany(preload);

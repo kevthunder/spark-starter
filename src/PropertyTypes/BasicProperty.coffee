@@ -12,6 +12,7 @@ class BasicProperty extends Mixable
   init: ->
     @value = @ingest(@default)
     @calculated = false
+    @initiated = false
 
     preload = @constructor.getPreload(@obj, @property, this)
     if preload.length > 0

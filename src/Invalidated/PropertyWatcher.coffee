@@ -33,9 +33,9 @@ class PropertyWatcher extends Binder
     @getProperty()?
 
   doBind: ->
+    @update()
     @getProperty().on 'invalidated', @invalidateCallback
     @getProperty().on 'updated', @updateCallback
-    @getProperty().get()
 
   doUnbind: ->
     @getProperty().off 'invalidated', @invalidateCallback

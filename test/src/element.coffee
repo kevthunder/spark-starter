@@ -342,9 +342,10 @@ describe 'Element', ->
           change: (old) ->
              @callcount1 += 1
              
+    debugger
     TestClass.properties
       prop: 
-        change: (old,overrided) ->
+        change: (old, overrided) ->
           @callcount2 += 1
           
     obj = new TestClass();
