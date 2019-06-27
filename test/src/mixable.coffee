@@ -88,3 +88,17 @@ describe 'Mixable', ->
     assert.equal obj.foo, 1
     val = 2
     assert.equal obj.foo, 2
+
+
+  it 'should keep Final Properties definition', ->
+    class BaseClass extends Mixable
+      getFinalProperties: ->
+        ['foo']
+      
+    class TestClass extends Mixable
+      getFinalProperties: ->
+        ['bar']
+      @extend BaseClass
+
+    obj = new TestClass();
+    assert.deepEqual obj.getFinalProperties(), ['foo','bar']

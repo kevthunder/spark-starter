@@ -8,11 +8,17 @@ class Mixable
     make: (source, target) ->
       for prop in @getExtensionProperties(source, target)
         Object.defineProperty(target, prop.name, prop)
+      if source.getFinalProperties and target.getFinalProperties
+        originalFinalProperties = target.getFinalProperties
+        target.getFinalProperties = ->
+          source.getFinalProperties().concat(originalFinalProperties.call(this))
+      else
+        target.getFinalProperties = source.getFinalProperties || target.getFinalProperties
       target.extensions = (target.extensions || []).concat([source])
       if typeof source.extended == 'function'
         source.extended(target)
 
-    alwaysFinal: ['extended', 'extensions', '__super__', 'constructor']
+    alwaysFinal: ['extended', 'extensions', '__super__', 'constructor', 'getFinalProperties']
 
     getExtensionProperties: (source, target) ->
       alwaysFinal = @alwaysFinal

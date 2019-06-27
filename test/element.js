@@ -47,6 +47,57 @@
       assert.instanceOf(obj.getProperty("foo"), Property);
       return assert.instanceOf(obj.getProperty("bar"), Property);
     });
+    it('can extend a third class with properties that have watchers', function() {
+      var BaseClass, MiddleClass, TestClass, obj;
+      BaseClass = (function() {
+        class BaseClass extends Element {};
+
+        BaseClass.properties({
+          foo: {
+            default: 'hello',
+            change: function() {}
+          }
+        });
+
+        return BaseClass;
+
+      }).call(this);
+      MiddleClass = (function() {
+        class MiddleClass extends Element {};
+
+        MiddleClass.properties({
+          baz: {
+            default: 'hi',
+            change: function() {}
+          }
+        });
+
+        return MiddleClass;
+
+      }).call(this);
+      TestClass = (function() {
+        class TestClass extends BaseClass {};
+
+        TestClass.extend(MiddleClass);
+
+        TestClass.properties({
+          bar: {
+            default: 'hey',
+            change: function() {}
+          }
+        });
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass();
+      assert.equal(obj.foo, 'hello');
+      assert.equal(obj.baz, 'hi');
+      assert.equal(obj.bar, 'hey');
+      assert.instanceOf(obj.getProperty("foo"), Property);
+      assert.instanceOf(obj.getProperty("bar"), Property);
+      return assert.instanceOf(obj.getProperty("baz"), Property);
+    });
     it('can extend a nested class with properties', function() {
       var BaseClass, SupClass, TestClass, obj;
       BaseClass = (function() {

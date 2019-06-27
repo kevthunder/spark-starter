@@ -295,18 +295,26 @@
           }
         },
         make: function(source, target) {
-          var j, len, prop, ref3;
+          var j, len, originalFinalProperties, prop, ref3;
           ref3 = this.getExtensionProperties(source, target);
           for (j = 0, len = ref3.length; j < len; j++) {
             prop = ref3[j];
             Object.defineProperty(target, prop.name, prop);
+          }
+          if (source.getFinalProperties && target.getFinalProperties) {
+            originalFinalProperties = target.getFinalProperties;
+            target.getFinalProperties = function() {
+              return source.getFinalProperties().concat(originalFinalProperties.call(this));
+            };
+          } else {
+            target.getFinalProperties = source.getFinalProperties || target.getFinalProperties;
           }
           target.extensions = (target.extensions || []).concat([source]);
           if (typeof source.extended === 'function') {
             return source.extended(target);
           }
         },
-        alwaysFinal: ['extended', 'extensions', '__super__', 'constructor'],
+        alwaysFinal: ['extended', 'extensions', '__super__', 'constructor', 'getFinalProperties'],
         getExtensionProperties: function(source, target) {
           var alwaysFinal, props, targetChain;
           alwaysFinal = this.alwaysFinal;
@@ -1403,9 +1411,10 @@
     Spark.CollectionProperty = definition();
     return Spark.CollectionProperty.definition = definition;
   })(function(dependencies = {}) {
-    var Collection, CollectionProperty, CollectionPropertyWatcher, DynamicProperty;
+    var Collection, CollectionProperty, CollectionPropertyWatcher, DynamicProperty, Referred;
     DynamicProperty = dependencies.hasOwnProperty("DynamicProperty") ? dependencies.DynamicProperty : Spark.DynamicProperty;
     Collection = dependencies.hasOwnProperty("Collection") ? dependencies.Collection : Spark.Collection;
+    Referred = dependencies.hasOwnProperty("Referred") ? dependencies.Referred : Spark.Referred;
     CollectionPropertyWatcher = dependencies.hasOwnProperty("CollectionPropertyWatcher") ? dependencies.CollectionPropertyWatcher : Spark.CollectionPropertyWatcher;
     CollectionProperty = (function() {
       class CollectionProperty extends DynamicProperty {

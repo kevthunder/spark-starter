@@ -123,7 +123,7 @@
       obj = new TestClass();
       return assert.equal(obj.foo(), 'hi');
     });
-    return it('can extend properties with accessor', function() {
+    it('can extend properties with accessor', function() {
       var BaseClass, TestClass, obj, val;
       val = 1;
       BaseClass = class BaseClass extends Mixable {};
@@ -144,6 +144,30 @@
       assert.equal(obj.foo, 1);
       val = 2;
       return assert.equal(obj.foo, 2);
+    });
+    return it('should keep Final Properties definition', function() {
+      var BaseClass, TestClass, obj;
+      BaseClass = class BaseClass extends Mixable {
+        getFinalProperties() {
+          return ['foo'];
+        }
+
+      };
+      TestClass = (function() {
+        class TestClass extends Mixable {
+          getFinalProperties() {
+            return ['bar'];
+          }
+
+        };
+
+        TestClass.extend(BaseClass);
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass();
+      return assert.deepEqual(obj.getFinalProperties(), ['foo', 'bar']);
     });
   });
 

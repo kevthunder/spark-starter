@@ -1,5 +1,6 @@
 DynamicProperty = require('./DynamicProperty')
 Collection = require('../Collection')
+Referred = require('../Referred')
 CollectionPropertyWatcher = require('../Invalidated/CollectionPropertyWatcher')
 
 class CollectionProperty extends DynamicProperty

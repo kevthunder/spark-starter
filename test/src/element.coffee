@@ -26,6 +26,34 @@ describe 'Element', ->
     assert.instanceOf obj.getProperty("foo"), Property
     assert.instanceOf obj.getProperty("bar"), Property
 
+  it 'can extend a third class with properties that have watchers', ->
+    class BaseClass extends Element
+      @properties
+        foo: 
+          default: 'hello'
+          change: ->
+
+    class MiddleClass extends Element
+      @properties
+        baz: 
+          default: 'hi'
+          change: ->
+
+    class TestClass extends BaseClass
+      @extend MiddleClass
+      @properties
+        bar: 
+          default: 'hey'
+          change: ->
+    obj = new TestClass();
+
+    assert.equal obj.foo, 'hello'
+    assert.equal obj.baz, 'hi'
+    assert.equal obj.bar, 'hey'
+    assert.instanceOf obj.getProperty("foo"), Property
+    assert.instanceOf obj.getProperty("bar"), Property
+    assert.instanceOf obj.getProperty("baz"), Property
+
   it 'can extend a nested class with properties', ->
     class BaseClass extends Element
       @properties
