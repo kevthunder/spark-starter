@@ -1,6 +1,5 @@
 Binder = require('../Binder')
 
-# todo: dont use Invalidator
 class PropertyWatcher extends Binder
 
   constructor: (options)->
@@ -22,12 +21,18 @@ class PropertyWatcher extends Binder
 
   init: ->
     if @autoBind
-      @bind()
+      @checkBind()
 
   getProperty: ->
     if typeof @property == "string"
       @property = @scope.getPropertyInstance(@property)
     @property
+
+  checkBind: ->
+    @toggleBind(@shouldBind())
+
+  shouldBind: ->
+    true
 
   canBind: ->
     @getProperty()?

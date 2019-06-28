@@ -1,6 +1,12 @@
 Referred = require('./Referred')
 
 class Binder extends Referred
+  toggleBind: (val = !@binded)->
+    if val
+      @bind()
+    else
+      @unbind()
+
   bind: ->
     if !@binded and @canBind()
       @doBind()
@@ -22,3 +28,6 @@ class Binder extends Referred
     
   equals: (binder) -> 
     @compareRefered(binder)
+
+  destroy: ->
+    @unbind()

@@ -50,6 +50,14 @@
     var Binder, Referred;
     Referred = dependencies.hasOwnProperty("Referred") ? dependencies.Referred : Spark.Referred;
     Binder = class Binder extends Referred {
+      toggleBind(val = !this.binded) {
+        if (val) {
+          return this.bind();
+        } else {
+          return this.unbind();
+        }
+      }
+
       bind() {
         if (!this.binded && this.canBind()) {
           this.doBind();
@@ -78,6 +86,10 @@
 
       equals(binder) {
         return this.compareRefered(binder);
+      }
+
+      destroy() {
+        return this.unbind();
       }
 
     };
@@ -526,8 +538,8 @@
   })(function() {
     var Overrider;
     Overrider = (function() {
-      // todo :   
-      //  simplified form : @withoutName method  
+      // todo : 
+      //  simplified form : @withoutName method
       class Overrider {
         static overrides(overrides) {
           return this.Override.applyMany(this.prototype, this.name, overrides);
@@ -638,7 +650,6 @@
   })(function(dependencies = {}) {
     var Binder, PropertyWatcher;
     Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
-    // todo: dont use Invalidator  
     PropertyWatcher = class PropertyWatcher extends Binder {
       constructor(options) {
         super();
@@ -668,7 +679,7 @@
 
       init() {
         if (this.autoBind) {
-          return this.bind();
+          return this.checkBind();
         }
       }
 
@@ -677,6 +688,14 @@
           this.property = this.scope.getPropertyInstance(this.property);
         }
         return this.property;
+      }
+
+      checkBind() {
+        return this.toggleBind(this.shouldBind());
+      }
+
+      shouldBind() {
+        return true;
       }
 
       canBind() {
@@ -2093,6 +2112,42 @@
 
     }).call(this, Binder);
     return Updater;
+  });
+
+  (function(definition) {
+    Spark.ActivablePropertyWatcher = definition();
+    return Spark.ActivablePropertyWatcher.definition = definition;
+  })(function(dependencies = {}) {
+    var ActivablePropertyWatcher, Invalidator, PropertyWatcher;
+    PropertyWatcher = dependencies.hasOwnProperty("PropertyWatcher") ? dependencies.PropertyWatcher : Spark.PropertyWatcher;
+    Invalidator = dependencies.hasOwnProperty("Invalidator") ? dependencies.Invalidator : Spark.Invalidator;
+    ActivablePropertyWatcher = class ActivablePropertyWatcher extends PropertyWatcher {
+      loadOptions(options) {
+        super.loadOptions(options);
+        return this.active = options.active;
+      }
+
+      shouldBind() {
+        var active;
+        if (this.active != null) {
+          if (this.invalidator == null) {
+            this.invalidator = new Invalidator(this, this.scope);
+            this.invalidator.callback = () => {
+              return this.checkBind();
+            };
+          }
+          this.invalidator.recycle();
+          active = this.active(this.invalidator);
+          this.invalidator.endRecycle();
+          this.invalidator.bind();
+          return active;
+        } else {
+          return true;
+        }
+      }
+
+    };
+    return ActivablePropertyWatcher;
   });
 
   (function(definition) {
