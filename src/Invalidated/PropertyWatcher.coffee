@@ -2,13 +2,13 @@ Binder = require('../Binder')
 
 class PropertyWatcher extends Binder
 
-  constructor: (options)->
+  constructor: (@options)->
     super()
     @invalidateCallback = => @invalidate()
     @updateCallback = (old)=> @update(old)
-    if options?
-      @loadOptions(options)
-    unless options?.initByLoader and options.loader?
+    if @options?
+      @loadOptions(@options)
+    unless @options?.initByLoader and @options.loader?
       @init()
 
   loadOptions: (options)->
@@ -18,6 +18,9 @@ class PropertyWatcher extends Binder
     @property = options.property
     @callback = options.callback
     @autoBind = options.autoBind
+
+  copyWith: (opt)->
+    new this.__proto__.constructor(Object.assign({},@options,opt));
 
   init: ->
     if @autoBind

@@ -116,18 +116,32 @@ class BasicProperty extends Mixable
   @getPreload = (target, prop, instance)->
     preload = []
     if typeof prop.options.change == "function"
-      ref = 
-        prop: prop.name
+      toLoad = {
+        type: PropertyWatcher
+        loaderAsScope: true
+        property: instance || prop.name
+        initByLoader: true
+        autoBind: true
         callback: prop.options.change
-        context: 'change'
-      unless target.preloaded?.find (loaded)-> Referred.compareRef(ref, loaded.ref) and !instance || loaded.instance?
-        preload.push
-          type: PropertyWatcher
-          loaderAsScope: true
-          scope: target
-          property: instance || prop.name
-          initByLoader: true
-          autoBind: true
+        ref: {
+          prop: prop.name
           callback: prop.options.change
-          ref: ref
+          context: 'change'
+        }
+      }
+    if typeof prop.options.change?.copyWith == "function"
+      toLoad = {
+        type: prop.options.change
+        loaderAsScope: true
+        property: instance || prop.name
+        initByLoader: true
+        autoBind: true
+        ref: {
+          prop: prop.name
+          type: prop.options.change
+          context: 'change'
+        }
+      }
+    if toLoad? and !target.preloaded?.find (loaded)-> Referred.compareRef(toLoad.ref, loaded.ref) and !instance || loaded.instance?
+      preload.push toLoad
     preload

@@ -45,6 +45,9 @@ class Loader extends Overrider
     def.map (d)=>
       @load(d)
   @load: (def)->
-    new def.type(def)
+    if typeof def.type.copyWith == "function"
+      def.type.copyWith(def)
+    else
+      new def.type(def)
   @preload: (def)->
     @prototype.preload(def)

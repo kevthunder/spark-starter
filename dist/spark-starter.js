@@ -651,18 +651,20 @@
     var Binder, PropertyWatcher;
     Binder = dependencies.hasOwnProperty("Binder") ? dependencies.Binder : Spark.Binder;
     PropertyWatcher = class PropertyWatcher extends Binder {
-      constructor(options) {
+      constructor(options1) {
+        var ref3;
         super();
+        this.options = options1;
         this.invalidateCallback = () => {
           return this.invalidate();
         };
         this.updateCallback = (old) => {
           return this.update(old);
         };
-        if (options != null) {
-          this.loadOptions(options);
+        if (this.options != null) {
+          this.loadOptions(this.options);
         }
-        if (!((options != null ? options.initByLoader : void 0) && (options.loader != null))) {
+        if (!(((ref3 = this.options) != null ? ref3.initByLoader : void 0) && (this.options.loader != null))) {
           this.init();
         }
       }
@@ -675,6 +677,10 @@
         this.property = options.property;
         this.callback = options.callback;
         return this.autoBind = options.autoBind;
+      }
+
+      copyWith(opt) {
+        return new this.__proto__.constructor(Object.assign({}, this.options, opt));
       }
 
       init() {
@@ -851,7 +857,11 @@
         }
 
         static load(def) {
-          return new def.type(def);
+          if (typeof def.type.copyWith === "function") {
+            return def.type.copyWith(def);
+          } else {
+            return new def.type(def);
+          }
         }
 
         static preload(def) {
@@ -1032,28 +1042,41 @@
         }
 
         static getPreload(target, prop, instance) {
-          var preload, ref, ref3;
+          var preload, ref3, ref4, toLoad;
           preload = [];
           if (typeof prop.options.change === "function") {
-            ref = {
-              prop: prop.name,
+            toLoad = {
+              type: PropertyWatcher,
+              loaderAsScope: true,
+              property: instance || prop.name,
+              initByLoader: true,
+              autoBind: true,
               callback: prop.options.change,
-              context: 'change'
-            };
-            if (!((ref3 = target.preloaded) != null ? ref3.find(function(loaded) {
-              return Referred.compareRef(ref, loaded.ref) && !instance || (loaded.instance != null);
-            }) : void 0)) {
-              preload.push({
-                type: PropertyWatcher,
-                loaderAsScope: true,
-                scope: target,
-                property: instance || prop.name,
-                initByLoader: true,
-                autoBind: true,
+              ref: {
+                prop: prop.name,
                 callback: prop.options.change,
-                ref: ref
-              });
-            }
+                context: 'change'
+              }
+            };
+          }
+          if (typeof ((ref3 = prop.options.change) != null ? ref3.copyWith : void 0) === "function") {
+            toLoad = {
+              type: prop.options.change,
+              loaderAsScope: true,
+              property: instance || prop.name,
+              initByLoader: true,
+              autoBind: true,
+              ref: {
+                prop: prop.name,
+                type: prop.options.change,
+                context: 'change'
+              }
+            };
+          }
+          if ((toLoad != null) && !((ref4 = target.preloaded) != null ? ref4.find(function(loaded) {
+            return Referred.compareRef(toLoad.ref, loaded.ref) && !instance || (loaded.instance != null);
+          }) : void 0)) {
+            preload.push(toLoad);
           }
           return preload;
         }

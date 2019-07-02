@@ -90,8 +90,8 @@ class Invalidator extends Binder
   
   prop: (prop, target = @scope) ->
     if typeof prop == 'string'
-      if target.getPropertyInstance?
-        prop = target.getPropertyInstance(prop)
+      if target.getPropertyInstance? and propInstance = target.getPropertyInstance(prop)
+        prop = propInstance
       else
         return target[prop] 
     else if !@checkPropInstance(prop)
