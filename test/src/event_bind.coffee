@@ -116,3 +116,39 @@ describe 'EventBind', ->
     bind.bind()
     bind.unbind()
     assert.equal calls, 1
+
+  it 'can change event target', ->
+    Emitter = class 
+      constructor: ->
+        @addCalls = 0
+        @removeCalls = 0
+      addListener: (evt, listener) ->
+        @addCalls += 1
+      removeListener: (evt, listener) ->
+        @removeCalls += 1
+
+    testListener = -> null
+    emitter1 = new Emitter()
+    emitter2 = new Emitter()
+    bind = new EventBind('test',null,testListener);
+
+    assert.equal emitter1.addCalls, 0
+    assert.equal emitter1.removeCalls, 0
+    assert.equal emitter2.addCalls, 0
+    assert.equal emitter2.removeCalls, 0
+
+    bind.bindTo(emitter1)
+
+    assert.equal emitter1.addCalls, 1
+    assert.equal emitter1.removeCalls, 0
+    assert.equal emitter2.addCalls, 0
+    assert.equal emitter2.removeCalls, 0
+
+    bind.bindTo(emitter2)
+
+    assert.equal emitter1.addCalls, 1
+    assert.equal emitter1.removeCalls, 1
+    assert.equal emitter2.addCalls, 1
+    assert.equal emitter2.removeCalls, 0
+
+

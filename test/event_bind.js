@@ -115,7 +115,7 @@
       bind.bind();
       return assert.equal(calls, 1);
     });
-    return it('should remove listener on unbind', function() {
+    it('should remove listener on unbind', function() {
       var bind, calls, emitter, testEvent, testListener;
       testEvent = 'test';
       testListener = function() {
@@ -137,6 +137,44 @@
       bind.bind();
       bind.unbind();
       return assert.equal(calls, 1);
+    });
+    return it('can change event target', function() {
+      var Emitter, bind, emitter1, emitter2, testListener;
+      Emitter = class {
+        constructor() {
+          this.addCalls = 0;
+          this.removeCalls = 0;
+        }
+
+        addListener(evt, listener) {
+          return this.addCalls += 1;
+        }
+
+        removeListener(evt, listener) {
+          return this.removeCalls += 1;
+        }
+
+      };
+      testListener = function() {
+        return null;
+      };
+      emitter1 = new Emitter();
+      emitter2 = new Emitter();
+      bind = new EventBind('test', null, testListener);
+      assert.equal(emitter1.addCalls, 0);
+      assert.equal(emitter1.removeCalls, 0);
+      assert.equal(emitter2.addCalls, 0);
+      assert.equal(emitter2.removeCalls, 0);
+      bind.bindTo(emitter1);
+      assert.equal(emitter1.addCalls, 1);
+      assert.equal(emitter1.removeCalls, 0);
+      assert.equal(emitter2.addCalls, 0);
+      assert.equal(emitter2.removeCalls, 0);
+      bind.bindTo(emitter2);
+      assert.equal(emitter1.addCalls, 1);
+      assert.equal(emitter1.removeCalls, 1);
+      assert.equal(emitter2.addCalls, 1);
+      return assert.equal(emitter2.removeCalls, 0);
     });
   });
 

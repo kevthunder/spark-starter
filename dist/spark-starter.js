@@ -1113,6 +1113,12 @@
         };
       }
 
+      bindTo(target) {
+        this.unbind();
+        this.target = target;
+        return this.bind();
+      }
+
       doBind() {
         if (typeof this.target.addEventListener === 'function') {
           return this.target.addEventListener(this.event, this.callback);
@@ -1283,9 +1289,10 @@
         }
 
         prop(prop, target = this.scope) {
+          var propInstance;
           if (typeof prop === 'string') {
-            if (target.getPropertyInstance != null) {
-              prop = target.getPropertyInstance(prop);
+            if ((target.getPropertyInstance != null) && (propInstance = target.getPropertyInstance(prop))) {
+              prop = propInstance;
             } else {
               return target[prop];
             }

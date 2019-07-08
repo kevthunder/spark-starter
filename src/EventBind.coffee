@@ -5,6 +5,12 @@ class EventBind extends Binder
     super()
   getRef: ->
     {event:@event, target:@target, callback:@callback}
+
+  bindTo: (target)->
+    @unbind()
+    @target = target
+    @bind()
+
   doBind: ->
     if typeof @target.addEventListener == 'function'
       @target.addEventListener(@event, @callback)
