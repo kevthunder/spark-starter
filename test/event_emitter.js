@@ -74,7 +74,7 @@
       emitter.emitEvent('foo');
       return assert.equal(called, 1);
     });
-    return it('insure callbacks cannot disrupt event triggering', function() {
+    it('insure callbacks cannot disrupt event triggering', function() {
       var emitter, fn1, fn2;
       fn1 = function() {
         fn1.called += 1;
@@ -91,6 +91,20 @@
       emitter.emitEvent('foo');
       assert.equal(fn1.called, 1, "fn1.called");
       return assert.equal(fn2.called, 1, "fn2.called");
+    });
+    return it('can remove all listeners', function() {
+      var emitter, fn;
+      fn = function() {
+        return 'test';
+      };
+      emitter = new EventEmitter();
+      emitter.addListener('foo', fn);
+      assert.lengthOf(emitter.getListeners('foo'), 1);
+      emitter.addListener('bar', fn);
+      assert.lengthOf(emitter.getListeners('bar'), 1);
+      emitter.removeAllListeners();
+      assert.lengthOf(emitter.getListeners('foo'), 0);
+      return assert.lengthOf(emitter.getListeners('bar'), 0);
     });
   });
 

@@ -30,6 +30,9 @@ class EventEmitter
     listeners.forEach (listener)->
       listener(args...)
 
+  removeAllListeners: ->
+    @._events = {}
+
   @::emit = @::emitEvent
   @::trigger = @::emitEvent
   @::on = @::addListener

@@ -516,6 +516,10 @@
           });
         }
 
+        removeAllListeners() {
+          return this._events = {};
+        }
+
       };
 
       EventEmitter.prototype.emit = EventEmitter.prototype.emitEvent;

@@ -80,7 +80,6 @@ apple.color = 'green'; // trigger an alert
 A Spark-starter property can be calculated from other properties and the calculation itself will only happens when needed.
 ```javascript
 class Basket extends Spark.Element { };
-Basket.extend(Spark.EventEmitter) // this will not be needed in future versions
 Basket.properties({
   numberOfApple: {
     default: 1

@@ -76,3 +76,16 @@ describe 'EventEmitter', ->
     emitter.emitEvent('foo')
     assert.equal fn1.called, 1, "fn1.called"
     assert.equal fn2.called, 1, "fn2.called"
+
+  
+  it 'can remove all listeners', ->
+    fn = ->
+      'test'
+    emitter = new EventEmitter()
+    emitter.addListener 'foo', fn
+    assert.lengthOf emitter.getListeners('foo'), 1
+    emitter.addListener 'bar', fn
+    assert.lengthOf emitter.getListeners('bar'), 1
+    emitter.removeAllListeners()
+    assert.lengthOf emitter.getListeners('foo'), 0
+    assert.lengthOf emitter.getListeners('bar'), 0
