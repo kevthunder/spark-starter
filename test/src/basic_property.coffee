@@ -62,5 +62,31 @@ describe 'BasicProperty', ->
     assert.equal prop.value, 'two'
     prop.set('zero')
     assert.equal prop.value, 'zero'
+
+  it 'can call the destroy function of an object', ->
+    prop = new Property('prop',{
+      default: {
+        destroy: ->
+          @destroyed = true
+      }
+      destroy: true
+    }).getInstance({});
     
+    val = prop.get()
+    assert.notExists(val.destroyed)
+    prop.destroy()
+    assert.isTrue(val.destroyed)
+
+  it 'can call a custom destroy function', ->
+    val = null
+    prop = new Property('prop',{
+      default: {}
+      destroy: (val)->
+        val.destroyed = true
+    }).getInstance({});
+    
+    val = prop.get()
+    assert.notExists(val.destroyed)
+    prop.destroy()
+    assert.isTrue(val.destroyed)
   

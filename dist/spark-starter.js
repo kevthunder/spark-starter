@@ -953,7 +953,16 @@
           return val !== old;
         }
 
-        destroy() {}
+        destroy() {
+          var ref3;
+          if (this.property.options.destroy === true && (((ref3 = this.value) != null ? ref3.destroy : void 0) != null)) {
+            this.value.destroy();
+          }
+          if (typeof this.property.options.destroy === 'function') {
+            this.callOptionFunct('destroy', this.value);
+          }
+          return this.value = null;
+        }
 
         callOptionFunct(funct, ...args) {
           if (typeof funct === 'string') {

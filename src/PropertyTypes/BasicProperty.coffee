@@ -46,7 +46,12 @@ class BasicProperty extends Mixable
     val != old
 
   destroy: ->
-      
+    if @property.options.destroy == true and @value?.destroy?
+      @value.destroy()
+    if typeof @property.options.destroy == 'function'
+      @callOptionFunct('destroy', @value)
+    @value = null
+
   callOptionFunct: (funct, args...) ->
     if typeof funct == 'string'
       funct = @property.options[funct]

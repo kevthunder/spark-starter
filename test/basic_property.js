@@ -53,7 +53,7 @@
       prop.set(4);
       return assert.equal(call, 3);
     });
-    return it('should allow to alter the input value', function() {
+    it('should allow to alter the input value', function() {
       var prop;
       prop = new Property('prop', {
         ingest: function(val) {
@@ -68,6 +68,35 @@
       assert.equal(prop.value, 'two');
       prop.set('zero');
       return assert.equal(prop.value, 'zero');
+    });
+    it('can call the destroy function of an object', function() {
+      var prop, val;
+      prop = new Property('prop', {
+        default: {
+          destroy: function() {
+            return this.destroyed = true;
+          }
+        },
+        destroy: true
+      }).getInstance({});
+      val = prop.get();
+      assert.notExists(val.destroyed);
+      prop.destroy();
+      return assert.isTrue(val.destroyed);
+    });
+    return it('can call a custom destroy function', function() {
+      var prop, val;
+      val = null;
+      prop = new Property('prop', {
+        default: {},
+        destroy: function(val) {
+          return val.destroyed = true;
+        }
+      }).getInstance({});
+      val = prop.get();
+      assert.notExists(val.destroyed);
+      prop.destroy();
+      return assert.isTrue(val.destroyed);
     });
   });
 
