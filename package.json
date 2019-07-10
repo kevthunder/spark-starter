@@ -1,6 +1,6 @@
 {
   "name": "spark-starter",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Basic framework based on properties",
   "main": "lib/spark-starter.js",
   "repository": {
