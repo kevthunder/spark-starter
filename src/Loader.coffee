@@ -37,10 +37,19 @@ class Loader extends Overrider
   preload: (def)->
     if !Array.isArray(def)
       def = [def]
-    @preloaded = @preloaded.concat(def)
+    @preloaded = (@preloaded || []).concat(def)
   destroyLoaded: ->
     @preloaded.forEach (def)->
       def.instance?.destroy?()
+
+  getFinalProperties: ->
+    super().concat(['preloaded'])
+    
+  extended: (target)->
+    super(target)
+    if @preloaded
+      target.preloaded = (target.preloaded || []).concat(@preloaded)
+
   @loadMany: (def)->
     def.map (d)=>
       @load(d)

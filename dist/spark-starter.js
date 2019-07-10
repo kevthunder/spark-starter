@@ -844,7 +844,7 @@
           if (!Array.isArray(def)) {
             def = [def];
           }
-          return this.preloaded = this.preloaded.concat(def);
+          return this.preloaded = (this.preloaded || []).concat(def);
         }
 
         destroyLoaded() {
@@ -852,6 +852,17 @@
             var ref3;
             return (ref3 = def.instance) != null ? typeof ref3.destroy === "function" ? ref3.destroy() : void 0 : void 0;
           });
+        }
+
+        getFinalProperties() {
+          return super.getFinalProperties().concat(['preloaded']);
+        }
+
+        extended(target) {
+          super.extended(target);
+          if (this.preloaded) {
+            return target.preloaded = (target.preloaded || []).concat(this.preloaded);
+          }
         }
 
         static loadMany(def) {
