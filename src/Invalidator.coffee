@@ -10,7 +10,7 @@ pluck = (arr,fn) ->
   else
     null
 
-class Invalidator extends Binder
+module.exports = class Invalidator extends Binder
   @strict = true
   constructor: (@invalidated, @scope = null) ->
     super()

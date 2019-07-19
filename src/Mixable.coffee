@@ -1,5 +1,5 @@
 
-class Mixable
+module.exports = class Mixable
   @Extension:
     makeOnce: (source, target) ->
       unless target.extensions?.includes(source)

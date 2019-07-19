@@ -1,7 +1,7 @@
 
 # todo : 
 #  simplified form : @withoutName method
-class Overrider
+module.exports = class Overrider
 
   @Override: {
     makeMany: (target, namespace, overrides)->

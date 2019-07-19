@@ -1,4 +1,4 @@
-class Collection
+module.exports = class Collection
   constructor: (arr) ->
     if arr?
       if typeof arr.toArray == 'function'

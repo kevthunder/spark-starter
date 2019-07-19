@@ -1,6 +1,6 @@
 Binder = require('../Binder')
 
-class PropertyWatcher extends Binder
+module.exports = class PropertyWatcher extends Binder
 
   constructor: (@options)->
     super()

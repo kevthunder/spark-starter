@@ -3,7 +3,7 @@ Collection = require('../Collection')
 Referred = require('../Referred')
 CollectionPropertyWatcher = require('../Invalidated/CollectionPropertyWatcher')
 
-class CollectionProperty extends DynamicProperty
+module.exports = class CollectionProperty extends DynamicProperty
   ingest: (val)->
     if typeof @property.options.ingest == 'function'
       val = @callOptionFunct("ingest", val)

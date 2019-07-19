@@ -1,7 +1,7 @@
 Invalidator = require('../Invalidator')
 BasicProperty = require('./BasicProperty')
 
-class DynamicProperty extends BasicProperty
+module.exports = class DynamicProperty extends BasicProperty
   
   callbackGet:->
     res = @callOptionFunct("get")

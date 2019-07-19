@@ -7,7 +7,7 @@ InvalidatedProperty = require('./PropertyTypes/InvalidatedProperty')
 PropertyOwner = require('./PropertyOwner')
 Mixable = require('./Mixable')
 
-class Property
+module.exports = class Property
   @::composers = [
     ComposedProperty, 
     CollectionProperty, 

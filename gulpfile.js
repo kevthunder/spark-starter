@@ -4,35 +4,38 @@ var gulp = require('gulp');
 var rename = require("gulp-rename");
 var coffee = require('gulp-coffee');
 var uglify = require('gulp-uglify-es').default;
-var concat = require('gulp-concat');
 var mocha = require('gulp-mocha');
-var wrapper = require('spark-wrapper');
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
 var sourcemaps = require('gulp-sourcemaps');
+var requireIndex = require('gulp-require-index');
 
 gulp.task('coffee', function() {
   return gulp.src(['./src/**/*.coffee'])
-    // .pipe(sourcemaps.init())
+    .pipe(sourcemaps.init())
     .pipe(coffee({bare: true}))
-    .pipe(wrapper({namespace:'Spark'}))
-    .pipe(wrapper.loader({namespace:'Spark','filename':'spark-starter'}))
-    // .pipe(sourcemaps.write('./maps'))
+    .pipe(sourcemaps.write('./maps', {sourceRoot: '../src'}))
     .pipe(gulp.dest('./lib/'));
 });
 
-gulp.task('concat', function() {
-  return gulp.src(['./src/**/*.coffee'])
-    .pipe(wrapper.compose({namespace:'Spark'}))
-    .pipe(concat('spark-starter.coffee'))
-    .pipe(gulp.dest('./tmp/'));
+gulp.task('buildIndex', function () {
+  return gulp.src(['./lib/**/*.js','!./lib/spark-starter.js'])
+    .pipe(requireIndex({name:'spark-starter.js'}))
+    .pipe(gulp.dest('./lib'));
 });
 
-gulp.task('concatCoffee', gulp.series('concat', function() {
-  return gulp.src(['./tmp/*.coffee'])
-    .pipe(coffee())
+gulp.task('concat', function() {
+  var b = browserify({
+    entries: './lib/spark-starter.js',
+    debug: true,
+    standalone: 'Spark'
+  })
+  return b.bundle()
+    .pipe(source('spark-starter.js'))
     .pipe(gulp.dest('./dist/'));
-}));
+});
 
-gulp.task('compress', gulp.series('concatCoffee', function () {
+gulp.task('compress', gulp.series('concat', function () {
   return gulp.src('./dist/spark-starter.js')
     .pipe(uglify({keep_classnames:true}))
     .pipe(rename('spark-starter.min.js'))
@@ -43,11 +46,11 @@ gulp.task('coffeeTest', function() {
   return gulp.src('./test/src/*.coffee')
     .pipe(sourcemaps.init())
     .pipe(coffee())
-    .pipe(sourcemaps.write('./maps'))
+    .pipe(sourcemaps.write('./maps', {sourceRoot: './src'}))
     .pipe(gulp.dest('./test/'));
 });
 
-gulp.task('build',  gulp.series('coffee', 'concatCoffee', 'compress', function (done) {
+gulp.task('build',  gulp.series('coffee', 'buildIndex', 'concat', 'compress', function (done) {
     console.log('Build Complete');
     done();
 }));

@@ -1,6 +1,6 @@
 Binder = require('./Binder')
 
-class Updater
+module.exports = class Updater
   constructor: (options) ->
     @callbacks = []
     @next = []

@@ -1,4 +1,4 @@
-class EventEmitter
+module.exports = class EventEmitter
   getAllEvents: () ->
     @._events || (@._events = {})
 

@@ -4,7 +4,7 @@ Loader = require('../Loader')
 PropertyWatcher = require('../Invalidated/PropertyWatcher')
 Referred = require('../Referred')
 
-class BasicProperty extends Mixable
+module.exports = class BasicProperty extends Mixable
   @extend EventEmitter
   constructor: (@property, @obj) ->
     super()

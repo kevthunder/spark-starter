@@ -2,7 +2,7 @@ Invalidator = require('../Invalidator')
 DynamicProperty = require('./DynamicProperty')
 Overrider = require('../Overrider')
 
-class CalculatedProperty extends DynamicProperty
+module.exports = class CalculatedProperty extends DynamicProperty
   @extend Overrider
 
 

@@ -1,6 +1,6 @@
 Binder = require('./Binder')
 
-class EventBind extends Binder
+module.exports = class EventBind extends Binder
   constructor: (@event, @target, @callback) ->
     super()
   getRef: ->

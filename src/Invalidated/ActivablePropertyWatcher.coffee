@@ -1,7 +1,7 @@
 PropertyWatcher = require('./PropertyWatcher')
 Invalidator = require('../Invalidator')
 
-class ActivablePropertyWatcher extends PropertyWatcher
+module.exports = class ActivablePropertyWatcher extends PropertyWatcher
   loadOptions: (options)->
     super(options)
     @active = options.active

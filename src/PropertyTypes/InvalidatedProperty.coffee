@@ -1,7 +1,7 @@
 Invalidator = require('../Invalidator')
 CalculatedProperty = require('./CalculatedProperty')
 
-class InvalidatedProperty extends CalculatedProperty
+module.exports = class InvalidatedProperty extends CalculatedProperty
   unknown: ->
     if @calculated || @active == false
       @_invalidateNotice()

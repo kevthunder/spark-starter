@@ -1,7 +1,7 @@
 Property = require('./Property')
 Mixable = require('./Mixable')
 
-class Element extends Mixable
+module.exports = class Element extends Mixable
   constructor: ->
     super()
     @init()

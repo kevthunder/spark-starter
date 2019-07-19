@@ -1,7 +1,7 @@
 Invalidator = require('../Invalidator')
 
 
-class Invalidated
+module.exports = class Invalidated
   constructor: (options)->
     if options?
       @loadOptions(options)

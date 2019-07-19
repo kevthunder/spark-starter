@@ -16,17 +16,19 @@
   "author": "kevthunder",
   "license": "ISC",
   "devDependencies": {
+    "browserify": "^16.3.0",
     "chai": "^4.1",
     "gulp": "^4.0",
     "gulp-coffee": "^3.0.2",
     "gulp-concat": "^2.6.1",
     "gulp-mocha": "^6.0.0",
     "gulp-rename": "^1.4.0",
+    "gulp-require-index": "github:kevthunder/gulp-require-index",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-uglify-es": "^1.0.4",
     "mocha": "^5.2.0",
     "source-map-support": "^0.5.9",
-    "spark-wrapper": "github:kevthunder/spark-wrapper"
+    "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {}
 }

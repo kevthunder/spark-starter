@@ -1,4 +1,4 @@
-class Referred
+module.exports = class Referred
   
   compareRefered: (refered) -> 
     @constructor.compareRefered(refered, this)

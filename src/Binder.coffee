@@ -1,6 +1,6 @@
 Referred = require('./Referred')
 
-class Binder extends Referred
+module.exports = class Binder extends Referred
   toggleBind: (val = !@binded)->
     if val
       @bind()

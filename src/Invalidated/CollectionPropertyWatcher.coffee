@@ -1,7 +1,7 @@
 PropertyWatcher = require('./PropertyWatcher')
 
 
-class CollectionPropertyWatcher extends PropertyWatcher
+module.exports = class CollectionPropertyWatcher extends PropertyWatcher
   loadOptions: (options)->
     super(options)
     @onAdded = options.onAdded

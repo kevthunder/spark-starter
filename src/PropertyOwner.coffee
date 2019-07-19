@@ -1,4 +1,4 @@
-class PropertyOwner
+module.exports = class PropertyOwner
 
   getProperty: (name)->
     @_properties && @_properties.find (prop)->
