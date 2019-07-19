@@ -108,6 +108,4 @@ myBasket.numberOfFruits; // will return 5 with no log
 ## todo
   - more tests
   - Create a complete documentation
-  - Remove the need to manually add a EventEmitter
-  - Revisit the `change` and `updater` options to make the easier to use.
   - option (shortcut) to forward methods from a property's value
