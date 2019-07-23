@@ -2,8 +2,10 @@ Property = require('./Property')
 Mixable = require('./Mixable')
 
 module.exports = class Element extends Mixable
-  constructor: ->
+  constructor: (data)->
     super()
+    if typeof data == "object" && @setProperties?
+      @setProperties(data)
     @init()
   init: ->
   tap: (name) ->

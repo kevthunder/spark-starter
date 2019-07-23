@@ -13,6 +13,30 @@
     var invalidateEvents, updateEvents;
     invalidateEvents = ['propInvalidated'];
     updateEvents = ['propChanged', 'propUpdated'];
+    it('can set properties from the constructor', function() {
+      var TestClass, obj;
+      TestClass = (function() {
+        class TestClass extends Element {};
+
+        TestClass.properties({
+          foo: {
+            default: null
+          },
+          bar: {
+            default: null
+          }
+        });
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass({
+        foo: 'hi',
+        bar: 'hello'
+      });
+      assert.equal(obj.foo, 'hi');
+      return assert.equal(obj.bar, 'hello');
+    });
     it('can extend a third class with properties', function() {
       var BaseClass, TestClass, obj;
       BaseClass = (function() {

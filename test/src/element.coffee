@@ -9,6 +9,23 @@ describe 'Element', ->
   invalidateEvents = ['propInvalidated']
   updateEvents = ['propChanged','propUpdated']
 
+  it 'can set properties from the constructor', ->
+    class TestClass extends Element
+      @properties
+        foo: 
+          default: null
+        bar: 
+          default: null
+    
+    obj = new TestClass(
+      foo: 'hi'
+      bar: 'hello'
+    )
+    
+    assert.equal obj.foo, 'hi'
+    assert.equal obj.bar, 'hello'
+
+
   it 'can extend a third class with properties', ->
     class BaseClass extends Element
       @properties
