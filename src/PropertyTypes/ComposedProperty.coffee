@@ -13,30 +13,39 @@ module.exports = class ComposedProperty extends CalculatedProperty
     else
       @default = @value = true
     @members = new ComposedProperty.Members(@property.options.members)
+    if @property.options.calcul?
+      @members.unshift (prev,invalidator)=> @property.options.calcul.bind(@obj)(invalidator)
     @members.changed = (old)=> @invalidate()
     @join = if typeof @property.options.composed == 'function'
       @property.options.composed
+    else if typeof @property.options.composed == 'string' and ComposedProperty.joinFunctions[@property.options.composed]?
+      ComposedProperty.joinFunctions[@property.options.composed]
     else if @property.options.default == false
       ComposedProperty.joinFunctions.or
-    else 
+    else if @property.options.default == true
       ComposedProperty.joinFunctions.and
+    else
+      ComposedProperty.joinFunctions.last
 
   calcul: ->
-    unless @invalidator
-      @invalidator =  new Invalidator(this, @obj)
-    @invalidator.recycle (invalidator,done)=> 
-      @value = @members.reduce (prev,member)=>
-          val = if typeof member == 'function' 
-            member(@invalidator)
-          else
-            member
-          @join(prev,val)
-        , @default
-      done()
-      if invalidator.isEmpty()
-        @invalidator = null
-      else
-        invalidator.bind()
+    if @members.length
+      unless @invalidator
+        @invalidator =  new Invalidator(this, @obj)
+      @invalidator.recycle (invalidator,done)=> 
+        @value = @members.reduce (prev,member)=>
+            val = if typeof member == 'function' 
+              member(prev, @invalidator)
+            else
+              member
+            @join(prev,val)
+          , @default
+        done()
+        if invalidator.isEmpty()
+          @invalidator = null
+        else
+          invalidator.bind()
+    else
+      @value = @default
     @revalidated()
     @value
 
@@ -57,12 +66,16 @@ module.exports = class ComposedProperty extends CalculatedProperty
       a && b
     or: (a,b)->
       a || b
+    last: (a,b)->
+      b
+    sum: (a,b)->
+      a + b
   }
 
 class ComposedProperty.Members extends Collection
   addPropertyRef: (name,obj)->
     if @findRefIndex(name,obj) == -1
-      fn = (invalidator)->
+      fn = (prev,invalidator)->
         invalidator.prop(name,obj)
       fn.ref = {
         name: name
@@ -71,7 +84,7 @@ class ComposedProperty.Members extends Collection
       @push(fn)
   addValueRef: (val,name,obj)->
     if @findRefIndex(name,obj) == -1
-      fn = (invalidator)->
+      fn = (prev,invalidator)->
         val
       fn.ref = {
         name: name
@@ -89,7 +102,7 @@ class ComposedProperty.Members extends Collection
         obj: obj
         val: val
       }
-      fn = (invalidator)->
+      fn = (prev,invalidator)->
         val
       fn.ref = ref
       @set(i,fn)

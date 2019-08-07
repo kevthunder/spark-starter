@@ -2,6 +2,7 @@ assert = require('chai').assert
 ComposedProperty = require('../lib/PropertyTypes/ComposedProperty')
 Property = require('../lib/Property')
 EventEmitter = require('../lib/EventEmitter')
+Invalidator = require('../lib/Invalidator')
 
 describe 'ComposedProperty', ->
 
@@ -20,20 +21,31 @@ describe 'ComposedProperty', ->
     
     assert.notInstanceOf prop, ComposedProperty
 
+  it 'returns default if no members', ->
+    prop = new Property('prop',{
+      composed: true
+      default: 'hi'
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, 'hi'
 
   it 'returns a value composed(and) of many values', ->
     prop = new Property('prop',{
       composed: true
       members: [true,true]
+      default: true
     }).getInstance({});
 
     res = prop.get()
     assert.isTrue res
 
     prop.members.push(false)
+    prop.members.push(true)
 
     res = prop.get()
     assert.isFalse res
+
 
   it 'returns a value composed(or) of many values', ->
     prop = new Property('prop',{
@@ -61,6 +73,49 @@ describe 'ComposedProperty', ->
     res = prop.get()
     assert.equal res, 6
 
+  it 'returns a value composed of many values using predefined function sum', ->
+    prop = new Property('prop',{
+      composed: 'sum'
+      members: [1,2,3]
+      default: 0
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, 6
+
+  it 'returns a value composed of many values using predefined function last', ->
+    prop = new Property('prop',{
+      composed: 'last'
+      members: [1,2,3]
+      default: 0
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, 3
+
+  it 'returns a value composed of many values using default function for string', ->
+    prop = new Property('prop',{
+      composed: true
+      members: ['foo','bar','baz']
+      default: ''
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, 'baz'
+
+  it 'use calcul as a member', ->
+    prop = new Property('prop',{
+      composed: 'sum'
+      calcul: (invalidator)->
+        assert.instanceOf invalidator, Invalidator
+        @test
+      members: [2,5]
+      default: 0
+    }).getInstance({test:8});
+
+    assert.instanceOf prop, ComposedProperty
+    res = prop.get()
+    assert.equal res, 15
 
   it 'returns a value composed of many functions', ->
     fnTrue = ->
@@ -69,15 +124,19 @@ describe 'ComposedProperty', ->
       true
     fnFalse = ->
       false
+    fnTrue3 = ->
+      true
     prop = new Property('prop',{
       composed: true
       members: [fnTrue,fnTrue2]
+      default: true
     }).getInstance({});
 
     res = prop.get()
     assert.isTrue res
 
     prop.members.push(fnFalse)
+    prop.members.push(fnTrue3)
 
     res = prop.get()
     assert.isFalse res
@@ -86,6 +145,7 @@ describe 'ComposedProperty', ->
     prop = new Property('prop',{
       composed: true
       members: []
+      default: true
     }).getInstance({});
 
     res = prop.get()
@@ -99,6 +159,7 @@ describe 'ComposedProperty', ->
 
     prop.members.addValueRef(false,'prop3')
     prop.members.addValueRef(false,'prop4')
+    prop.members.addValueRef(true,'prop5')
 
     res = prop.get()
     assert.isFalse res, 'after added 2 false values'
@@ -184,6 +245,7 @@ describe 'ComposedProperty', ->
     prop = new Property('prop',{
       composed: true
       members: []
+      default: true
     }).getInstance({});
 
     res = prop.get()
@@ -197,6 +259,7 @@ describe 'ComposedProperty', ->
 
     prop.members.addFunctionRef (->false), 'prop3'
     prop.members.addFunctionRef (->false), 'prop4'
+    prop.members.addFunctionRef (->true), 'prop5'
 
     res = prop.get()
     assert.isFalse res, 'after added 2 false values'
@@ -229,6 +292,7 @@ describe 'ComposedProperty', ->
     prop = new Property('prop',{
       composed: true
       members: []
+      default: true
     }).getInstance({});
 
     prop.members.addPropertyRef('prop1',remote)
@@ -251,6 +315,7 @@ describe 'ComposedProperty', ->
     prop = new Property('prop',{
       composed: true
       members: [true,true]
+      default: true
     }).getInstance({});
 
     assert.isFalse prop.calculated
@@ -282,6 +347,7 @@ describe 'ComposedProperty', ->
     prop = new Property('prop',{
       composed: true
       members: []
+      default: true
     }).getInstance({});
 
     prop.members.addPropertyRef('prop1',remote)

@@ -1,5 +1,5 @@
 (function() {
-  var ComposedProperty, EventEmitter, Property, assert;
+  var ComposedProperty, EventEmitter, Invalidator, Property, assert;
 
   assert = require('chai').assert;
 
@@ -8,6 +8,8 @@
   Property = require('../lib/Property');
 
   EventEmitter = require('../lib/EventEmitter');
+
+  Invalidator = require('../lib/Invalidator');
 
   describe('ComposedProperty', function() {
     it('should return collection when collection config is on', function() {
@@ -24,15 +26,26 @@
       prop = prop.getInstance({});
       return assert.notInstanceOf(prop, ComposedProperty);
     });
+    it('returns default if no members', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: true,
+        default: 'hi'
+      }).getInstance({});
+      res = prop.get();
+      return assert.equal(res, 'hi');
+    });
     it('returns a value composed(and) of many values', function() {
       var prop, res;
       prop = new Property('prop', {
         composed: true,
-        members: [true, true]
+        members: [true, true],
+        default: true
       }).getInstance({});
       res = prop.get();
       assert.isTrue(res);
       prop.members.push(false);
+      prop.members.push(true);
       res = prop.get();
       return assert.isFalse(res);
     });
@@ -61,8 +74,55 @@
       res = prop.get();
       return assert.equal(res, 6);
     });
+    it('returns a value composed of many values using predefined function sum', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: 'sum',
+        members: [1, 2, 3],
+        default: 0
+      }).getInstance({});
+      res = prop.get();
+      return assert.equal(res, 6);
+    });
+    it('returns a value composed of many values using predefined function last', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: 'last',
+        members: [1, 2, 3],
+        default: 0
+      }).getInstance({});
+      res = prop.get();
+      return assert.equal(res, 3);
+    });
+    it('returns a value composed of many values using default function for string', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: true,
+        members: ['foo', 'bar', 'baz'],
+        default: ''
+      }).getInstance({});
+      res = prop.get();
+      return assert.equal(res, 'baz');
+    });
+    it('use calcul as a member', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: 'sum',
+        calcul: function(invalidator) {
+          assert.instanceOf(invalidator, Invalidator);
+          return this.test;
+        },
+        members: [2, 5],
+        default: 0
+      }).getInstance({
+        test: 8
+      });
+      assert.instanceOf(prop, ComposedProperty);
+      res = prop.get();
+      return assert.equal(res, 15);
+    });
     it('returns a value composed of many functions', function() {
-      var fnFalse, fnTrue, fnTrue2, prop, res;
+      var fnFalse, fnTrue, fnTrue2, fnTrue3, prop, res;
       fnTrue = function() {
         return true;
       };
@@ -72,13 +132,18 @@
       fnFalse = function() {
         return false;
       };
+      fnTrue3 = function() {
+        return true;
+      };
       prop = new Property('prop', {
         composed: true,
-        members: [fnTrue, fnTrue2]
+        members: [fnTrue, fnTrue2],
+        default: true
       }).getInstance({});
       res = prop.get();
       assert.isTrue(res);
       prop.members.push(fnFalse);
+      prop.members.push(fnTrue3);
       res = prop.get();
       return assert.isFalse(res);
     });
@@ -86,7 +151,8 @@
       var prop, res;
       prop = new Property('prop', {
         composed: true,
-        members: []
+        members: [],
+        default: true
       }).getInstance({});
       res = prop.get();
       assert.isTrue(res, 'initial result');
@@ -96,6 +162,7 @@
       assert.isTrue(res, 'after added 2 true values');
       prop.members.addValueRef(false, 'prop3');
       prop.members.addValueRef(false, 'prop4');
+      prop.members.addValueRef(true, 'prop5');
       res = prop.get();
       assert.isFalse(res, 'after added 2 false values');
       prop.members.removeRef('prop3');
@@ -166,7 +233,8 @@
       var prop, res;
       prop = new Property('prop', {
         composed: true,
-        members: []
+        members: [],
+        default: true
       }).getInstance({});
       res = prop.get();
       assert.isTrue(res, 'initial result');
@@ -184,6 +252,9 @@
       prop.members.addFunctionRef((function() {
         return false;
       }), 'prop4');
+      prop.members.addFunctionRef((function() {
+        return true;
+      }), 'prop5');
       res = prop.get();
       assert.isFalse(res, 'after added 2 false values');
       prop.members.removeRef('prop3');
@@ -210,7 +281,8 @@
       }).bind(remote);
       prop = new Property('prop', {
         composed: true,
-        members: []
+        members: [],
+        default: true
       }).getInstance({});
       prop.members.addPropertyRef('prop1', remote);
       prop.members.addPropertyRef('prop2', remote);
@@ -227,7 +299,8 @@
       var prop, res;
       prop = new Property('prop', {
         composed: true,
-        members: [true, true]
+        members: [true, true],
+        default: true
       }).getInstance({});
       assert.isFalse(prop.calculated);
       res = prop.get();
@@ -264,7 +337,8 @@
       }).bind(remote);
       prop = new Property('prop', {
         composed: true,
-        members: []
+        members: [],
+        default: true
       }).getInstance({});
       prop.members.addPropertyRef('prop1', remote);
       prop.members.addPropertyRef('prop2', remote);

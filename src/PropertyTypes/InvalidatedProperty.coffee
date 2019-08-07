@@ -36,7 +36,7 @@ module.exports = class InvalidatedProperty extends CalculatedProperty
       this
 
   @compose = (prop)->
-    if typeof prop.options.calcul == 'function' && prop.options.calcul.length > 0
+    if typeof prop.options.calcul == 'function' && prop.options.calcul.length > 0 and !prop.options.composed?
       prop.instanceType.extend(InvalidatedProperty)
 
 

@@ -30,7 +30,7 @@ module.exports = class CalculatedProperty extends DynamicProperty
     @value
 
   @compose = (prop)->
-    if typeof prop.options.calcul == 'function'
+    if typeof prop.options.calcul == 'function' and !prop.options.composed?
       prop.instanceType::calculFunct = prop.options.calcul
       unless prop.options.calcul.length > 0
         prop.instanceType.extend(CalculatedProperty)
