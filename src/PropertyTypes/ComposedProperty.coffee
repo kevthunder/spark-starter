@@ -27,6 +27,7 @@ module.exports = class ComposedProperty extends CalculatedProperty
     else
       ComposedProperty.joinFunctions.last
 
+
   calcul: ->
     if @members.length
       unless @invalidator
@@ -48,6 +49,12 @@ module.exports = class ComposedProperty extends CalculatedProperty
       @value = @default
     @revalidated()
     @value
+  
+  set: (val)->
+    val = @ingest(val)
+    if @default != val
+      @default = val
+      @invalidate()
 
   @compose = (prop)->
     if prop.options.composed?

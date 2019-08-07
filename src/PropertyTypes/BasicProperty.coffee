@@ -87,8 +87,6 @@ module.exports = class BasicProperty extends Mixable
 
     if typeof prop.options.set == 'function'
       prop.instanceType::set = @::callbackSet
-    else
-      prop.instanceType::set = @::setAndCheckChanges
 
     prop.instanceType::default = prop.options.default
 

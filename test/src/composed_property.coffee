@@ -103,6 +103,23 @@ describe 'ComposedProperty', ->
     res = prop.get()
     assert.equal res, 'baz'
 
+  it 'use the setted value as the new base value', ->
+    prop = new Property('prop',{
+      composed: (a,b)->
+        a + b
+      members: [1,2,3]
+      default: 0
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, 6
+
+    debugger
+    prop.set(10)
+    res = prop.get()
+    assert.equal res, 16
+
+
   it 'use calcul as a member', ->
     prop = new Property('prop',{
       composed: 'sum'

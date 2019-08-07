@@ -104,6 +104,22 @@
       res = prop.get();
       return assert.equal(res, 'baz');
     });
+    it('use the setted value as the new base value', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: function(a, b) {
+          return a + b;
+        },
+        members: [1, 2, 3],
+        default: 0
+      }).getInstance({});
+      res = prop.get();
+      assert.equal(res, 6);
+      debugger;
+      prop.set(10);
+      res = prop.get();
+      return assert.equal(res, 16);
+    });
     it('use calcul as a member', function() {
       var prop, res;
       prop = new Property('prop', {
