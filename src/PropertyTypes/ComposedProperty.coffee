@@ -76,7 +76,7 @@ class ComposedProperty.Members extends Collection
   addPropertyRef: (name,obj)->
     if @findRefIndex(name,obj) == -1
       fn = (prev,invalidator)->
-        invalidator.prop(name,obj)
+        invalidator.propPath(name,obj)
       fn.ref = {
         name: name
         obj: obj

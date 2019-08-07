@@ -295,6 +295,42 @@
       res = prop.get();
       return assert.isTrue(res, 'removed property');
     });
+    it('returns a value composed of many nested remote properties', function() {
+      var nested, prop, remote, res;
+      remote = {
+        prop3: {}
+      };
+      new Property('prop1', {
+        default: {
+          val: 1
+        }
+      }).bind(remote);
+      nested = {};
+      new Property('val', {
+        default: 3
+      }).bind(nested);
+      new Property('prop2', {
+        default: nested
+      }).bind(remote);
+      new Property('val', {
+        default: 5
+      }).bind(remote.prop3);
+      prop = new Property('prop', {
+        composed: 'sum',
+        members: [],
+        default: 0
+      }).getInstance({});
+      prop.members.addPropertyRef('prop1.val', remote);
+      prop.members.addPropertyRef('prop2.val', remote);
+      res = prop.get();
+      assert.equal(res, 4);
+      prop.members.addPropertyRef('prop3.val', remote);
+      res = prop.get();
+      assert.equal(res, 9);
+      prop.members.removeRef('prop3.val', remote);
+      res = prop.get();
+      return assert.equal(res, 4);
+    });
     it('invalidate the result when adding a member', function() {
       var prop, res;
       prop = new Property('prop', {
