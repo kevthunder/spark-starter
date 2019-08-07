@@ -21,6 +21,14 @@ describe 'ComposedProperty', ->
     
     assert.notInstanceOf prop, ComposedProperty
 
+  it 'has null as default value', ->
+    prop = new Property('prop',{
+      composed: true
+    }).getInstance({});
+
+    res = prop.get()
+    assert.equal res, null
+
   it 'returns default if no members', ->
     prop = new Property('prop',{
       composed: true

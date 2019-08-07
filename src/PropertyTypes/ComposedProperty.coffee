@@ -11,7 +11,7 @@ module.exports = class ComposedProperty extends CalculatedProperty
     if @property.options.hasOwnProperty('default')
       @default = @property.options.default
     else
-      @default = @value = true
+      @default = @value = null
     @members = new ComposedProperty.Members(@property.options.members)
     if @property.options.calcul?
       @members.unshift (prev,invalidator)=> @property.options.calcul.bind(@obj)(invalidator)

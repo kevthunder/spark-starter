@@ -26,6 +26,14 @@
       prop = prop.getInstance({});
       return assert.notInstanceOf(prop, ComposedProperty);
     });
+    it('has null as default value', function() {
+      var prop, res;
+      prop = new Property('prop', {
+        composed: true
+      }).getInstance({});
+      res = prop.get();
+      return assert.equal(res, null);
+    });
     it('returns default if no members', function() {
       var prop, res;
       prop = new Property('prop', {
