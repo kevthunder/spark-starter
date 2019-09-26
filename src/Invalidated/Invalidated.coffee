@@ -1,4 +1,4 @@
-Invalidator = require('../Invalidator')
+Invalidator = require('spark-properties').Invalidator
 
 
 module.exports = class Invalidated

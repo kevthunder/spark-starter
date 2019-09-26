@@ -1,13 +1,20 @@
-Property = require('./Property')
+PropertiesManager = require('spark-properties').PropertiesManager
 Mixable = require('./Mixable')
 
 module.exports = class Element extends Mixable
   constructor: (data)->
     super()
-    if typeof data == "object" && @setProperties?
-      @setProperties(data)
+    @initPropertiesManager(data)
     @init()
+  initPropertiesManager: (data)->
+    @propertiesManager = @propertiesManager.useScope(this)
+    @propertiesManager.initProperties()
+    @propertiesManager.createScopeGetterSetters()
+    if typeof data == "object"
+      @propertiesManager.setPropertiesData(data)
+    this
   init: ->
+    this
   tap: (name) ->
     args = Array::slice.call(arguments)
     if typeof name == 'function'
@@ -26,22 +33,24 @@ module.exports = class Element extends Mixable
       @_callbacks[name].owner = this
     @_callbacks[name]
 
+  destroy: ->
+    this.propertiesManager.destroy()
+
   getFinalProperties: ->
-    if @._properties?
-      ['_properties'].concat @._properties.map((prop)->prop.name)
-    else
-      []
+    ['propertiesManager']
 
   extended: (target)->
-    if @._properties?
-      for property in @._properties
-        options = Object.assign({},property.options)
-        (new Property(property.name, options)).bind(target)
+    if target.propertiesManager
+      target.propertiesManager = target.propertiesManager.copyWith(@propertiesManager.propertiesOptions)
+    else
+      target.propertiesManager = @propertiesManager
+
+  propertiesManager: new PropertiesManager()
 
   @property: (prop, desc) ->
-    (new Property(prop, desc)).bind(@prototype)
+    @::propertiesManager = @::propertiesManager.withProperty(prop, desc)
     
   @properties: (properties) ->
-    for prop, desc of properties
-      @property prop, desc
+    @::propertiesManager = @::propertiesManager.copyWith(properties)
+
 

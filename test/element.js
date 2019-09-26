@@ -5,9 +5,9 @@
 
   Element = require('../lib/Element');
 
-  Property = require('../lib/Property');
+  Property = require('spark-properties').Property;
 
-  EventEmitter = require('../lib/EventEmitter');
+  EventEmitter = require('events').EventEmitter;
 
   describe('Element', function() {
     var invalidateEvents, updateEvents;
@@ -36,6 +36,34 @@
       });
       assert.equal(obj.foo, 'hi');
       return assert.equal(obj.bar, 'hello');
+    });
+    it('can get and set properties', function() {
+      var TestClass, obj;
+      TestClass = (function() {
+        class TestClass extends Element {};
+
+        TestClass.properties({
+          a: {
+            default: null
+          },
+          b: {
+            default: null
+          },
+          c: {
+            default: null
+          }
+        });
+
+        return TestClass;
+
+      }).call(this);
+      obj = new TestClass();
+      obj.a = 1;
+      obj.bProperty.set(2);
+      obj.propertiesManager.getProperty("c").set(3);
+      assert.equal(obj.a, 1);
+      assert.equal(obj.bProperty.get(), 2);
+      return assert.equal(obj.propertiesManager.getProperty("c").get(), 3);
     });
     it('can extend a third class with properties', function() {
       var BaseClass, TestClass, obj;
@@ -68,8 +96,8 @@
       obj = new TestClass();
       assert.equal(obj.foo, 'hello');
       assert.equal(obj.bar, 'hey');
-      assert.instanceOf(obj.getProperty("foo"), Property);
-      return assert.instanceOf(obj.getProperty("bar"), Property);
+      assert.instanceOf(obj.fooProperty, Property);
+      return assert.instanceOf(obj.barProperty, Property);
     });
     it('can extend a third class with properties that have watchers', function() {
       var BaseClass, MiddleClass, TestClass, obj;
@@ -118,9 +146,9 @@
       assert.equal(obj.foo, 'hello');
       assert.equal(obj.baz, 'hi');
       assert.equal(obj.bar, 'hey');
-      assert.instanceOf(obj.getProperty("foo"), Property);
-      assert.instanceOf(obj.getProperty("bar"), Property);
-      return assert.instanceOf(obj.getProperty("baz"), Property);
+      assert.instanceOf(obj.fooProperty, Property);
+      assert.instanceOf(obj.barProperty, Property);
+      return assert.instanceOf(obj.bazProperty, Property);
     });
     it('can extend a nested class with properties', function() {
       var BaseClass, SupClass, TestClass, obj;
@@ -154,8 +182,8 @@
       obj = new TestClass();
       assert.equal(obj.foo, 'hello');
       assert.equal(obj.bar, 'hey');
-      assert.instanceOf(obj.getProperty("foo"), Property);
-      return assert.instanceOf(obj.getProperty("bar"), Property);
+      assert.instanceOf(obj.fooProperty, Property);
+      return assert.instanceOf(obj.barProperty, Property);
     });
     it('can extend a third class with merged properties', function() {
       var BaseClass, Test1Class, Test2Class, Test3Class;
@@ -233,44 +261,15 @@
       assert.equal((new Test2Class()).bar, 'adios');
       return assert.equal((new Test3Class()).bar, 'see you');
     });
-    it('allow access to old and new value in change function', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {
-          constructor() {
-            super();
-          }
-
-        };
-
-        TestClass.properties({
-          prop: {
-            default: 7
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      obj.propChanged = function(old) {
-        assert.equal(this._prop, 11);
-        return assert.equal(old, 7);
-      };
-      return obj.setProp(11);
-    });
     it('should calcul a prop only once and on demand', function() {
       var TestClass, obj;
       TestClass = (function() {
-        class TestClass extends Element {
-          init() {
-            return this.callcount = 0;
-          }
+        class TestClass extends Element {};
 
-        };
+        TestClass.prototype.callcount = 0;
 
         TestClass.properties({
-          prop: {
+          test: {
             calcul: function() {
               return this.callcount += 1;
             }
@@ -282,81 +281,12 @@
       }).call(this);
       obj = new TestClass();
       assert.equal(obj.callcount, 0);
-      obj.getProp();
+      obj.testProperty.get();
       assert.equal(obj.callcount, 1);
-      obj.getProp();
+      obj.testProperty.get();
       return assert.equal(obj.callcount, 1);
     });
-    it('give access to an invalidator in the calcul option of a property', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {
-          constructor() {
-            super();
-            this.callcount = 0;
-          }
-
-        };
-
-        TestClass.properties({
-          prop: {
-            calcul: function(invalidated) {
-              assert.typeOf(invalidated.prop, 'function');
-              assert.typeOf(invalidated.value, 'function');
-              assert.typeOf(invalidated.event, 'function');
-              return this.callcount += 1;
-            }
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      obj.getProp();
-      return assert.equal(obj.callcount, 1);
-    });
-    it('should not emit change event when a property is invalidated and is not changed', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {
-          constructor() {
-            super();
-            this.callcount = 0;
-          }
-
-          getListeners() {
-            return [{}];
-          }
-
-          emitEvent(event, params) {
-            if (event === 'propChanged') {
-              assert.equal(params[0], lastValue - 1);
-              return this.callcount += 1;
-            }
-          }
-
-        };
-
-        TestClass.properties({
-          prop: {
-            calcul: function() {
-              return 5;
-            }
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      assert.equal(obj.callcount, 0);
-      obj.getProp();
-      assert.equal(obj.callcount, 0);
-      obj.invalidateProp();
-      return assert.equal(obj.callcount, 0);
-    });
-    it('have a method to unbind all invalidators', function() {
+    it('when destroyed, unbind all invalidators', function() {
       var TestClass, emitter, obj, res;
       emitter = new EventEmitter();
       TestClass = (function() {
@@ -380,177 +310,11 @@
       }).call(this);
       obj = new TestClass();
       obj.prop1;
-      assert.equal(emitter.getListeners('test').length, 1);
+      assert.equal(emitter.listenerCount('test'), 1);
       obj.prop2;
-      assert.equal(emitter.getListeners('test').length, 2);
-      res = obj.destroyProperties();
-      return assert.equal(emitter.getListeners('test').length, 0);
-    });
-    it('can mass assign properties', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {};
-
-        TestClass.properties({
-          a: {
-            default: 0
-          },
-          b: {
-            default: 0
-          },
-          c: {
-            default: 0
-          },
-          d: {
-            default: 0
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      assert.equal(obj.a, 0);
-      assert.equal(obj.b, 0);
-      assert.equal(obj.c, 0);
-      assert.equal(obj.d, 0);
-      obj.setProperties({
-        a: 1,
-        b: 2,
-        c: 3,
-        f: 8
-      });
-      assert.equal(obj.a, 1);
-      assert.equal(obj.b, 2);
-      assert.equal(obj.c, 3);
-      return assert.equal(obj.d, 0);
-    });
-    it('can get all manually setted properties', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {};
-
-        TestClass.properties({
-          a: {
-            default: 0
-          },
-          b: {
-            default: 0
-          },
-          d: {
-            calcul: function() {
-              return 4;
-            }
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      assert.deepEqual(obj.getManualDataProperties(), {}, 'initial');
-      obj.a = 1;
-      obj.b = 2;
-      assert.deepEqual(obj.getManualDataProperties(), {
-        a: 1,
-        b: 2
-      }, 'after assign');
-      assert.equal(obj.d, 4);
-      assert.deepEqual(obj.getManualDataProperties(), {
-        a: 1,
-        b: 2
-      }, 'after cacul');
-      obj.d = 5;
-      assert.deepEqual(obj.getManualDataProperties(), {
-        a: 1,
-        b: 2,
-        d: 5
-      }, 'after assign over caculated value');
-      obj.invalidateD();
-      return assert.deepEqual(obj.getManualDataProperties(), {
-        a: 1,
-        b: 2
-      }, 'after invalidate');
-    });
-    it('can mass assign properties with whitelist', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {};
-
-        TestClass.properties({
-          a: {
-            default: 0
-          },
-          b: {
-            default: 0
-          },
-          c: {
-            default: 0
-          },
-          d: {
-            default: 0
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      assert.equal(obj.a, 0);
-      assert.equal(obj.b, 0);
-      assert.equal(obj.c, 0);
-      assert.equal(obj.d, 0);
-      obj.setProperties({
-        a: 1,
-        b: 2,
-        c: 3
-      }, {
-        whitelist: ['a', 'b']
-      });
-      assert.equal(obj.a, 1);
-      assert.equal(obj.b, 2);
-      assert.equal(obj.c, 0);
-      return assert.equal(obj.d, 0);
-    });
-    it('can mass assign properties with blacklist', function() {
-      var TestClass, obj;
-      TestClass = (function() {
-        class TestClass extends Element {};
-
-        TestClass.properties({
-          a: {
-            default: 0
-          },
-          b: {
-            default: 0
-          },
-          c: {
-            default: 0
-          },
-          d: {
-            default: 0
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      obj = new TestClass();
-      assert.equal(obj.a, 0);
-      assert.equal(obj.b, 0);
-      assert.equal(obj.c, 0);
-      assert.equal(obj.d, 0);
-      obj.setProperties({
-        a: 1,
-        b: 2,
-        c: 3
-      }, {
-        blacklist: ['c']
-      });
-      assert.equal(obj.a, 1);
-      assert.equal(obj.b, 2);
-      assert.equal(obj.c, 0);
-      return assert.equal(obj.d, 0);
+      assert.equal(emitter.listenerCount('test'), 2);
+      res = obj.destroy();
+      return assert.equal(emitter.listenerCount('test'), 0);
     });
     it('return self when calling tap', function() {
       var TestClass, obj, res;
@@ -598,16 +362,14 @@
     it('keeps old options when overriding a property', function() {
       var TestClass, obj;
       TestClass = (function() {
-        class TestClass extends Element {
-          init() {
-            return this.callcount = 0;
-          }
+        class TestClass extends Element {};
 
-        };
+        TestClass.prototype.callcount = 0;
 
         TestClass.properties({
           prop: {
             change: function() {
+              assert.equal(this.constructor, TestClass);
               return this.callcount += 1;
             }
           }
@@ -632,17 +394,15 @@
     it('allows to call an overrided function of a property', function() {
       var TestClass, obj;
       TestClass = (function() {
-        class TestClass extends Element {
-          init() {
-            this.callcount1 = 0;
-            return this.callcount2 = 0;
-          }
+        class TestClass extends Element {};
 
-        };
+        TestClass.prototype.callcount1 = 0;
+
+        TestClass.prototype.callcount2 = 0;
 
         TestClass.properties({
           prop: {
-            change: function(old) {
+            change: function(val, old) {
               return this.callcount1 += 1;
             }
           }
@@ -653,7 +413,8 @@
       }).call(this);
       TestClass.properties({
         prop: {
-          change: function(old, overrided) {
+          change: function(val, old, overrided) {
+            overrided(val, old);
             return this.callcount2 += 1;
           }
         }
@@ -666,19 +427,7 @@
       assert.equal(obj.callcount1, 2, "original callcount");
       return assert.equal(obj.callcount2, 2, "new callcount");
     });
-    it('return new Property when calling getProperty after an override', function() {
-      var TestClass, newProp, obj, oldProp;
-      TestClass = class TestClass extends Element {};
-      oldProp = TestClass.property("prop", {
-        default: 1
-      });
-      newProp = TestClass.property("prop", {
-        default: 2
-      });
-      obj = new TestClass();
-      return assert.equal(obj.getProperty("prop"), newProp);
-    });
-    it('should propagate invalidation', function() {
+    it.skip('should propagate invalidation', function() {
       var TestClass, lvl1, lvl2, lvl3, res, val;
       val = 1;
       TestClass = (function() {
@@ -686,20 +435,21 @@
           constructor(source) {
             super();
             this.source = source;
-            this.calculCount = 0;
           }
 
         };
 
         TestClass.include(EventEmitter.prototype);
 
+        TestClass.prototype.calculCount = 0;
+
         TestClass.properties({
           source: {},
           forwarded: {
             calcul: function(invalidator) {
               this.calculCount++;
-              if (invalidator.prop('source') != null) {
-                return invalidator.prop('forwarded', this.source);
+              if (invalidator.propByName('source') != null) {
+                return invalidator.propByName('forwarded', this.source);
               } else {
                 return val;
               }
@@ -716,23 +466,23 @@
       assert.equal(lvl1.calculCount, 0, "lvl1 calculCount beginning");
       assert.equal(lvl2.calculCount, 0, "lvl2 calculCount beginning");
       assert.equal(lvl3.calculCount, 0, "lvl3 calculCount beginning");
-      res = lvl3.getForwarded();
+      res = lvl3.forwardedProperty.get();
       assert.equal(res, 1, "result for get");
       assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after get");
       assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get");
       assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get");
       val += 1;
-      lvl1.invalidateForwarded();
+      lvl1.forwardedProperty.invalidate();
       assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after invalidate");
       assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after invalidate");
       assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after invalidate");
-      res = lvl3.getForwarded();
+      res = lvl3.forwardedProperty.get();
       assert.equal(res, 2, "result for get 2");
       assert.equal(lvl1.calculCount, 2, "lvl1 calculCount after get 2");
       assert.equal(lvl2.calculCount, 2, "lvl2 calculCount after get 2");
       return assert.equal(lvl3.calculCount, 2, "lvl3 calculCount after get 2");
     });
-    return it('should not recalculate if no change while propagating', function() {
+    return it.skip('should not recalculate if no change while propagating', function() {
       var TestClass, lvl1, lvl2, lvl3, res, val;
       val = 1;
       TestClass = (function() {

@@ -1,4 +1,4 @@
-Binder = require('./Binder')
+Binder = require('spark-binding').Binder
 
 module.exports = class Updater
   constructor: (options) ->

@@ -1,5 +1,5 @@
-PropertyWatcher = require('./PropertyWatcher')
-Invalidator = require('../Invalidator')
+PropertyWatcher = require('spark-properties').watchers.PropertyWatcher
+Invalidator = require('spark-properties').Invalidator
 
 module.exports = class ActivablePropertyWatcher extends PropertyWatcher
   loadOptions: (options)->

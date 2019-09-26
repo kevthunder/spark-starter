@@ -23,12 +23,16 @@
     "gulp-concat": "^2.6.1",
     "gulp-mocha": "^6.0.0",
     "gulp-rename": "^1.4.0",
-    "gulp-require-index": "github:kevthunder/gulp-require-index",
+    "gulp-require-index": "^0.1.1",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-uglify-es": "^1.0.4",
     "mocha": "^5.2.0",
     "source-map-support": "^0.5.9",
     "vinyl-source-stream": "^2.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "spark-binding": "0.1.0",
+    "spark-collection": "0.0.2",
+    "spark-properties": "github:kevthunder/spark-properties"
+  }
 }
