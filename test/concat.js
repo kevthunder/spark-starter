@@ -17,6 +17,9 @@
       it('contains Collection', function() {
         return assert.isFunction(Spark.Collection);
       });
+      it('contains Property', function() {
+        return assert.isFunction(Spark.Property);
+      });
       return it('can create working Element', function() {
         var TestClass, obj;
         TestClass = (function() {

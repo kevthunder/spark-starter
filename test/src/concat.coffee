@@ -12,6 +12,8 @@ describe 'concatened file check', ->
       assert.isFunction Spark.Element
     it 'contains Collection', ->
       assert.isFunction Spark.Collection
+    it 'contains Property', ->
+      assert.isFunction Spark.Property
     it 'can create working Element', ->
       class TestClass extends Spark.Element
         @properties
