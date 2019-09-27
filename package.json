@@ -31,8 +31,8 @@
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
-    "spark-binding": "0.1.0",
+    "spark-binding": "^0.1.0",
     "spark-collection": "0.0.2",
-    "spark-properties": "github:kevthunder/spark-properties"
+    "spark-properties": "^0.1.0"
   }
 }

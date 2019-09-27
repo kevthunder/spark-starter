@@ -391,7 +391,7 @@
       assert.equal(obj.prop, 7);
       return assert.equal(obj.callcount, 2);
     });
-    it('allows to call an overrided function of a property', function() {
+    return it('allows to call an overrided function of a property', function() {
       var TestClass, obj;
       TestClass = (function() {
         class TestClass extends Element {};
@@ -426,114 +426,6 @@
       assert.equal(obj.prop, 7);
       assert.equal(obj.callcount1, 2, "original callcount");
       return assert.equal(obj.callcount2, 2, "new callcount");
-    });
-    it.skip('should propagate invalidation', function() {
-      var TestClass, lvl1, lvl2, lvl3, res, val;
-      val = 1;
-      TestClass = (function() {
-        class TestClass extends Element {
-          constructor(source) {
-            super();
-            this.source = source;
-          }
-
-        };
-
-        TestClass.include(EventEmitter.prototype);
-
-        TestClass.prototype.calculCount = 0;
-
-        TestClass.properties({
-          source: {},
-          forwarded: {
-            calcul: function(invalidator) {
-              this.calculCount++;
-              if (invalidator.propByName('source') != null) {
-                return invalidator.propByName('forwarded', this.source);
-              } else {
-                return val;
-              }
-            }
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      lvl1 = new TestClass();
-      lvl2 = new TestClass(lvl1);
-      lvl3 = new TestClass(lvl2);
-      assert.equal(lvl1.calculCount, 0, "lvl1 calculCount beginning");
-      assert.equal(lvl2.calculCount, 0, "lvl2 calculCount beginning");
-      assert.equal(lvl3.calculCount, 0, "lvl3 calculCount beginning");
-      res = lvl3.forwardedProperty.get();
-      assert.equal(res, 1, "result for get");
-      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after get");
-      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get");
-      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get");
-      val += 1;
-      lvl1.forwardedProperty.invalidate();
-      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after invalidate");
-      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after invalidate");
-      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after invalidate");
-      res = lvl3.forwardedProperty.get();
-      assert.equal(res, 2, "result for get 2");
-      assert.equal(lvl1.calculCount, 2, "lvl1 calculCount after get 2");
-      assert.equal(lvl2.calculCount, 2, "lvl2 calculCount after get 2");
-      return assert.equal(lvl3.calculCount, 2, "lvl3 calculCount after get 2");
-    });
-    return it.skip('should not recalculate if no change while propagating', function() {
-      var TestClass, lvl1, lvl2, lvl3, res, val;
-      val = 1;
-      TestClass = (function() {
-        class TestClass extends Element {
-          constructor(source) {
-            super();
-            this.source = source;
-            this.calculCount = 0;
-          }
-
-        };
-
-        TestClass.include(EventEmitter.prototype);
-
-        TestClass.properties({
-          source: {},
-          forwarded: {
-            calcul: function(invalidator) {
-              this.calculCount++;
-              if (invalidator.prop('source') != null) {
-                return invalidator.prop('forwarded', this.source);
-              } else {
-                return val;
-              }
-            }
-          }
-        });
-
-        return TestClass;
-
-      }).call(this);
-      lvl1 = new TestClass();
-      lvl2 = new TestClass(lvl1);
-      lvl3 = new TestClass(lvl2);
-      assert.equal(lvl1.calculCount, 0, "lvl1 calculCount beginning");
-      assert.equal(lvl2.calculCount, 0, "lvl2 calculCount beginning");
-      assert.equal(lvl3.calculCount, 0, "lvl3 calculCount beginning");
-      res = lvl3.getForwarded();
-      assert.equal(res, 1, "result for get");
-      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after get");
-      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get");
-      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get");
-      lvl1.invalidateForwarded();
-      assert.equal(lvl1.calculCount, 1, "lvl1 calculCount after invalidate");
-      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after invalidate");
-      assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after invalidate");
-      lvl3.getForwarded();
-      assert.equal(res, 1, "result for get 2");
-      assert.equal(lvl1.calculCount, 2, "lvl1 calculCount after get 2");
-      assert.equal(lvl2.calculCount, 1, "lvl2 calculCount after get 2");
-      return assert.equal(lvl3.calculCount, 1, "lvl3 calculCount after get 2");
     });
   });
 
