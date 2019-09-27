@@ -1,0 +1,101 @@
+# How to upgrade
+
+## From 0.10 to 0.11
+
+### invalidate
+
+old:
+```
+obj.invalidateName()
+```
+new:
+```
+obj.nameProperty.invalidate()
+```
+search
+```
+(\W)invalidate(\w+)\(\)
+```
+replace
+```
+# You need to change the capital manually
+$1$2Property.invalidate()
+```
+
+### Property instance
+
+old:
+```
+obj._name
+```
+new:
+```
+obj.nameProperty
+```
+search
+```
+# will potentially catch other things
+(\W)_(\w+)(\W)
+```
+
+### invalidator: prop by name
+
+old:
+```
+invalidator.prop('name')
+```
+new:
+```
+invalidator.propByName('name')
+```
+search
+```
+\.prop\('(\w+)'
+```
+replace
+```
+.propByName('$1
+```
+
+### change arguments
+
+old:
+```
+  Class.properties({
+    tile: {
+      change: function(old) {
+      }
+    }
+  }
+```
+new:
+```
+  Class.properties({
+    tile: {
+      change: function(val, old) {
+      }
+    }
+  }
+```
+search
+```
+change:(\s*(function)?)\(([^v^)])
+```
+replace
+```
+change:$1(val, $3
+```
+
+### direct get and set Function
+
+removed:
+```
+obj.getName()
+obj.setName('')
+```
+alternatives:
+```
+obj.name
+obj.name = ''
+```
+
