@@ -12,6 +12,7 @@ module.exports = class Element extends Mixable
     @propertiesManager.createScopeGetterSetters()
     if typeof data == "object"
       @propertiesManager.setPropertiesData(data)
+    @propertiesManager.initWatchers()
     this
   init: ->
     this
