@@ -86,6 +86,25 @@ replace
 change:$1(val, $3
 ```
 
+### Adding a property as a member of a composed property
+
+old:
+```
+  obj.propMembers.addPropertyRef('open',this)
+```
+new:
+```
+  obj.propMembers.addProperty(this.openProperty)
+```
+search
+```
+\.addPropertyRef\(['"](\w+)['"],([^)]+)\)
+```
+replace
+```
+.addProperty($2.$1Property)
+```
+
 ### direct get and set Function
 
 removed:
@@ -99,3 +118,21 @@ obj.name
 obj.name = ''
 ```
 
+### Destroying properties
+
+old:
+```
+  this.destroyProperties()
+```
+new:
+```
+  this.propertiesManager.destroy()
+```
+search
+```
+([.@])destroyProperties\(\)
+```
+replace
+```
+$1propertiesManager.destroy()
+```
