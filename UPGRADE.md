@@ -38,6 +38,25 @@ search
 (\W)_(\w+)(\W)
 ```
 
+### Property instance by name
+
+old:
+```
+obj.getPropertyInstance('name')
+```
+new:
+```
+obj.propertiesManager.getProperty('name')
+```
+search
+```
+([.@])getPropertyInstance\(
+```
+replace
+```
+$1propertiesManager.getProperty(
+```
+
 ### invalidator: prop by name
 
 old:
@@ -104,6 +123,18 @@ replace
 ```
 .addProperty($2.$1Property)
 ```
+
+### watcher namespace
+
+old:
+```
+  require('spark-starter').Invalidated.PropertyWatcher
+```
+new:
+```
+  require('spark-starter').watchers.PropertyWatcher
+```
+
 
 ### direct get and set Function
 
