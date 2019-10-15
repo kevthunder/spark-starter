@@ -6,13 +6,13 @@ module.exports = class Element extends Mixable
     super()
     @initPropertiesManager(data)
     @init()
+    @propertiesManager.initWatchers()
   initPropertiesManager: (data)->
     @propertiesManager = @propertiesManager.useScope(this)
     @propertiesManager.initProperties()
     @propertiesManager.createScopeGetterSetters()
     if typeof data == "object"
       @propertiesManager.setPropertiesData(data)
-    @propertiesManager.initWatchers()
     this
   init: ->
     this
