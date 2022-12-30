@@ -26,7 +26,7 @@
     "gulp-require-index": "^0.1.1",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-uglify-es": "^1.0.4",
-    "mocha": "^8.1.2",
+    "mocha": "^8.4.0",
     "source-map-support": "^0.5.9",
     "vinyl-source-stream": "^2.0.0"
   },
